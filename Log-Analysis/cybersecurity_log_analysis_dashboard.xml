@@ -1,0 +1,69 @@
+<dashboard version="1.1" theme="dark">
+  <label>Cybersecurity Log Analysis</label>
+  <description>SOC Test Loggging</description>
+  <row>
+    <panel>
+      <title>Failed Logins</title>
+      <chart>
+        <title>Failed Login Attempts</title>
+        <search>
+          <query>index=* sourcetype=linux_secure ("Failed password" OR "authentication failure")
+| stats count by user, host, _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Sudo Execution</title>
+      <table>
+        <title>Sudo Commands Executed</title>
+        <search>
+          <query>index=* sourcetype=linux_secure "sudo:" 
+| rex "USER=(?&lt;user&gt;\w+)"
+| rex "COMMAND=(?&lt;command&gt;.+)"
+| stats count by user, command</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Syslog Events</title>
+      <chart>
+        <title>Syslog Event Trends</title>
+        <search>
+          <query>index=* sourcetype=syslog 
+| timechart count by host</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>System Events</title>
+      <table>
+        <title>Live System Events</title>
+        <search>
+          <query>index=* sourcetype=syslog | table _time, host, sourcetype, message</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,17 @@
+# Syslog Event Trends
+index=* sourcetype=syslog
+| timechart count by host
+
+# Live System Events
+index=* sourcetype=syslog
+| table _time, host, sourcetype, message
+| sort -_time
+
+# Failed Login Attempts
+index=* sourcetype=syslog ("Failed password" OR "authentication failure")
+| stats count by user, host, _time
+
+# Sudo Commands Executed
+index=* sourcetype=syslog "sudo:"
+| rex "COMMAND=(?<command>[^\s]+)"
+| stats count by user, command
