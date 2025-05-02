@@ -1,98 +1,111 @@
 # 🛰️ Automated Threat Intelligence Lab
 
-## Summary
+An automated tool for gathering, analyzing, and reporting Indicators of Compromise (IOCs) using open-source threat intelligence APIs including **VirusTotal**, **AlienVault OTX**, and **AbuseIPDB**.
 
-This project pulls and logs live threat data using public APIs from VirusTotal, AlienVault OTX, and AbuseIPDB. The tool aggregates indicators of compromise (IOCs) like malicious hashes, IPs, and domains into structured formats such as CSV or JSON.
+> 🎯 Designed to demonstrate scripting, API integration, and threat intel workflows using Python.
 
-> 📌 This project was designed to demonstrate scripting, threat intel workflows, and API integration.
+---
 
-## ⚙️ Features
+## 🚀 Features
 
-- Fetch IOCs from multiple sources:
-  - VirusTotal (hashes, IPs, domains)
-  - AbuseIPDB (IP reputation)
-  - AlienVault OTX (IPs, domains)
-- Normalize and store results in CSV or JSON format
-- Easy setup with environment variables for API keys
-- CLI flags for specific queries
+- Query multiple threat intelligence APIs for:
+  - File hashes (MD5, SHA1, SHA256)
+  - IP addresses
+  - Domains
+- Aggregate and normalize data from:
+  - VirusTotal
+  - AbuseIPDB
+  - AlienVault OTX
+- Export results in CSV, JSON, or Markdown report format
+- Append to existing databases for historical tracking
+- Modular and extensible design
+
+---
 
 ## 🧰 Tools Used
 
 - Python 3.x
-- VirusTotal API
-- AlienVault OTX API
-- AbuseIPDB API
-- pandas for data handling
-- python-dotenv for configuration
+- [VirusTotal API](https://www.virustotal.com/gui/home/search)
+- [AlienVault OTX API](https://otx.alienvault.com/)
+- [AbuseIPDB API](https://www.abuseipdb.com/)
+- `pandas` for data handling
+- `python-dotenv` for config management
 
-## 🔐 Setup
+---
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/Threat-Intelligence.git
-   cd Threat-Intelligence
-   ```
+## 📁 Folder Structure
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+Threat-Intelligence/
+├── data/ # Output files (CSV/JSON)
+├── logs/ # Log files
+├── reports/ # Markdown reports
+├── scripts/
+│ ├── main.py # Main CLI logic
+│ └── utils.py # Helper functions
+├── tests/ # Unit tests (WIP)
+├── .env.example # Template for API keys
+├── requirements.txt # Python dependencies
+└── README.md # Project documentation
 
-3. Create a `.env` file in the root directory with your API keys:
-   ```
-   VIRUSTOTAL_API_KEY=your_virustotal_api_key_here
-   ABUSEIPDB_API_KEY=your_abuseipdb_api_key_here
-   OTX_API_KEY=your_otx_api_key_here
-   ```
+---
 
-4. Run the script:
-   ```bash
-   python scripts/main.py --hash <hash_value> --ip <ip_address> --domain <domain_name> --output <csv|json>
-   ```
+## ⚙️ Setup
 
-## 🧪 Sample Usage
+1. Clone the repo:
 
-Check a specific hash:
 ```bash
-python scripts/main.py --hash e99a18c428cb38d5f260853678922e03
-```
+git clone https://github.com/GreyKeyStudios/CyberSecurity-Projects.git
+cd CyberSecurity-Projects/Threat-Intelligence
 
-Check an IP address:
-```bash
-python scripts/main.py --ip 45.76.23.19
-```
+Install dependencies:
+pip install -r requirements.txt
+
+Add your API keys to a .env file:
+VIRUSTOTAL_API_KEY=your_virustotal_api_key
+ABUSEIPDB_API_KEY=your_abuseipdb_api_key
+OTX_API_KEY=your_otx_api_key
+
+⚡ Usage
+Check a file hash:
+python scripts/main.py --hash <HASH>
 
 Check a domain:
-```bash
 python scripts/main.py --domain shady-site.biz
-```
 
-Save output as JSON:
-```bash
-python scripts/main.py --hash e99a18c428cb38d5f260853678922e03 --output json
-```
+Check an IP address:
+python scripts/main.py --ip 185.130.5.231
 
-## 📊 Sample Output
+Check all with a label and output to CSV:
+python scripts/main.py --threat-type "Phishing Kit" --hash <HASH> --domain shady.biz --ip 185.130.5.231 --output csv
 
-CSV format:
-```
+📊 Sample Output
+CSV
 Source,IOC Type,IOC Value,Threat Label,First Seen
-VirusTotal,hash,e99a18c428cb38d5f260853678922e03,Malicious,2024-03-03 19:00:00Z
-AbuseIPDB,ip,45.76.23.19,Malicious,2024-03-03 19:01:00Z
-OTX,domain,shady-site.biz,Malicious,2024-03-03 19:02:00Z
-```
+VirusTotal,hash,e99a18c4...,Malicious,2024-05-01T19:00:00Z
+OTX,domain,shady-site.biz,Suspicious,2024-05-01T19:02:00Z
+AbuseIPDB,ip,185.130.5.231,Malicious,2024-05-01T19:01:00Z
 
-## 🧠 What You Learn
+Markdown Report
+# Threat Intelligence Report - Phishing Kit
 
-- Working with real-world threat data
-- Making authenticated API requests in Python
-- Structuring IOC data for use in SIEM or SOAR platforms
-- Building a basic threat intel aggregator
+## Indicators of Compromise
 
-## 📝 License
+### Domains
+| Domain             | Source     | Threat Level | First Seen  |
+|--------------------|------------|--------------|-------------|
+| shady-site.biz     | VirusTotal | Malicious    | 2024-05-01  |
 
+🧠 What You’ll Learn
+How to collect and structure IOC data
+
+Real-world threat intel automation
+
+How to make authenticated API requests in Python
+
+Basic reporting for SOC or SOAR integration
+
+✅ License
 MIT License
 
-## 👤 Author
-
-Built by [Your Name]
+👤 Author
+Developed by Grey Key Studios
