@@ -6,12 +6,12 @@ import { Menu, X, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/projects", label: "Projects" },
-  { href: "/casefiles", label: "SOC Casefiles" },
-  { href: "/resources", label: "Resources" },
-  { href: "/about", label: "About" },
-  { href: "/resume", label: "Resume" },
+  { href: "/", label: "Home", external: false },
+  { href: "/projects", label: "Projects", external: false },
+  { href: "/casefiles", label: "SOC Casefiles", external: false },
+  { href: "/resources", label: "Resources", external: false },
+  { href: "/about", label: "About", external: false },
+  { href: "/resume", label: "Resume", external: false },
 ]
 
 export function Navbar() {
