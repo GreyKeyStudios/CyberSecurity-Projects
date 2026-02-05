@@ -1,0 +1,125 @@
+{
+  "templates": [
+    {
+      "id": "incident-report",
+      "title": "Incident Report Template",
+      "category": "Template",
+      "description": "Standard incident report format following industry best practices. Includes alert summary, investigation steps, findings, resolution, and ticket notes.",
+      "file": "Templates/Incident-Report-Template.md",
+      "githubPath": "Templates/Incident-Report-Template.md",
+      "useCase": "Documenting security incidents from alert to resolution",
+      "sections": [
+        "Incident Summary",
+        "Initial Triage",
+        "Investigation",
+        "Findings",
+        "Resolution",
+        "Ticket Notes"
+      ]
+    },
+    {
+      "id": "ticket-notes",
+      "title": "Ticket Notes Template",
+      "category": "Template",
+      "description": "Ticketing system documentation format. Includes concise format for ticketing systems and detailed format for documentation.",
+      "file": "Templates/Ticket-Notes-Template.md",
+      "githubPath": "Templates/Ticket-Notes-Template.md",
+      "useCase": "Creating ticket notes for SOC ticketing systems (Jira, ServiceNow, etc.)",
+      "sections": [
+        "Concise Format",
+        "Detailed Format",
+        "Common Ticket Fields",
+        "Writing Tips"
+      ]
+    },
+    {
+      "id": "phishing-analysis",
+      "title": "Phishing Analysis Template",
+      "category": "Template",
+      "description": "Comprehensive phishing email analysis template. Includes email header analysis, URL/IP reputation checks, IOC extraction, and verdict documentation.",
+      "file": "Templates/Phishing-Analysis-Template.md",
+      "githubPath": "Templates/Phishing-Analysis-Template.md",
+      "useCase": "Analyzing suspicious emails and documenting phishing investigations",
+      "sections": [
+        "Email Header Analysis",
+        "Email Content Analysis",
+        "Threat Intelligence",
+        "Verdict",
+        "IOCs",
+        "Recommended Actions"
+      ]
+    }
+  ],
+  "cheatSheets": [
+    {
+      "id": "common-ports",
+      "title": "Common Ports Cheat Sheet",
+      "category": "Cheat Sheet",
+      "description": "Quick reference for common network ports and their typical uses in SOC analysis. Includes well-known ports, registered ports, and common malicious ports.",
+      "file": "SOC-Notes/Common-Ports-CheatSheet.md",
+      "githubPath": "SOC-Notes/Common-Ports-CheatSheet.md",
+      "useCase": "Quick reference during network analysis and firewall rule creation",
+      "topics": [
+        "Well-Known Ports (0-1023)",
+        "Registered Ports (1024-49151)",
+        "Common Malicious Ports",
+        "SOC Analysis Tips"
+      ]
+    },
+    {
+      "id": "windows-event-ids",
+      "title": "Windows Event IDs Reference",
+      "category": "Cheat Sheet",
+      "description": "Comprehensive reference for Windows Event IDs used in SOC log analysis. Includes authentication events, process events, network events, and common queries.",
+      "file": "SOC-Notes/Windows-Event-IDs.md",
+      "githubPath": "SOC-Notes/Windows-Event-IDs.md",
+      "useCase": "Quick reference during Windows log analysis and SIEM query development",
+      "topics": [
+        "Authentication Events",
+        "Account Management",
+        "Process & Service Events",
+        "Network Events",
+        "Common SOC Queries"
+      ]
+    },
+    {
+      "id": "siem-queries",
+      "title": "SIEM Query Notes",
+      "category": "Cheat Sheet",
+      "description": "Common SIEM queries and search patterns for SOC analysis. Examples in Splunk SPL syntax but concepts apply to other SIEMs.",
+      "file": "SOC-Notes/SIEM-Query-Notes.md",
+      "githubPath": "SOC-Notes/SIEM-Query-Notes.md",
+      "useCase": "Reference for writing SIEM queries and log analysis",
+      "topics": [
+        "Authentication & Access",
+        "Process & Execution",
+        "Network Activity",
+        "File System",
+        "Account Management",
+        "Time-Based Analysis"
+      ]
+    },
+    {
+      "id": "phishing-indicators",
+      "title": "Phishing Indicators Guide",
+      "category": "Cheat Sheet",
+      "description": "Quick reference guide for identifying phishing emails and campaigns. Includes email header indicators, content analysis, URL analysis, and IOC types.",
+      "file": "SOC-Notes/Phishing-Indicators.md",
+      "githubPath": "SOC-Notes/Phishing-Indicators.md",
+      "useCase": "Quick reference during phishing email analysis and investigation",
+      "topics": [
+        "Email Header Indicators",
+        "Subject Line Indicators",
+        "Sender Indicators",
+        "Content Indicators",
+        "URL Analysis",
+        "IOC Types"
+      ]
+    }
+  ],
+  "stats": {
+    "total": 7,
+    "templates": 3,
+    "cheatSheets": 4
+  }
+}

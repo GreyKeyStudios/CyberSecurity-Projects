@@ -60,12 +60,13 @@ nmap 127.0.0.1
 
 ## Screenshots
 
-- UFW enable confirmation
-- UFW status verbose output
-- UFW rules numbered
-- Nmap scan results
+Screenshots are stored in the `screenshots/` folder:
 
-(Images saved separately in the documentation folder.)
+![Pre-Rule Status](screenshots/pre-rule-verbose.png) - UFW status before rules were applied
+
+![Post-Rule Status](screenshots/post-rule-numbered.png) - UFW rules with numbered output showing configured rules
+
+![Nmap Scan](screenshots/nmap.png) - Nmap scan results verifying firewall behavior
 
 ---
 

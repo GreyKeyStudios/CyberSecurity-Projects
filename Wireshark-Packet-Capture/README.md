@@ -81,10 +81,18 @@ Mutillidae was unavailable due to database errors during capture.
 ---
 
 ## Screenshots
-(Stored in the `screenshots/` folder)
-- HTTP login captures
-- Protocol hierarchies
-- TCP stream reconstructions
+
+Screenshots are stored in the `screenshots/` folder:
+
+![Juice Shop Review 1](screenshots/juice-shop-review.png) - Juice Shop customer review containing hidden information
+
+![Juice Shop Review 2](screenshots/juice-shop-review-2.png) - Additional Juice Shop findings
+
+![Big Hint](screenshots/bighint-1.png) - Key finding/hint discovered during analysis
+
+![Solution](screenshots/solution-2.png) - Solution or key discovery from packet analysis
+
+![Mutillidae Server Down](screenshots/multidae-serverdown.png) - Mutillidae application unavailable during capture (database errors)
 
 ---
 

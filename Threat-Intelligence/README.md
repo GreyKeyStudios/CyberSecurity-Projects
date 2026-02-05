@@ -95,17 +95,157 @@ Markdown Report
 |--------------------|------------|--------------|-------------|
 | shady-site.biz     | VirusTotal | Malicious    | 2024-05-01  |
 
-🧠 What You’ll Learn
-How to collect and structure IOC data
+---
 
-Real-world threat intel automation
+## 🔍 How This Works (Plain English)
 
-How to make authenticated API requests in Python
+This tool automates the process of checking Indicators of Compromise (IOCs) against multiple threat intelligence sources. Here's how it works step-by-step:
 
-Basic reporting for SOC or SOAR integration
+### Step 1: Parse IOC Input
+You provide one or more IOCs via command-line arguments:
+- `--hash` - File hash (MD5, SHA1, or SHA256)
+- `--ip` - IP address to check
+- `--domain` - Domain name to check
+- `--threat-type` - Category label (required: "Emotet", "CISA Alert", or "Phishing Kit")
+- `--output` - Format for results (csv, json, or report)
+
+**Example:**
+```bash
+python scripts/main.py --ip 185.130.5.231 --threat-type "Phishing Kit" --output json
+```
+
+### Step 2: Call Threat Intelligence APIs
+The tool makes authenticated API calls to three services:
+
+**VirusTotal API:**
+- Checks file hashes, IPs, and domains
+- Returns: Detection count (how many engines flagged it), threat level, tags, first seen date
+- Uses API endpoint: `https://www.virustotal.com/api/v3`
+
+**AbuseIPDB API:**
+- Checks IP addresses for abuse reports
+- Returns: Confidence score (0-100), total abuse reports, ISP, country
+- Uses API endpoint: `https://api.abuseipdb.com/api/v2/check`
+
+**AlienVault OTX API:**
+- Checks IPs and domains for threat intelligence
+- Returns: Pulse count (threat intelligence reports), references, tags
+- Uses API endpoint: `https://otx.alienvault.com/api/v1`
+
+### Step 3: Normalize Results
+The tool combines data from all sources and standardizes the format:
+- Source (which API provided the data)
+- IOC Type (hash, ip, or domain)
+- IOC Value (the actual hash/IP/domain)
+- Threat Level (Malicious, Suspicious, or Clean)
+- First Seen timestamp
+- Additional metadata (detection counts, confidence scores, etc.)
+
+### Step 4: Export Report
+Results are saved in your chosen format:
+
+**CSV Format:**
+- Tabular data, easy to import into Excel or databases
+- Appends to existing file if it exists
+- Saved to `data/threat_intel_iocs.csv`
+
+**JSON Format:**
+- Structured data, easy to parse programmatically
+- Appends to existing file if it exists
+- Saved to `data/threat_intel_iocs.json`
+
+**Markdown Report:**
+- Human-readable report with tables and analysis
+- Includes threat-specific recommendations
+- Saved to `reports/threat_intel_report.md`
+
+### What APIs It Calls
+- **VirusTotal:** `/files/{hash}`, `/ip_addresses/{ip}`, `/domains/{domain}`
+- **AbuseIPDB:** `/api/v2/check` (IP addresses only)
+- **AlienVault OTX:** `/indicators/IPv4/{ip}/general`, `/indicators/domain/{domain}/general`
+
+### What Inputs It Expects
+- **Hash:** MD5, SHA1, or SHA256 hash (64 characters for SHA256)
+- **IP:** Valid IPv4 address (e.g., `185.130.5.231`)
+- **Domain:** Valid domain name (e.g., `example.com`)
+- **Threat Type:** One of: "Emotet", "CISA Alert", "Phishing Kit"
+- **Output Format:** One of: "csv", "json", "report"
+
+### What Output It Produces
+- **CSV:** Tabular data with columns: Source, IOC Type, IOC Value, Threat Label, First Seen
+- **JSON:** Structured data with nested objects containing all metadata
+- **Markdown:** Formatted report with tables, analysis, and recommendations
+
+### How to Troubleshoot
+1. **API Key Issues:** Check `.env` file exists and contains valid API keys
+2. **Network Errors:** Verify internet connection and API endpoint availability
+3. **Rate Limiting:** APIs have rate limits; wait between calls if needed
+4. **Invalid IOC Format:** Verify hash/IP/domain format is correct
+5. **File Permissions:** Ensure write access for `data/`, `logs/`, `reports/` directories
+6. **Missing Dependencies:** Run `pip install -r requirements.txt`
+
+### Example Troubleshooting
+```bash
+# Check if API keys are loaded
+python -c "from dotenv import load_dotenv; import os; load_dotenv(); print(os.getenv('VIRUSTOTAL_API_KEY'))"
+
+# Test with a known good IP (Google DNS)
+python scripts/main.py --ip 8.8.8.8 --threat-type "Phishing Kit" --output json
+
+# Check logs for errors
+cat logs/threat_intel.log
+```
+
+---
+
+🧠 What You'll Learn
+- How to collect and structure IOC data
+- Real-world threat intel automation
+- How to make authenticated API requests in Python
+- Basic reporting for SOC or SOAR integration
 
 ✅ License
 MIT License
+
+---
+
+## ✅ Verified Run (Live API Test)
+
+**Date:** 2026-02-04  
+**Environment:** Kali Linux / Ubuntu (Python venv)  
+**APIs Verified:** VirusTotal, AbuseIPDB, AlienVault OTX
+
+### Commands Used
+
+```bash
+# Test IP lookup
+python scripts/main.py --ip 8.8.8.8 --threat-type "CISA Alert" --output report
+
+# Test hash lookup
+python scripts/main.py --hash 44d88612fea8a8f36de82e1278abb02f --threat-type "Emotet" --output report
+```
+
+### Output
+
+- ✅ Report generated successfully: `reports/threat_intel_report_[timestamp].md`
+- ✅ Logging enabled: `logs/threat_intel.log`
+- ✅ All three APIs responded successfully
+- ✅ Data normalized and exported correctly
+
+### Notes
+
+- Created missing output folders (`reports/`, `data/`) automatically during verification
+- Tool successfully enriches IOCs and generates timestamped Markdown reports
+- Reports are now saved with unique timestamps to prevent overwriting
+- All API integrations verified working
+
+### Verification Status
+
+**Status:** ✅ Verified and Working  
+**Bucket Classification:** Bucket A (You Did It)  
+**Interview Ready:** Yes - Can explain and demonstrate
+
+---
 
 👤 Author
 Developed by Grey Key Studios

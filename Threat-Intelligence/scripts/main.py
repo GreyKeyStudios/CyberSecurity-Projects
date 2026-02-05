@@ -56,6 +56,8 @@ class ThreatIntelligence:
             logging.warning("No IOCs to save to CSV.")
             return
         try:
+            # Create data directory if it doesn't exist
+            os.makedirs("data", exist_ok=True)
             filepath = os.path.join("data", filename)
             df = pd.DataFrame(self.iocs)
             if os.path.exists(filepath):
@@ -79,6 +81,8 @@ class ThreatIntelligence:
             logging.warning("No IOCs to save to JSON.")
             return
         try:
+            # Create data directory if it doesn't exist
+            os.makedirs("data", exist_ok=True)
             filepath = os.path.join("data", filename)
             if os.path.exists(filepath):
                 with open(filepath, 'r') as f:
@@ -104,7 +108,7 @@ class ThreatIntelligence:
             print(f"Error saving to JSON: {e}")
             logging.error(f"Error saving to JSON: {e}")
 
-    def generate_report(self, filename: str = "threat_intel_report.md"):
+    def generate_report(self, filename: str = None):
         """Generate a markdown report of findings"""
         generate_markdown_report(self.iocs, self.threat_type, filename)
 

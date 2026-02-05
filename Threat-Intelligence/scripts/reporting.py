@@ -2,13 +2,21 @@ import os
 from datetime import datetime
 import logging
 
-def generate_markdown_report(iocs, threat_type, filename="threat_intel_report.md"):
+def generate_markdown_report(iocs, threat_type, filename=None):
     """Generate a markdown report of findings and save to file."""
     if not iocs:
         print("No IOCs to generate report from")
         logging.warning("No IOCs to generate report from.")
         return
     try:
+        # Create reports directory if it doesn't exist
+        os.makedirs("reports", exist_ok=True)
+        
+        # Generate timestamped filename if not provided
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+            filename = f"threat_intel_report_{timestamp}.md"
+        
         filepath = os.path.join("reports", filename)
         if os.path.exists(filepath):
             with open(filepath, 'r') as f:
