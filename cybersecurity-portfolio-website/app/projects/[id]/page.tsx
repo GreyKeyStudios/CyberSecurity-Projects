@@ -8,6 +8,9 @@ import { MarkdownContent } from "@/components/markdown-content"
 import { ScreenshotGallery } from "@/components/screenshot-gallery"
 import { fetchReadme, projectScreenshots } from "@/lib/project-content"
 
+// Cloudflare Pages requires Edge Runtime for dynamic routes
+export const runtime = 'edge'
+
 interface ProjectPageProps {
   params: Promise<{ id: string }>
 }

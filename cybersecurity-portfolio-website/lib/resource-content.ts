@@ -6,9 +6,7 @@ export async function fetchResourceContent(githubPath: string): Promise<string |
   try {
     const url = `${GITHUB_RAW_BASE}/${githubPath}`
     const response = await fetch(url, { 
-      next: { revalidate: 3600 },
-      // Don't fail on build if repo isn't accessible
-      cache: 'no-store' // Always fetch fresh content
+      next: { revalidate: 3600 } // Cache for 1 hour, allows static generation
     })
     
     if (!response.ok) {
