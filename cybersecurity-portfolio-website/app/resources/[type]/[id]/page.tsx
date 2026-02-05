@@ -7,9 +7,6 @@ import { MarkdownContent } from "@/components/markdown-content"
 import { fetchResourceContent, getResourceGitHubUrl } from "@/lib/resource-content"
 import resourcesData from "@/data/resources.json"
 
-// Cloudflare Pages requires Edge Runtime for dynamic routes
-export const runtime = 'edge'
-
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/GreyKeyStudios/CyberSecurity-Projects/main"
 
 interface ResourcePageProps {
