@@ -52,6 +52,19 @@ QUICK-STATUS.md
 DOCKER-STRUCTURE.txt
 JOB-SEARCH-GUIDE.md
 
+# Internal documentation (website integration, deployment guides)
+WEBSITE-INTEGRATION-CHECKLIST.md
+WEBSITE-INTEGRATION-NOTES.md
+V0-DESIGN-SPEC.md
+DEPLOYMENT-GUIDE.md
+GITHUB-AUTH-SETUP.md
+
+# Archive/zip files (not needed in repo)
+*.zip
+*.zip:Zone.Identifier
+cybersecurity-portfolio-website.zip
+cybersecurity-portfolio-website.zip:Zone.Identifier
+
 # Website development (Next.js)
 .next/
 out/
@@ -69,3 +82,10 @@ yarn-error.log*
 *.tmp
 *.temp
 *~
+
+# Remove sensitive files guide (temporary)
+REMOVE-SENSITIVE-FILES.md
+REMOVE-INTERNAL-DOCS.md
+check-github-files.md
+check-tracked-files.sh
+remove-sensitive-files.sh
