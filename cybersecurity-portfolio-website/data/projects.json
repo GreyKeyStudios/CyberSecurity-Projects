@@ -1,0 +1,224 @@
+{
+  "projects": [
+    {
+      "id": "soc-casefiles",
+      "title": "SOC Casefiles",
+      "category": "SOC Operations",
+      "badge": "verified-complete",
+      "badgeLabel": "✅ Verified Complete",
+      "status": "complete",
+      "priority": "high",
+      "description": "Real-world incident investigation workflows with complete documentation. Demonstrates alert triage, IOC extraction, and ticket documentation skills.",
+      "skills": ["Alert Triage", "Incident Documentation", "IOC Extraction", "Ticket Notes"],
+      "tools": ["Markdown", "Documentation"],
+      "evidence": ["5 complete casefiles", "4 operational playbooks"],
+      "link": "/projects/soc-casefiles",
+      "githubPath": "SOC-Casefiles/",
+      "featured": true
+    },
+    {
+      "id": "log-analysis",
+      "title": "Log Analysis (Splunk Dashboard)",
+      "category": "SIEM",
+      "badge": "verified-complete",
+      "badgeLabel": "✅ Verified Complete",
+      "status": "complete",
+      "priority": "high",
+      "description": "SIEM log analysis with interactive dashboards",
+      "skills": ["Splunk", "SPL Queries", "Log Analysis", "Dashboard Creation"],
+      "tools": ["Splunk Enterprise", "rsyslog", "Linux"],
+      "evidence": ["6 dashboard screenshots", "Splunk queries", "Dashboard XML"],
+      "link": "/projects/log-analysis",
+      "githubPath": "Log-Analysis/",
+      "featured": true
+    },
+    {
+      "id": "threat-intelligence",
+      "title": "Threat Intelligence Automation Tool",
+      "category": "Automation",
+      "badge": "verified-api",
+      "badgeLabel": "🧪 Verified (API Tool Tested)",
+      "status": "complete",
+      "priority": "high",
+      "description": "Python automation for IOC enrichment using VirusTotal, OTX, and AbuseIPDB APIs",
+      "skills": ["Python", "API Integration", "IOC Enrichment", "Automation"],
+      "tools": ["Python 3", "VirusTotal API", "AbuseIPDB API", "AlienVault OTX API"],
+      "evidence": ["Working Python tool", "Sample report", "Verified API calls"],
+      "link": "/projects/threat-intelligence",
+      "githubPath": "Threat-Intelligence/",
+      "featured": true
+    },
+    {
+      "id": "wireshark",
+      "title": "Wireshark Packet Capture",
+      "category": "Network Forensics",
+      "badge": "verified-complete",
+      "badgeLabel": "✅ Verified Complete",
+      "status": "complete",
+      "priority": "medium",
+      "description": "Network traffic analysis, packet inspection, and protocol analysis",
+      "skills": ["Wireshark", "Packet Analysis", "Network Forensics", "Protocol Analysis"],
+      "tools": ["Wireshark", "Docker", "Kali Linux"],
+      "evidence": ["4 pcap files", "5 screenshots", "Complete analysis"],
+      "link": "/projects/wireshark",
+      "githubPath": "Wireshark-Packet-Capture/",
+      "featured": false
+    },
+    {
+      "id": "firewall-setup",
+      "title": "Firewall Setup",
+      "category": "Network Security",
+      "badge": "verified-complete",
+      "badgeLabel": "✅ Verified Complete",
+      "status": "complete",
+      "priority": "medium",
+      "description": "UFW firewall configuration, rule management, and port verification",
+      "skills": ["Firewall Configuration", "Network Security", "UFW", "Port Management"],
+      "tools": ["UFW", "nmap", "Kali Linux"],
+      "evidence": ["3 screenshots", "Complete configuration"],
+      "link": "/projects/firewall-setup",
+      "githubPath": "Firewall-Setup/",
+      "featured": false
+    },
+    {
+      "id": "ids-setup",
+      "title": "IDS Setup",
+      "category": "Detection",
+      "badge": "scaffold",
+      "badgeLabel": "📋 Planned / Scaffold",
+      "status": "planned",
+      "priority": "low",
+      "description": "Intrusion Detection System deployment and configuration",
+      "skills": ["IDS/IPS", "Suricata", "Snort", "Rule Configuration"],
+      "tools": ["Suricata", "Snort", "Linux"],
+      "evidence": [],
+      "link": "/projects/ids-setup",
+      "githubPath": "IDS_Setup/",
+      "featured": false
+    },
+    {
+      "id": "malware-analysis",
+      "title": "Malware Analysis",
+      "category": "Threat Analysis",
+      "badge": "scaffold",
+      "badgeLabel": "📋 Planned / Scaffold",
+      "status": "planned",
+      "priority": "low",
+      "description": "Malware investigation using analysis tools and techniques",
+      "skills": ["Malware Analysis", "Static Analysis", "Dynamic Analysis", "Threat Intelligence"],
+      "tools": ["Any.Run", "VirusTotal", "Analysis Tools"],
+      "evidence": [],
+      "link": "/projects/malware-analysis",
+      "githubPath": "Malware-Analysis/",
+      "featured": false
+    },
+    {
+      "id": "home-security-lab",
+      "title": "Home Security Lab",
+      "category": "Security Lab",
+      "badge": "scaffold",
+      "badgeLabel": "📋 Planned / Scaffold",
+      "status": "planned",
+      "priority": "low",
+      "description": "Home security monitoring system using SIEM concepts",
+      "skills": ["SIEM", "Log Collection", "Intrusion Detection", "Monitoring"],
+      "tools": ["SIEM Tools", "Linux", "Logging"],
+      "evidence": [],
+      "link": "/projects/home-security-lab",
+      "githubPath": "Home-Security-Lab/",
+      "featured": false
+    },
+    {
+      "id": "docker-security-lab",
+      "title": "Docker Security Lab",
+      "category": "Container Security",
+      "badge": "scaffold",
+      "badgeLabel": "📋 Planned / Scaffold",
+      "status": "planned",
+      "priority": "low",
+      "description": "Container security and multi-tier application security",
+      "skills": ["Docker", "Container Security", "Network Segmentation", "Security Hardening"],
+      "tools": ["Docker", "Docker Compose", "Nginx"],
+      "evidence": [],
+      "link": "/projects/docker-security-lab",
+      "githubPath": "Docker-Security-Lab/",
+      "featured": false
+    }
+  ],
+  "badges": [
+    {
+      "id": "verified-complete",
+      "label": "✅ Verified Complete",
+      "icon": "check",
+      "color": "green",
+      "description": "Project is complete with evidence and can be fully explained"
+    },
+    {
+      "id": "verified-api",
+      "label": "🧪 Verified (API Tool Tested)",
+      "icon": "flask",
+      "color": "blue",
+      "description": "Tool has been tested with live API calls and verified working"
+    },
+    {
+      "id": "scaffold",
+      "label": "📋 Planned / Scaffold",
+      "icon": "clipboard",
+      "color": "gray",
+      "description": "Project structure created, implementation pending"
+    }
+  ],
+  "stats": {
+    "total": 9,
+    "complete": 4,
+    "planned": 5,
+    "verified": 4
+  },
+  "categories": [
+    {
+      "id": "soc-operations",
+      "name": "SOC Operations",
+      "description": "Security Operations Center workflows and procedures"
+    },
+    {
+      "id": "siem",
+      "name": "SIEM",
+      "description": "Security Information and Event Management"
+    },
+    {
+      "id": "automation",
+      "name": "Automation",
+      "description": "Scripting and automation tools"
+    },
+    {
+      "id": "network-forensics",
+      "name": "Network Forensics",
+      "description": "Network traffic analysis and investigation"
+    },
+    {
+      "id": "network-security",
+      "name": "Network Security",
+      "description": "Firewall and network security configurations"
+    },
+    {
+      "id": "detection",
+      "name": "Detection",
+      "description": "Intrusion detection and monitoring"
+    },
+    {
+      "id": "threat-analysis",
+      "name": "Threat Analysis",
+      "description": "Malware and threat analysis"
+    },
+    {
+      "id": "security-lab",
+      "name": "Security Lab",
+      "description": "Security lab environments and setups"
+    },
+    {
+      "id": "container-security",
+      "name": "Container Security",
+      "description": "Container and application security"
+    }
+  ]
+}
