@@ -31,6 +31,10 @@ logs/
 # Data files (keep directory structure, ignore data files)
 data/
 !data/.gitkeep
+# Allow website data files - MUST be committed
+!cybersecurity-portfolio-website/data/
+!cybersecurity-portfolio-website/data/*.json
+cybersecurity-portfolio-website/data/*.Identifier
 
 # Reports (keep sample report, ignore generated reports)
 reports/
