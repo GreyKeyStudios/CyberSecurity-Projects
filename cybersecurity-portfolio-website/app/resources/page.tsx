@@ -449,6 +449,20 @@ export default function ResourcesPage() {
                         </div>
                       </button>
 
+                      <button
+                        onClick={() => {
+                          openWindow("settings")
+                          setIsStartMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left"
+                      >
+                        <Wrench className="h-5 w-5 text-slate-400" />
+                        <div>
+                          <div className="text-white font-medium">Settings</div>
+                          <div className="text-xs text-white/50">Preferences</div>
+                        </div>
+                      </button>
+
                       <div className="border-t border-white/10 my-2" />
                       
                       <button
@@ -490,6 +504,7 @@ export default function ResourcesPage() {
                   const icon = desktopIcons.find(i => i.id === window.id)
                   const specialWindows: Record<string, any> = {
                     about: { label: "About", icon: Monitor, color: "text-blue-400" },
+                    settings: { label: "Settings", icon: Wrench, color: "text-slate-400" },
                     "util-hash": { label: "Hash ID", icon: Shield, color: "text-teal-400" },
                     "util-base64": { label: "Base64", icon: FileText, color: "text-teal-400" },
                     "util-timestamp": { label: "Timestamp", icon: Monitor, color: "text-teal-400" },
@@ -549,6 +564,7 @@ export default function ResourcesPage() {
             // Handle special windows like "about" and utilities
             const specialWindows: Record<string, any> = {
               about: { label: "About SOC OS", icon: Monitor, titleBar: "from-blue-400/20 to-blue-500/20" },
+              settings: { label: "Settings", icon: Wrench, titleBar: "from-slate-400/20 to-slate-500/20" },
               "util-hash": { label: "Hash Identifier", icon: Shield, titleBar: "from-teal-400/20 to-teal-500/20" },
               "util-base64": { label: "Base64 Toolkit", icon: FileText, titleBar: "from-teal-400/20 to-teal-500/20" },
               "util-timestamp": { label: "Timestamp Converter", icon: Monitor, titleBar: "from-teal-400/20 to-teal-500/20" },
@@ -623,6 +639,7 @@ export default function ResourcesPage() {
                 {window.id === "utilities" && <UtilitiesContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "terminal" && <TerminalContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "about" && <AboutContent />}
+                {window.id === "settings" && <SettingsContent />}
                 {window.id === "util-hash" && <HashIdentifierUtility />}
                 {window.id === "util-base64" && <Base64Utility />}
                 {window.id === "util-timestamp" && <TimestampUtility />}
@@ -4205,6 +4222,138 @@ function AboutContent() {
               </p>
             </CardContent>
           </Card>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function SettingsContent() {
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [reducedMotion, setReducedMotion] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Wrench className="h-6 w-6 text-slate-400" />
+          Settings
+        </h2>
+        <p className="text-muted-foreground">Customize your SOC OS experience</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Customize the look and feel</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Theme</p>
+              <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
+            </div>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}
+              className="px-3 py-2 rounded-lg border bg-background"
+              disabled
+            >
+              <option value="dark">Dark</option>
+              <option value="light">Light (Coming Soon)</option>
+            </select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Reduced Motion</p>
+              <p className="text-sm text-muted-foreground">Minimize animations</p>
+            </div>
+            <Button
+              variant={reducedMotion ? "default" : "outline"}
+              size="sm"
+              onClick={() => setReducedMotion(!reducedMotion)}
+            >
+              {reducedMotion ? "ON" : "OFF"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Audio</CardTitle>
+          <CardDescription>Sound preferences</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Sound Effects</p>
+              <p className="text-sm text-muted-foreground">Enable UI sound effects (Coming Soon)</p>
+            </div>
+            <Button
+              variant={soundEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              disabled
+            >
+              {soundEnabled ? "ON" : "OFF"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data</CardTitle>
+          <CardDescription>Manage your local data</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="font-medium mb-2">Clear Local Storage</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              This will clear temporary data stored in your browser (Evidence Locker, Timeline Builder notes).
+              Your journal and progress are stored in your account and won't be affected.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (confirm("Clear all local temporary data?")) {
+                  localStorage.clear()
+                  alert("Local storage cleared!")
+                }
+              }}
+            >
+              Clear Local Data
+            </Button>
+          </div>
+
+          <div className="pt-4 border-t">
+            <p className="font-medium mb-2 text-red-500">Reset SOC OS</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Close all windows and return to the splash screen. This does not delete any data.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (confirm("Close all windows and return to splash screen?")) {
+                  window.location.reload()
+                }
+              }}
+            >
+              Reset OS
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-muted/50">
+        <CardContent className="pt-6 text-sm text-muted-foreground">
+          <p>
+            <strong>Note:</strong> Some settings are placeholders for future features.
+            Theme switching and sound effects will be added in future updates.
+          </p>
         </CardContent>
       </Card>
     </div>
