@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal as TerminalIcon, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket, FolderCog } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -2645,6 +2645,7 @@ function PortQuizGame({ onBack }: { onBack: () => void }) {
   const [userAnswer, setUserAnswer] = useState('')
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
   const [highScore, setHighScore] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const ports = [
     { port: 21, service: 'FTP' },
@@ -2707,6 +2708,8 @@ function PortQuizGame({ onBack }: { onBack: () => void }) {
         setCurrentQuestion(currentQuestion + 1)
         setUserAnswer('')
         setFeedback(null)
+        // Refocus input for next question
+        setTimeout(() => inputRef.current?.focus(), 50)
       } else {
         endGame()
       }
@@ -2847,6 +2850,7 @@ function PortQuizGame({ onBack }: { onBack: () => void }) {
 
           <div className="space-y-4">
             <Input
+              ref={inputRef}
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
               onKeyPress={handleKeyPress}
