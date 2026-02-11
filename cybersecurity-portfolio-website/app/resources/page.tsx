@@ -81,7 +81,7 @@ export default function ResourcesPage() {
     
     // Row 3: Tools & Reference
     { id: "tools", label: "Daily Tools", icon: Wrench, color: "text-cyan-500", bgColor: "bg-cyan-500/10", titleBar: "from-cyan-500/20 to-cyan-600/20" },
-    { id: "cli-cheats", label: "CLI Cheats", icon: Terminal, color: "text-lime-500", bgColor: "bg-lime-500/10", titleBar: "from-lime-500/20 to-lime-600/20" },
+    { id: "cli-cheats", label: "CLI Cheats", icon: Code2, color: "text-lime-500", bgColor: "bg-lime-500/10", titleBar: "from-lime-500/20 to-lime-600/20" },
     { id: "glossary", label: "SOC Dictionary", icon: BookA, color: "text-fuchsia-500", bgColor: "bg-fuchsia-500/10", titleBar: "from-fuchsia-500/20 to-fuchsia-600/20" },
     { id: "ioc-helper", label: "IOC Helper", icon: Shield, color: "text-red-500", bgColor: "bg-red-500/10", titleBar: "from-red-500/20 to-red-600/20" },
     
@@ -489,7 +489,16 @@ export default function ResourcesPage() {
                 {windows.filter(w => w.isOpen).map(window => {
                   const icon = desktopIcons.find(i => i.id === window.id)
                   const specialWindows: Record<string, any> = {
-                    about: { label: "About", icon: Monitor, color: "text-blue-400" }
+                    about: { label: "About", icon: Monitor, color: "text-blue-400" },
+                    "util-hash": { label: "Hash ID", icon: Shield, color: "text-teal-400" },
+                    "util-base64": { label: "Base64", icon: FileText, color: "text-teal-400" },
+                    "util-timestamp": { label: "Timestamp", icon: Monitor, color: "text-teal-400" },
+                    "util-email": { label: "Email Parser", icon: FileText, color: "text-teal-400" },
+                    "util-ip": { label: "IP Lookup", icon: Compass, color: "text-teal-400" },
+                    "util-port": { label: "Port Lookup", icon: Wrench, color: "text-teal-400" },
+                    "util-useragent": { label: "User-Agent", icon: Monitor, color: "text-teal-400" },
+                    "util-evidence": { label: "Evidence", icon: ClipboardList, color: "text-teal-400" },
+                    "util-timeline": { label: "Timeline", icon: ClipboardList, color: "text-teal-400" },
                   }
                   const windowConfig = icon || specialWindows[window.id]
                   if (!windowConfig) return null
@@ -537,9 +546,18 @@ export default function ResourcesPage() {
           {/* Render Open Windows - Constrained to Monitor */}
           {windows.filter(w => w.isOpen).map(window => {
             const icon = desktopIcons.find(i => i.id === window.id)
-            // Handle special windows like "about"
+            // Handle special windows like "about" and utilities
             const specialWindows: Record<string, any> = {
-              about: { label: "About SOC OS", icon: Monitor, titleBar: "from-blue-400/20 to-blue-500/20" }
+              about: { label: "About SOC OS", icon: Monitor, titleBar: "from-blue-400/20 to-blue-500/20" },
+              "util-hash": { label: "Hash Identifier", icon: Shield, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-base64": { label: "Base64 Toolkit", icon: FileText, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-timestamp": { label: "Timestamp Converter", icon: Monitor, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-email": { label: "Email Header Parser", icon: FileText, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-ip": { label: "IP Info Lookup", icon: Compass, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-port": { label: "Port Lookup", icon: Wrench, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-useragent": { label: "User-Agent Parser", icon: Monitor, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-evidence": { label: "Evidence Locker", icon: ClipboardList, titleBar: "from-teal-400/20 to-teal-500/20" },
+              "util-timeline": { label: "Timeline Builder", icon: ClipboardList, titleBar: "from-teal-400/20 to-teal-500/20" },
             }
             const windowConfig = icon || specialWindows[window.id]
             if (!windowConfig) return null
@@ -602,9 +620,18 @@ export default function ResourcesPage() {
                 {window.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
                 {window.id === "glossary" && <GlossaryContent glossary={glossary} />}
                 {window.id === "tools" && <ToolsContent tools={tools} />}
-                {window.id === "utilities" && <UtilitiesContent />}
+                {window.id === "utilities" && <UtilitiesContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "terminal" && <TerminalContent />}
                 {window.id === "about" && <AboutContent />}
+                {window.id === "util-hash" && <HashIdentifierUtility />}
+                {window.id === "util-base64" && <Base64Utility />}
+                {window.id === "util-timestamp" && <TimestampUtility />}
+                {window.id === "util-email" && <EmailHeaderUtility />}
+                {window.id === "util-ip" && <IPInfoUtility />}
+                {window.id === "util-port" && <PortLookupUtility />}
+                {window.id === "util-useragent" && <UserAgentUtility />}
+                {window.id === "util-evidence" && <EvidenceLockerUtility />}
+                {window.id === "util-timeline" && <TimelineBuilderUtility />}
                 {window.id === "cheat-sheets" && (
                   <CheatSheetsContent 
                     cheatSheets={cheatSheets}
@@ -3338,40 +3365,18 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
 
 // Phase 5 Components - Utilities & Terminal
 
-function UtilitiesContent() {
-  const [selectedUtility, setSelectedUtility] = useState<string | null>(null)
-
+function UtilitiesContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
   const utilities = [
-    { id: "hash", name: "Hash Identifier", description: "Identify hash types (MD5, SHA1, SHA256, etc.)", icon: "🔐" },
-    { id: "base64", name: "Base64 Toolkit", description: "Encode/decode Base64 strings", icon: "📝" },
-    { id: "timestamp", name: "Timestamp Converter", description: "Convert between Unix timestamps and dates", icon: "⏰" },
-    { id: "email-header", name: "Email Header Parser", description: "Parse and analyze email headers", icon: "📧" },
-    { id: "ip-info", name: "IP Info Lookup", description: "Quick IP address information", icon: "🌐" },
-    { id: "port-lookup", name: "Port Lookup", description: "Common port numbers and services", icon: "🔌" },
-    { id: "user-agent", name: "User-Agent Parser", description: "Decode browser user-agent strings", icon: "🖥️" },
-    { id: "evidence", name: "Evidence Locker", description: "Temporary evidence notes", icon: "📋" },
-    { id: "timeline", name: "Timeline Builder", description: "Build investigation timelines", icon: "📅" },
+    { id: "util-hash", name: "Hash Identifier", description: "Identify hash types (MD5, SHA1, SHA256, etc.)", icon: "🔐" },
+    { id: "util-base64", name: "Base64 Toolkit", description: "Encode/decode Base64 strings", icon: "📝" },
+    { id: "util-timestamp", name: "Timestamp Converter", description: "Convert between Unix timestamps and dates", icon: "⏰" },
+    { id: "util-email", name: "Email Header Parser", description: "Parse and analyze email headers", icon: "📧" },
+    { id: "util-ip", name: "IP Info Lookup", description: "Quick IP address information", icon: "🌐" },
+    { id: "util-port", name: "Port Lookup", description: "Common port numbers and services", icon: "🔌" },
+    { id: "util-useragent", name: "User-Agent Parser", description: "Decode browser user-agent strings", icon: "🖥️" },
+    { id: "util-evidence", name: "Evidence Locker", description: "Temporary evidence notes", icon: "📋" },
+    { id: "util-timeline", name: "Timeline Builder", description: "Build investigation timelines", icon: "📅" },
   ]
-
-  if (selectedUtility) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setSelectedUtility(null)}>
-          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
-          Back to Utilities
-        </Button>
-        {selectedUtility === "hash" && <HashIdentifierUtility />}
-        {selectedUtility === "base64" && <Base64Utility />}
-        {selectedUtility === "timestamp" && <TimestampUtility />}
-        {selectedUtility === "email-header" && <EmailHeaderUtility />}
-        {selectedUtility === "ip-info" && <IPInfoUtility />}
-        {selectedUtility === "port-lookup" && <PortLookupUtility />}
-        {selectedUtility === "user-agent" && <UserAgentUtility />}
-        {selectedUtility === "evidence" && <EvidenceLockerUtility />}
-        {selectedUtility === "timeline" && <TimelineBuilderUtility />}
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -3388,7 +3393,7 @@ function UtilitiesContent() {
           <Card
             key={utility.id}
             className="cursor-pointer hover:border-teal-400/50 transition-all"
-            onClick={() => setSelectedUtility(utility.id)}
+            onClick={() => onNavigate(utility.id)}
           >
             <CardHeader>
               <div className="flex items-center gap-3">
