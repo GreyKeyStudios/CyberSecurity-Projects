@@ -3760,8 +3760,12 @@ Example:
 
 function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
   const [history, setHistory] = useState<string[]>([
-    "SOC OS Terminal v1.0 - Command Center",
-    "Type 'help' for available commands or 'help <command>' for details",
+    "╔══════════════════════════════════════════════════════════╗",
+    "║  SOC OS Terminal v1.0 - Command Center                  ║",
+    "╚══════════════════════════════════════════════════════════╝",
+    "",
+    "💡 New to command lines? Type 'help' to see what you can do!",
+    "   Or try: 'open journal', 'apps', 'ticket list'",
     ""
   ])
   const [input, setInput] = useState("")
