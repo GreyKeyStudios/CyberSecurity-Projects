@@ -1275,40 +1275,112 @@
         "User was away during weekend - possible unattended compromise"
       ],
       "solution": "**Incident Type:** Malware Infection - C2 Communication\n\n**Findings:**\n- Confirmed C2 beaconing to known malicious IP\n- Likely malware: [TrojanFamily] based on beacon interval\n- System compromised approximately 48 hours ago\n- Persistence mechanism: Scheduled task or startup registry\n\n**Immediate Actions:**\n1. Isolate workstation from network\n2. Block C2 IP at firewall for all systems\n3. Run full forensic scan\n4. Image system before remediation\n5. Reset user credentials\n\n**Investigation:**\n- Check email for phishing attempts\n- Review recent downloads\n- Scan other systems for same IOCs\n\n**Status:** Contained - System isolated for remediation"
+    },
+    {
+      "id": "ticket-003",
+      "title": "Ransomware Detection - File Encryption Activity",
+      "difficulty": "hard",
+      "category": "Ransomware",
+      "description": "EDR alert triggered for mass file modification activity on file server FS-DATA-01. Multiple users reporting inability to access shared files. Files have .locked extension.",
+      "scenario": "**Date/Time:** 2024-02-10 22:15 UTC\n\n**Alert Source:** CrowdStrike EDR\n\n**Affected System:** FS-DATA-01 (file server)\n\n**Alert Details:**\n- 15,000+ files modified in 5 minutes\n- Process: powershell.exe spawned by outlook.exe\n- User context: sysadmin@company.com\n- Ransom note detected: README_RECOVER.txt\n\n**User Reports:**\n- \"All my Excel files have .locked extension\"\n- \"Can't open any documents\"\n- Desktop wallpaper changed to ransom message",
+      "logs": "```\n2024-02-10 22:10:05 | Process Created | outlook.exe spawned powershell.exe | User: sysadmin\n2024-02-10 22:10:15 | File Modified | \\\\FS-DATA-01\\shared\\*.xlsx -> *.xlsx.locked\n2024-02-10 22:11:22 | File Modified | \\\\FS-DATA-01\\shared\\*.docx -> *.docx.locked\n2024-02-10 22:12:45 | File Created | \\\\FS-DATA-01\\shared\\README_RECOVER.txt\n2024-02-10 22:13:10 | Network Connection | Outbound to 45.67.89.123:443\n2024-02-10 22:15:00 | Mass File Modification Alert | 15,234 files affected\n```",
+      "iocs": ["45.67.89.123", "README_RECOVER.txt", ".locked extension", "sysadmin@company.com"],
+      "guidedSteps": [
+        "Immediately isolate affected systems from network",
+        "Identify patient zero and infection vector",
+        "Check if backups are available and unaffected",
+        "Document all affected systems and file types",
+        "DO NOT pay ransom - report to management and law enforcement"
+      ],
+      "hints": [
+        "Ransomware likely delivered via phishing email to sysadmin",
+        "PowerShell used for execution - check command history",
+        "Act fast to prevent spread to other systems",
+        "Shadow copies may be deleted - check immediately"
+      ],
+      "solution": "**Incident Type:** Ransomware Attack\n\n**Findings:**\n- Ransomware variant: [Identified via ransom note]\n- Initial infection: Phishing email with malicious attachment\n- Compromised account: sysadmin (elevated privileges)\n- Lateral movement: Via SMB shares\n- 15,234 files encrypted across file server\n\n**Immediate Actions (CRITICAL):**\n1. Isolate ALL affected systems immediately\n2. Disable compromised account\n3. Block C2 IP (45.67.89.123) at firewall\n4. Disconnect file server from network\n5. Preserve system state for forensics\n\n**Recovery Steps:**\n1. Assess backup integrity (verify not encrypted)\n2. DO NOT pay ransom\n3. Restore from last known good backup\n4. Reset all user credentials\n5. Scan all systems for IOCs\n\n**Post-Incident:**\n- Implement email filtering for attachments\n- Enable MFA for all accounts\n- Conduct phishing awareness training\n- Report to FBI IC3 and insurance\n\n**Status:** Active Incident - Containment in progress"
+    },
+    {
+      "id": "ticket-004",
+      "title": "Impossible Travel - Geographic Anomaly",
+      "difficulty": "medium",
+      "category": "Account Compromise",
+      "description": "User successfully authenticated from two geographic locations 3,000 miles apart within 30 minutes. First from New York (usual location), then from Moscow, Russia.",
+      "scenario": "**Date/Time:** 2024-02-10 08:00 UTC\n\n**Alert Source:** Azure AD / SIEM\n\n**User Affected:** ceo@company.com\n\n**Alert Details:**\n- 07:30 UTC: Login from New York, NY (IP: 72.229.28.185)\n- 07:55 UTC: Login from Moscow, Russia (IP: 91.215.85.155)\n- Both logins successful with correct credentials\n- No VPN usage detected\n- User device: iPhone (New York), Windows 10 (Moscow)\n\n**Risk Factors:**\n- CEO account - high privilege\n- Sensitive company data access\n- Financial system permissions",
+      "logs": "```\n2024-02-10 07:30:12 | Successful Login | ceo@company.com | 72.229.28.185 | New York, NY, USA | Device: iPhone\n2024-02-10 07:55:48 | Successful Login | ceo@company.com | 91.215.85.155 | Moscow, Russia | Device: Windows 10\n2024-02-10 08:00:15 | File Access | ceo@company.com | /confidential/financials/Q4_2024.xlsx | Source: 91.215.85.155\n2024-02-10 08:05:32 | Email Sent | ceo@company.com | To: accounts@vendor-payment.ru | Source: 91.215.85.155\n```",
+      "iocs": ["91.215.85.155", "accounts@vendor-payment.ru", "ceo@company.com"],
+      "guidedSteps": [
+        "Confirm user's actual location with them directly (phone call)",
+        "Check if VPN or proxy was used",
+        "Review activity from suspicious location",
+        "Disable account immediately if compromise confirmed",
+        "Check for data exfiltration or unauthorized transactions"
+      ],
+      "hints": [
+        "Physically impossible to travel 3,000 miles in 30 minutes",
+        "Moscow login is highly suspicious for US-based CEO",
+        "Check for credential stuffing or password spray attacks",
+        "Suspicious email to Russian domain after Moscow login"
+      ],
+      "solution": "**Incident Type:** Account Compromise - Credential Theft\n\n**Findings:**\n- CEO credentials stolen/compromised\n- Attacker accessed from Russia (91.215.85.155)\n- Accessed sensitive financial documents\n- Attempted to send email to suspicious vendor (likely BEC attempt)\n- Legitimate user confirmed in New York during both logins\n\n**Attack Vector:** Likely phishing or credential reuse\n\n**Immediate Actions:**\n1. Disable ceo@company.com account immediately\n2. Force password reset for CEO\n3. Enable MFA (if not already active)\n4. Block IP 91.215.85.155 at firewall\n5. Recall/block suspicious email to Russian domain\n6. Review all activity from Moscow IP\n\n**Impact Assessment:**\n- Q4 Financials accessed (confidential data exposure)\n- Attempted BEC/wire fraud (blocked)\n- No successful transactions detected\n\n**Remediation:**\n1. Reset CEO password with strong credentials\n2. Enable hardware MFA (YubiKey recommended)\n3. Audit all recent CEO account activity\n4. Notify finance team to watch for BEC attempts\n5. Check for similar impossible travel patterns\n\n**Status:** Contained - Account secured, no financial loss"
+    },
+    {
+      "id": "ticket-005",
+      "title": "Suspicious Data Exfiltration",
+      "difficulty": "medium",
+      "category": "Data Loss Prevention",
+      "description": "DLP alert triggered for large file upload to personal cloud storage (Dropbox). Employee uploaded 2.5GB of files containing customer PII during off-hours.",
+      "scenario": "**Date/Time:** 2024-02-10 23:45 UTC (Saturday night)\n\n**Alert Source:** DLP System (Symantec)\n\n**User:** jdoe@company.com (Sales Engineer)\n\n**Alert Details:**\n- 2.5GB uploaded to personal Dropbox account\n- Files contain: customer contact lists, pricing data, sales forecasts\n- PII detected: 5,000+ customer records (names, emails, phone numbers)\n- Upload occurred from company laptop\n- User submitted resignation 2 weeks ago (last day is next Friday)\n\n**Activity Log:**\n- Accessed HR database (customer CRM)\n- Downloaded multiple Excel files\n- Compressed into archive\n- Uploaded via web browser to Dropbox",
+      "logs": "```\n2024-02-10 23:30:15 | Database Query | jdoe | SELECT * FROM customers WHERE sales_rep='jdoe'\n2024-02-10 23:35:22 | File Download | jdoe | customer_list_2024.xlsx | 45MB\n2024-02-10 23:38:45 | File Download | jdoe | pricing_strategy_Q1.xlsx | 12MB\n2024-02-10 23:40:10 | File Created | jdoe | company_data_archive.zip | 2.5GB\n2024-02-10 23:45:30 | DLP ALERT | jdoe | Upload to dropbox.com | 2.5GB | PII Detected: 5,000+ records\n2024-02-10 23:46:00 | Upload Complete | jdoe | dropbox.com | SUCCESS\n```",
+      "iocs": ["jdoe@company.com", "company_data_archive.zip", "personal Dropbox", "5,000+ customer records"],
+      "guidedSteps": [
+        "Verify DLP alert - confirm PII in exfiltrated data",
+        "Check employee status (termination date, access level)",
+        "Document all files accessed and downloaded",
+        "Disable user access immediately",
+        "Escalate to HR and Legal teams"
+      ],
+      "hints": [
+        "Employee leaving company soon - possible data theft for new employer",
+        "Occurred during off-hours (late Saturday night) - intentional evasion",
+        "Large volume suggests systematic data collection",
+        "Customer PII is sensitive - potential regulatory violation (GDPR, CCPA)"
+      ],
+      "solution": "**Incident Type:** Insider Threat - Data Exfiltration\n\n**Findings:**\n- Employee downloaded 2.5GB of sensitive company data\n- 5,000+ customer records with PII exfiltrated\n- Uploaded to personal Dropbox account\n- Employee resigning in 1 week (possible competitor move)\n- Activity during off-hours suggests intentional theft\n\n**Data Classification:**\n- Customer PII (GDPR/CCPA regulated)\n- Pricing strategies (trade secrets)\n- Sales forecasts (confidential)\n\n**Immediate Actions:**\n1. Disable jdoe@company.com account immediately\n2. Revoke VPN and system access\n3. Contact Dropbox abuse team for takedown request\n4. Preserve all evidence (logs, files, timeline)\n5. Escalate to HR and Legal immediately\n\n**Legal/HR Actions:**\n1. Interview employee (with Legal present)\n2. Demand return/deletion of company data\n3. Consider legal action (NDA/Non-compete violation)\n4. File data breach report if required by regulation\n5. Notify affected customers if PII compromised\n\n**Prevention:**\n1. Implement stricter DLP policies for departing employees\n2. Reduce access 2 weeks before termination date\n3. Monitor all data access for resigning employees\n4. Require exit interviews and device returns\n\n**Status:** Active Investigation - Legal involvement required"
     }
   ],
   "miniGames": [
     {
-      "id": "find-malicious-ip",
-      "title": "Find the Malicious IP",
-      "description": "Click on suspicious IPs in network traffic",
-      "difficulty": "Easy",
-      "type": "click-game"
-    },
-    {
-      "id": "spot-phishing",
-      "title": "Spot the Phishing",
-      "description": "Identify phishing indicators in emails",
-      "difficulty": "Medium",
-      "type": "quiz"
-    },
-    {
       "id": "port-quiz",
-      "title": "Port Number Speed Round",
-      "description": "Match ports to services as fast as you can",
+      "title": "Port Number Speed Quiz",
+      "description": "Match ports to services as fast as you can! Test your port knowledge.",
       "difficulty": "Easy",
       "type": "speed-quiz"
     },
     {
+      "id": "spot-phishing",
+      "title": "Spot the Phishing",
+      "description": "Identify phishing indicators in emails (Coming Soon)",
+      "difficulty": "Medium",
+      "type": "quiz"
+    },
+    {
+      "id": "find-malicious-ip",
+      "title": "Find the Malicious IP",
+      "description": "Click on suspicious IPs in network traffic (Coming Soon)",
+      "difficulty": "Easy",
+      "type": "click-game"
+    },
+    {
       "id": "decode-payload",
       "title": "Decode the Payload",
-      "description": "Decode Base64 encoded malicious strings",
+      "description": "Decode Base64 encoded malicious strings (Coming Soon)",
       "difficulty": "Medium",
       "type": "decoder"
     }
   ],
   "stats": {
-    "total": 122,
+    "total": 125,
     "templates": 3,
     "cheatSheets": 4,
     "quickStart": 4,
@@ -1325,6 +1397,7 @@
     "glossary": 30,
     "skillDrills": 20,
     "certPath": 5,
+    "tickets": 5,
     "miniGames": 4
   }
 }

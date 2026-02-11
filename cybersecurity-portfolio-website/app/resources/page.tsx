@@ -2604,7 +2604,12 @@ function MiniGameContent({ miniGames }: { miniGames: any[] }) {
     )
   }
   
-  // Game screen (placeholder for now)
+  // Port Quiz Game
+  if (selectedGame.id === "port-quiz") {
+    return <PortQuizGame onBack={() => setSelectedGame(null)} />
+  }
+  
+  // Game screen (placeholder for others)
   return (
     <div className="space-y-6">
       <div>
@@ -2621,13 +2626,264 @@ function MiniGameContent({ miniGames }: { miniGames: any[] }) {
             {selectedGame.description}
           </p>
           <p className="text-sm text-muted-foreground/70 mb-6">
-            Game mechanics coming soon! This will be a fun, interactive way to practice SOC skills.
+            Game mechanics coming soon! Check back for updates.
           </p>
           <Button onClick={() => setSelectedGame(null)}>
             Back to Games
           </Button>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function PortQuizGame({ onBack }: { onBack: () => void }) {
+  const [gameState, setGameState] = useState<'start' | 'playing' | 'finished'>('start')
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [score, setScore] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(60)
+  const [userAnswer, setUserAnswer] = useState('')
+  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
+  const [highScore, setHighScore] = useState(0)
+
+  const ports = [
+    { port: 21, service: 'FTP' },
+    { port: 22, service: 'SSH' },
+    { port: 23, service: 'Telnet' },
+    { port: 25, service: 'SMTP' },
+    { port: 53, service: 'DNS' },
+    { port: 80, service: 'HTTP' },
+    { port: 110, service: 'POP3' },
+    { port: 143, service: 'IMAP' },
+    { port: 443, service: 'HTTPS' },
+    { port: 445, service: 'SMB' },
+    { port: 3306, service: 'MySQL' },
+    { port: 3389, service: 'RDP' },
+    { port: 5432, service: 'PostgreSQL' },
+    { port: 8080, service: 'HTTP-Proxy' },
+  ]
+
+  const [questions, setQuestions] = useState<typeof ports>([])
+
+  useEffect(() => {
+    if (gameState === 'playing' && timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
+      return () => clearTimeout(timer)
+    } else if (timeLeft === 0 && gameState === 'playing') {
+      endGame()
+    }
+  }, [timeLeft, gameState])
+
+  const startGame = () => {
+    const shuffled = [...ports].sort(() => Math.random() - 0.5)
+    setQuestions(shuffled)
+    setGameState('playing')
+    setCurrentQuestion(0)
+    setScore(0)
+    setTimeLeft(60)
+    setUserAnswer('')
+    setFeedback(null)
+  }
+
+  const endGame = () => {
+    setGameState('finished')
+    if (score > highScore) {
+      setHighScore(score)
+      localStorage.setItem('portQuizHighScore', score.toString())
+    }
+  }
+
+  const checkAnswer = () => {
+    const correct = questions[currentQuestion]
+    if (userAnswer.toLowerCase().trim() === correct.service.toLowerCase()) {
+      setScore(score + 10)
+      setFeedback('correct')
+    } else {
+      setFeedback('incorrect')
+    }
+
+    setTimeout(() => {
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1)
+        setUserAnswer('')
+        setFeedback(null)
+      } else {
+        endGame()
+      }
+    }, 1000)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && userAnswer && !feedback) {
+      checkAnswer()
+    }
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem('portQuizHighScore')
+    if (saved) setHighScore(parseInt(saved))
+  }, [])
+
+  if (gameState === 'start') {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+
+        <div className="text-center space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Port Number Speed Quiz</h2>
+            <Badge className="text-lg px-4 py-1">Easy</Badge>
+          </div>
+
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-left">
+              <div>
+                <p className="font-semibold mb-2">Rules:</p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                  <li>You'll see port numbers one at a time</li>
+                  <li>Type the service name (e.g., SSH, HTTP, RDP)</li>
+                  <li>60 seconds to answer as many as you can</li>
+                  <li>+10 points for each correct answer</li>
+                </ul>
+              </div>
+
+              <div className="pt-4 border-t">
+                <p className="font-semibold mb-2">High Score: {highScore} points</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button size="lg" onClick={startGame} className="text-lg px-8 py-6">
+            Start Quiz
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (gameState === 'finished') {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+
+        <div className="text-center space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold mb-4">Game Over!</h2>
+          </div>
+
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl">Final Score: {score} points</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-lg">
+                <p>Questions Answered: {currentQuestion + 1} / {questions.length}</p>
+                <p>Accuracy: {Math.round((score / ((currentQuestion + 1) * 10)) * 100)}%</p>
+              </div>
+
+              {score > highScore && (
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <p className="text-green-500 font-bold">🎉 New High Score!</p>
+                </div>
+              )}
+
+              <div className="pt-4 border-t">
+                <p className="text-muted-foreground mb-2">High Score: {Math.max(score, highScore)} points</p>
+              </div>
+
+              <div className="flex gap-2 justify-center">
+                <Button onClick={startGame}>Play Again</Button>
+                <Button variant="outline" onClick={onBack}>Back to Games</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  const currentPort = questions[currentQuestion]
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Button variant="ghost" onClick={() => {
+          setGameState('start')
+          setUserAnswer('')
+          setFeedback(null)
+        }}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Exit Game
+        </Button>
+
+        <div className="flex gap-4 items-center">
+          <Badge variant="secondary">Score: {score}</Badge>
+          <Badge variant={timeLeft <= 10 ? "destructive" : "default"}>
+            Time: {timeLeft}s
+          </Badge>
+        </div>
+      </div>
+
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center text-sm text-muted-foreground">
+            Question {currentQuestion + 1} / {questions.length}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">What service runs on port:</p>
+            <h3 className="text-6xl font-bold text-primary">{currentPort.port}</h3>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type service name..."
+              className="text-center text-2xl h-16"
+              autoFocus
+              disabled={feedback !== null}
+            />
+
+            {feedback === 'correct' && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-center">
+                <p className="text-green-500 font-bold">✓ Correct! +10 points</p>
+              </div>
+            )}
+
+            {feedback === 'incorrect' && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
+                <p className="text-red-500 font-bold">✗ Incorrect! Answer: {currentPort.service}</p>
+              </div>
+            )}
+
+            {!feedback && (
+              <Button 
+                onClick={checkAnswer} 
+                className="w-full h-12 text-lg"
+                disabled={!userAnswer}
+              >
+                Submit Answer
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="text-center text-sm text-muted-foreground">
+        Tip: Press Enter to submit your answer
+      </div>
     </div>
   )
 }
