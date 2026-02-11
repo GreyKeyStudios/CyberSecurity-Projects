@@ -883,8 +883,256 @@
       "relatedTerms": ["CVSS", "Patch Management", "Vulnerability Management"]
     }
   ],
+  "skillDrills": {
+    "categories": [
+      {
+        "id": "event-ids",
+        "title": "Windows Event IDs",
+        "description": "Master the most important security event codes",
+        "icon": "🪟",
+        "drills": [
+          {
+            "question": "What does Event ID 4625 indicate?",
+            "options": ["Successful login", "Failed login attempt", "Account lockout", "Password change"],
+            "correct": 1,
+            "explanation": "Event ID 4625 indicates a failed logon attempt - critical for detecting brute force attacks and credential stuffing."
+          },
+          {
+            "question": "Event ID 4672 indicates what?",
+            "options": ["Failed login", "Special privileges assigned", "Account created", "Service started"],
+            "correct": 1,
+            "explanation": "Event ID 4672 shows when special privileges are assigned to a new logon - useful for detecting privilege escalation."
+          },
+          {
+            "question": "What does Event ID 4688 track?",
+            "options": ["File access", "New process creation", "Registry changes", "Network connections"],
+            "correct": 1,
+            "explanation": "Event ID 4688 tracks new process creation - essential for detecting malicious execution and lateral movement."
+          },
+          {
+            "question": "Event ID 7045 indicates what activity?",
+            "options": ["User login", "Service installation", "File deletion", "Port opened"],
+            "correct": 1,
+            "explanation": "Event ID 7045 indicates a new service was installed - common persistence mechanism for attackers."
+          },
+          {
+            "question": "What does Event ID 4624 mean?",
+            "options": ["Successful account logon", "Failed login", "Account disabled", "Password reset"],
+            "correct": 0,
+            "explanation": "Event ID 4624 indicates a successful account logon - correlate with 4625 to identify successful brute force attempts."
+          }
+        ]
+      },
+      {
+        "id": "ports",
+        "title": "Port Numbers",
+        "description": "Identify services by port number",
+        "icon": "🔌",
+        "drills": [
+          {
+            "question": "What service typically runs on port 445?",
+            "options": ["HTTP", "SMB", "RDP", "SSH"],
+            "correct": 1,
+            "explanation": "Port 445 is used for SMB (Server Message Block) - commonly targeted for lateral movement and ransomware."
+          },
+          {
+            "question": "Which port is used for RDP?",
+            "options": ["22", "3389", "443", "8080"],
+            "correct": 1,
+            "explanation": "Port 3389 is Remote Desktop Protocol (RDP) - frequently attacked and should be monitored for brute force attempts."
+          },
+          {
+            "question": "Port 22 is associated with which service?",
+            "options": ["SSH", "Telnet", "FTP", "SMTP"],
+            "correct": 0,
+            "explanation": "Port 22 is SSH (Secure Shell) - watch for brute force attacks and unusual login patterns."
+          },
+          {
+            "question": "What commonly runs on port 443?",
+            "options": ["HTTP", "HTTPS", "FTP", "DNS"],
+            "correct": 1,
+            "explanation": "Port 443 is HTTPS - encrypted web traffic. Monitor for C2 communications hiding in HTTPS."
+          },
+          {
+            "question": "Port 53 is used for what?",
+            "options": ["HTTP", "DNS", "SMTP", "DHCP"],
+            "correct": 1,
+            "explanation": "Port 53 is DNS - watch for DNS tunneling, excessive queries, and queries to suspicious domains."
+          }
+        ]
+      },
+      {
+        "id": "mitre",
+        "title": "MITRE ATT&CK",
+        "description": "Match tactics to techniques",
+        "icon": "🎯",
+        "drills": [
+          {
+            "question": "Which MITRE tactic does 'Pass the Hash' fall under?",
+            "options": ["Initial Access", "Lateral Movement", "Exfiltration", "Command and Control"],
+            "correct": 1,
+            "explanation": "Pass the Hash (T1550.002) is a Lateral Movement technique used to authenticate using NTLM hashes."
+          },
+          {
+            "question": "Phishing falls under which tactic?",
+            "options": ["Initial Access", "Execution", "Persistence", "Privilege Escalation"],
+            "correct": 0,
+            "explanation": "Phishing (T1566) is an Initial Access technique - the attacker's first foothold into the environment."
+          },
+          {
+            "question": "What tactic is 'Scheduled Task' associated with?",
+            "options": ["Execution", "Persistence", "Defense Evasion", "Discovery"],
+            "correct": 1,
+            "explanation": "Scheduled Task (T1053) is commonly used for Persistence to maintain access across reboots."
+          },
+          {
+            "question": "Command and Control typically involves what?",
+            "options": ["Initial compromise", "Communication with C2 servers", "Data theft", "Account creation"],
+            "correct": 1,
+            "explanation": "Command and Control (C2) is how attackers communicate with compromised systems to issue commands and receive data."
+          },
+          {
+            "question": "Which is an Exfiltration technique?",
+            "options": ["Phishing", "Data encrypted for impact", "Exfiltration over C2 channel", "Credential dumping"],
+            "correct": 2,
+            "explanation": "Exfiltration over C2 Channel (T1041) is how attackers steal data using their command and control infrastructure."
+          }
+        ]
+      },
+      {
+        "id": "log-analysis",
+        "title": "Log Analysis",
+        "description": "Spot malicious activity in log snippets",
+        "icon": "📊",
+        "drills": [
+          {
+            "question": "What's suspicious about this Apache log?",
+            "log": "192.168.1.100 - - [10/Feb/2024:14:23:11] \"GET /../../etc/passwd HTTP/1.1\" 200",
+            "options": ["Nothing suspicious", "Directory traversal attempt", "SQL injection", "XSS attack"],
+            "correct": 1,
+            "explanation": "The '../..' pattern indicates a directory traversal attack attempting to access /etc/passwd outside the web root."
+          },
+          {
+            "question": "What does this auth.log entry suggest?",
+            "log": "Feb 10 14:30:01 server sshd[1234]: Failed password for admin from 203.0.113.50 port 52891 ssh2\nFeb 10 14:30:03 server sshd[1235]: Failed password for admin from 203.0.113.50 port 52892 ssh2\nFeb 10 14:30:05 server sshd[1236]: Accepted password for admin from 203.0.113.50 port 52893 ssh2",
+            "options": ["Normal user behavior", "Brute force attack succeeded", "System error", "Password reset"],
+            "correct": 1,
+            "explanation": "Rapid failed attempts followed by successful login indicates a successful brute force attack."
+          },
+          {
+            "question": "What's happening in this log pattern?",
+            "log": "192.168.1.50 - POST /login.php (200)\n192.168.1.50 - GET /admin/users.php (200)\n192.168.1.50 - POST /admin/users.php?action=create (200)",
+            "options": ["Normal admin activity", "Unauthorized access after login", "Failed login attempts", "Web crawler"],
+            "correct": 1,
+            "explanation": "Successful login followed immediately by admin panel access suggests potential account compromise or insider threat."
+          }
+        ]
+      },
+      {
+        "id": "ioc-identification",
+        "title": "IOC Identification",
+        "description": "Classify indicators of compromise",
+        "icon": "🔍",
+        "drills": [
+          {
+            "question": "What type of IOC is '52.12.34.56'?",
+            "options": ["Domain", "IPv4 Address", "File Hash", "Email Address"],
+            "correct": 1,
+            "explanation": "This is an IPv4 address - can be checked against threat intelligence feeds like AbuseIPDB."
+          },
+          {
+            "question": "What is '5d41402abc4b2a76b9719d911017c592'?",
+            "options": ["IPv6 Address", "Domain", "MD5 Hash", "Base64 string"],
+            "correct": 2,
+            "explanation": "This is an MD5 hash (32 hex characters) - used to identify files. MD5 hashes can be checked on VirusTotal."
+          },
+          {
+            "question": "Which IOC type is 'malicious-site.com'?",
+            "options": ["IP Address", "Domain Name", "URL", "Email"],
+            "correct": 1,
+            "explanation": "This is a domain name - check reputation on VirusTotal, URLScan.io, or Cisco Talos."
+          },
+          {
+            "question": "What is 'http://evil.com/payload.exe'?",
+            "options": ["Domain", "File Hash", "URL", "IP Address"],
+            "correct": 2,
+            "explanation": "This is a full URL (includes protocol and path) - scan with URLScan.io or submit to sandboxes."
+          }
+        ]
+      }
+    ]
+  },
+  "certPath": {
+    "current": [
+      {
+        "name": "Security+",
+        "status": "in-progress",
+        "provider": "CompTIA",
+        "description": "Foundation-level security certification",
+        "started": "2024-01",
+        "target": "2024-03",
+        "progress": 60
+      }
+    ],
+    "planned": [
+      {
+        "name": "CySA+",
+        "status": "planned",
+        "provider": "CompTIA",
+        "description": "Cybersecurity Analyst certification",
+        "prerequisite": "Security+",
+        "estimatedTime": "3-4 months"
+      },
+      {
+        "name": "Azure Fundamentals (AZ-900)",
+        "status": "planned",
+        "provider": "Microsoft",
+        "description": "Cloud fundamentals certification",
+        "estimatedTime": "1-2 months"
+      },
+      {
+        "name": "Azure Security (AZ-500)",
+        "status": "planned",
+        "provider": "Microsoft",
+        "description": "Azure security technologies",
+        "prerequisite": "AZ-900",
+        "estimatedTime": "2-3 months"
+      }
+    ],
+    "completed": []
+  },
+  "miniGames": [
+    {
+      "id": "find-malicious-ip",
+      "title": "Find the Malicious IP",
+      "description": "Click on suspicious IPs in network traffic",
+      "difficulty": "Easy",
+      "type": "click-game"
+    },
+    {
+      "id": "spot-phishing",
+      "title": "Spot the Phishing",
+      "description": "Identify phishing indicators in emails",
+      "difficulty": "Medium",
+      "type": "quiz"
+    },
+    {
+      "id": "port-quiz",
+      "title": "Port Number Speed Round",
+      "description": "Match ports to services as fast as you can",
+      "difficulty": "Easy",
+      "type": "speed-quiz"
+    },
+    {
+      "id": "decode-payload",
+      "title": "Decode the Payload",
+      "description": "Decode Base64 encoded malicious strings",
+      "difficulty": "Medium",
+      "type": "decoder"
+    }
+  ],
   "stats": {
-    "total": 92,
+    "total": 122,
     "templates": 3,
     "cheatSheets": 4,
     "quickStart": 4,
@@ -898,6 +1146,9 @@
     "threatFeed": 8,
     "cliCommands": 12,
     "toolbox": 10,
-    "glossary": 20
+    "glossary": 20,
+    "skillDrills": 20,
+    "certPath": 5,
+    "miniGames": 4
   }
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal, Package, BookA } from "lucide-react"
+import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal, Package, BookA, Dumbbell, Gamepad2, Map } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ interface WindowState {
 }
 
 export default function ResourcesPage() {
-  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary } = resourcesData
+  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary, skillDrills, certPath, miniGames } = resourcesData
   const [isVMActive, setIsVMActive] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
 
@@ -64,8 +64,13 @@ export default function ResourcesPage() {
     { id: "threat-feed", label: "Intel Feed", icon: Radio, color: "text-teal-500", bgColor: "bg-teal-500/10", titleBar: "from-teal-500/20 to-teal-600/20" },
     { id: "toolbox", label: "Toolbox", icon: Package, color: "text-slate-400", bgColor: "bg-slate-400/10", titleBar: "from-slate-400/20 to-slate-500/20" },
     
+    // Row 4: Skill Building
+    { id: "skill-drills", label: "Skill Drills", icon: Dumbbell, color: "text-emerald-400", bgColor: "bg-emerald-400/10", titleBar: "from-emerald-400/20 to-emerald-500/20" },
+    { id: "mini-game", label: "Mini Game", icon: Gamepad2, color: "text-pink-400", bgColor: "bg-pink-400/10", titleBar: "from-pink-400/20 to-pink-500/20" },
+    
     // Row 5: Career & Study
     { id: "interview-prep", label: "Interview Prep", icon: Briefcase, color: "text-indigo-500", bgColor: "bg-indigo-500/10", titleBar: "from-indigo-500/20 to-indigo-600/20" },
+    { id: "cert-path", label: "Cert Roadmap", icon: Map, color: "text-blue-400", bgColor: "bg-blue-400/10", titleBar: "from-blue-400/20 to-blue-500/20" },
     { id: "sec-plus", label: "Sec+ Vault", icon: GraduationCap, color: "text-amber-500", bgColor: "bg-amber-500/10", titleBar: "from-amber-500/20 to-amber-600/20" },
   ]
 
@@ -399,6 +404,9 @@ export default function ResourcesPage() {
                   />
                 )}
                 {icon.id === "sec-plus" && <SecPlusVaultContent secPlusVault={secPlusVault} />}
+                {icon.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} />}
+                {icon.id === "mini-game" && <MiniGameContent miniGames={miniGames} />}
+                {icon.id === "cert-path" && <CertPathContent certPath={certPath} />}
                 {icon.id === "threat-feed" && <ThreatFeedContent threatFeed={threatFeed} />}
                 {icon.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} />}
                 {icon.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
@@ -2105,6 +2113,397 @@ function GlossaryContent({ glossary }: { glossary: any[] }) {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+// Phase 4 Components
+
+function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null)
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [score, setScore] = useState(0)
+  const [showExplanation, setShowExplanation] = useState(false)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [quizComplete, setQuizComplete] = useState(false)
+  
+  // Category selection screen
+  if (!selectedCategory) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+            <Dumbbell className="h-6 w-6 text-emerald-400" />
+            Skill Drills
+          </h2>
+          <p className="text-muted-foreground">Quick practice to sharpen your SOC skills. Test your knowledge with focused quizzes.</p>
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+          {skillDrills.categories.map((cat: any) => (
+            <Card 
+              key={cat.id}
+              className="cursor-pointer hover:border-emerald-500/50 transition-all"
+              onClick={() => {
+                setSelectedCategory(cat)
+                setCurrentQuestion(0)
+                setScore(0)
+                setShowExplanation(false)
+                setSelectedAnswer(null)
+                setQuizComplete(false)
+              }}
+            >
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">{cat.icon}</span>
+                  <CardTitle className="text-base">{cat.title}</CardTitle>
+                </div>
+                <CardDescription className="text-xs">{cat.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Badge variant="secondary" className="text-xs">
+                  {cat.drills.length} questions
+                </Badge>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  
+  // Quiz complete screen
+  if (quizComplete) {
+    const percentage = Math.round((score / selectedCategory.drills.length) * 100)
+    const getGrade = () => {
+      if (percentage >= 90) return { grade: 'A', message: 'Excellent!', color: 'text-green-500' }
+      if (percentage >= 80) return { grade: 'B', message: 'Great job!', color: 'text-blue-500' }
+      if (percentage >= 70) return { grade: 'C', message: 'Good effort!', color: 'text-yellow-500' }
+      return { grade: 'D', message: 'Keep practicing!', color: 'text-orange-500' }
+    }
+    const result = getGrade()
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-bold">Quiz Complete!</h2>
+          <div className={`text-6xl font-bold ${result.color}`}>{percentage}%</div>
+          <p className="text-xl">{result.message}</p>
+          <p className="text-muted-foreground">
+            You got {score} out of {selectedCategory.drills.length} questions correct
+          </p>
+        </div>
+        
+        <div className="flex gap-3 justify-center">
+          <Button onClick={() => {
+            setCurrentQuestion(0)
+            setScore(0)
+            setShowExplanation(false)
+            setSelectedAnswer(null)
+            setQuizComplete(false)
+          }}>
+            Try Again
+          </Button>
+          <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+            Back to Categories
+          </Button>
+        </div>
+      </div>
+    )
+  }
+  
+  // Quiz interface
+  const drill = selectedCategory.drills[currentQuestion]
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-lg">{selectedCategory.title}</h3>
+          <p className="text-sm text-muted-foreground">
+            Question {currentQuestion + 1} of {selectedCategory.drills.length}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-semibold">Score: {score}/{currentQuestion || 0}</p>
+          {currentQuestion > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {Math.round((score / currentQuestion) * 100)}%
+            </p>
+          )}
+        </div>
+      </div>
+      
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base">{drill.question}</CardTitle>
+        </CardHeader>
+        {drill.log && (
+          <CardContent className="pt-0">
+            <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto mb-4">
+              {drill.log}
+            </pre>
+          </CardContent>
+        )}
+        <CardContent className={drill.log ? "pt-0" : ""}>
+          <div className="space-y-2">
+            {drill.options.map((option: string, idx: number) => (
+              <Button
+                key={idx}
+                variant={selectedAnswer === idx ? 'default' : 'outline'}
+                onClick={() => {
+                  if (!showExplanation) {
+                    setSelectedAnswer(idx)
+                    setShowExplanation(true)
+                    if (idx === drill.correct) setScore(score + 1)
+                  }
+                }}
+                disabled={showExplanation}
+                className={`w-full justify-start text-left h-auto py-3 ${
+                  showExplanation 
+                    ? idx === drill.correct 
+                      ? 'border-green-500 bg-green-500/10' 
+                      : idx === selectedAnswer 
+                        ? 'border-red-500 bg-red-500/10' 
+                        : ''
+                    : ''
+                }`}
+              >
+                {option}
+              </Button>
+            ))}
+          </div>
+          
+          {showExplanation && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              selectedAnswer === drill.correct 
+                ? 'bg-green-500/10 border border-green-500/20' 
+                : 'bg-red-500/10 border border-red-500/20'
+            }`}>
+              <h4 className="font-semibold mb-2">
+                {selectedAnswer === drill.correct ? '✓ Correct!' : '✗ Incorrect'}
+              </h4>
+              <p className="text-sm">{drill.explanation}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <div className="flex gap-3">
+        {showExplanation && (
+          <Button onClick={() => {
+            if (currentQuestion < selectedCategory.drills.length - 1) {
+              setCurrentQuestion(currentQuestion + 1)
+              setShowExplanation(false)
+              setSelectedAnswer(null)
+            } else {
+              setQuizComplete(true)
+            }
+          }} className="flex-1">
+            {currentQuestion < selectedCategory.drills.length - 1 ? 'Next Question →' : 'Finish Quiz'}
+          </Button>
+        )}
+        <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+          Back to Categories
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function MiniGameContent({ miniGames }: { miniGames: any[] }) {
+  const [selectedGame, setSelectedGame] = useState<any | null>(null)
+  
+  // Game selection screen
+  if (!selectedGame) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+            <Gamepad2 className="h-6 w-6 text-pink-400" />
+            SOC Training Games
+          </h2>
+          <p className="text-muted-foreground">Fun, gamified practice to reinforce SOC skills.</p>
+        </div>
+        
+        <div className="grid gap-4 md:grid-cols-2">
+          {miniGames.map((game: any) => {
+            const getDifficultyColor = (diff: string) => {
+              if (diff === "Easy") return "bg-green-500/10 text-green-500 border-green-500/20"
+              if (diff === "Medium") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+              return "bg-red-500/10 text-red-500 border-red-500/20"
+            }
+            
+            return (
+              <Card 
+                key={game.id}
+                className="cursor-pointer hover:border-pink-400/50 transition-all"
+                onClick={() => setSelectedGame(game)}
+              >
+                <CardHeader>
+                  <CardTitle className="text-base">{game.title}</CardTitle>
+                  <Badge className={getDifficultyColor(game.difficulty)}>{game.difficulty}</Badge>
+                  <CardDescription className="text-xs mt-2">{game.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="default" size="sm" className="w-full">
+                    Play Game
+                  </Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+        
+        <Card className="bg-muted/50">
+          <CardHeader>
+            <CardTitle className="text-sm">Coming Soon</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            More games and challenges will be added. Current games are in development!
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+  
+  // Game screen (placeholder for now)
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">{selectedGame.title}</h2>
+        <Badge variant="secondary">{selectedGame.difficulty}</Badge>
+      </div>
+      
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base">Game Mode: {selectedGame.type}</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center p-8">
+          <p className="text-muted-foreground mb-4">
+            {selectedGame.description}
+          </p>
+          <p className="text-sm text-muted-foreground/70 mb-6">
+            Game mechanics coming soon! This will be a fun, interactive way to practice SOC skills.
+          </p>
+          <Button onClick={() => setSelectedGame(null)}>
+            Back to Games
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function CertPathContent({ certPath }: { certPath: any }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Map className="h-6 w-6 text-blue-400" />
+          Certification Roadmap
+        </h2>
+        <p className="text-muted-foreground">My certification journey and planned progression.</p>
+      </div>
+      
+      {/* Current Certifications */}
+      {certPath.current && certPath.current.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-lg mb-3">🎯 Currently Working On</h3>
+          <div className="space-y-4">
+            {certPath.current.map((cert: any, idx: number) => (
+              <Card key={idx} className="bg-card border-border border-l-4 border-l-blue-500">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">{cert.name}</CardTitle>
+                      <Badge variant="secondary" className="mt-1">{cert.provider}</Badge>
+                    </div>
+                    <Badge className="bg-blue-500/10 text-blue-500">In Progress</Badge>
+                  </div>
+                  <CardDescription className="text-xs mt-2">{cert.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-semibold">{cert.progress}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 transition-all"
+                        style={{ width: `${cert.progress}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Started: {cert.started}</span>
+                      <span>Target: {cert.target}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Completed Certifications */}
+      {certPath.completed && certPath.completed.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-lg mb-3">✅ Completed</h3>
+          <div className="space-y-3">
+            {certPath.completed.map((cert: any, idx: number) => (
+              <Card key={idx} className="bg-card border-border border-l-4 border-l-green-500">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">{cert.name}</CardTitle>
+                      <Badge variant="secondary" className="mt-1">{cert.provider}</Badge>
+                    </div>
+                    <Badge className="bg-green-500/10 text-green-500">Completed</Badge>
+                  </div>
+                  <CardDescription className="text-xs mt-2">
+                    Completed: {cert.completedDate}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Planned Certifications */}
+      {certPath.planned && certPath.planned.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-lg mb-3">📋 Planned</h3>
+          <div className="space-y-3">
+            {certPath.planned.map((cert: any, idx: number) => (
+              <Card key={idx} className="bg-card border-border">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">{cert.name}</CardTitle>
+                      <Badge variant="secondary" className="mt-1">{cert.provider}</Badge>
+                    </div>
+                    <Badge variant="outline">Planned</Badge>
+                  </div>
+                  <CardDescription className="text-xs mt-2">{cert.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {cert.prerequisite && (
+                    <p className="text-xs text-muted-foreground">
+                      📌 Prerequisite: {cert.prerequisite}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    ⏱️ Estimated time: {cert.estimatedTime}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
