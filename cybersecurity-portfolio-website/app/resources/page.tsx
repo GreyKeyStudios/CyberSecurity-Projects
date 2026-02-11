@@ -1,13 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal, Package, BookA, Dumbbell, Gamepad2, Map } from "lucide-react"
+import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DesktopWindow } from "@/components/desktop-window"
 import { MarkdownContent } from "@/components/markdown-content"
+import { AuthDialog } from "@/components/auth/auth-dialog"
+import { UserMenu } from "@/components/auth/user-menu"
+import { createClient } from "@/lib/supabase/client"
+import { User } from "@supabase/supabase-js"
 import resourcesData from "@/data/resources.json"
 
 const GITHUB_BASE_URL = "https://github.com/KreerB/CyberSecurity-Projects"
@@ -23,9 +27,12 @@ interface WindowState {
 }
 
 export default function ResourcesPage() {
-  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary, skillDrills, certPath, miniGames } = resourcesData
+  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets } = resourcesData
   const [isVMActive, setIsVMActive] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const supabase = createClient()
 
   // Prevent body scroll when VM is active
   useEffect(() => {
@@ -38,6 +45,23 @@ export default function ResourcesPage() {
       document.body.style.overflow = 'auto'
     }
   }, [isVMActive])
+
+  // Check for user session and set up auth listener
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
 
   const desktopIcons = [
     // Row 1: Onboarding & Daily Use
@@ -68,7 +92,12 @@ export default function ResourcesPage() {
     { id: "skill-drills", label: "Skill Drills", icon: Dumbbell, color: "text-emerald-400", bgColor: "bg-emerald-400/10", titleBar: "from-emerald-400/20 to-emerald-500/20" },
     { id: "mini-game", label: "Mini Game", icon: Gamepad2, color: "text-pink-400", bgColor: "bg-pink-400/10", titleBar: "from-pink-400/20 to-pink-500/20" },
     
-    // Row 5: Career & Study
+    // Row 5: Practice & Training
+    { id: "soc-journal", label: "SOC Journal", icon: BookMarked, color: "text-purple-400", bgColor: "bg-purple-400/10", titleBar: "from-purple-400/20 to-purple-500/20" },
+    { id: "tickets", label: "Tickets", icon: Ticket, color: "text-orange-400", bgColor: "bg-orange-400/10", titleBar: "from-orange-400/20 to-orange-500/20" },
+    { id: "lab-files", label: "Lab Files", icon: FolderDown, color: "text-cyan-400", bgColor: "bg-cyan-400/10", titleBar: "from-cyan-400/20 to-cyan-500/20" },
+    
+    // Row 6: Career & Study
     { id: "interview-prep", label: "Interview Prep", icon: Briefcase, color: "text-indigo-500", bgColor: "bg-indigo-500/10", titleBar: "from-indigo-500/20 to-indigo-600/20" },
     { id: "cert-path", label: "Cert Roadmap", icon: Map, color: "text-blue-400", bgColor: "bg-blue-400/10", titleBar: "from-blue-400/20 to-blue-500/20" },
     { id: "sec-plus", label: "Sec+ Vault", icon: GraduationCap, color: "text-amber-500", bgColor: "bg-amber-500/10", titleBar: "from-amber-500/20 to-amber-600/20" },
@@ -346,11 +375,38 @@ export default function ResourcesPage() {
                   )
                 })}
               </div>
+              
+              {/* Auth UI */}
+              <div className="flex items-center gap-2">
+                {user ? (
+                  <UserMenu user={user} onSignOut={() => setUser(null)} />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAuthDialogOpen(true)}
+                    className="text-white hover:bg-white/10"
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                )}
+              </div>
+
               <div className="text-xs text-white/70 font-mono">
                 SOC OS v1.0
               </div>
             </div>
           </div>
+
+          {/* Auth Dialog */}
+          <AuthDialog 
+            open={isAuthDialogOpen} 
+            onOpenChange={setIsAuthDialogOpen}
+            onSuccess={() => {
+              // Refresh user state is handled by the auth listener
+            }}
+          />
 
           {/* Render Open Windows - Constrained to Monitor */}
           {desktopIcons.map(icon => {
@@ -407,6 +463,9 @@ export default function ResourcesPage() {
                 {icon.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} />}
                 {icon.id === "mini-game" && <MiniGameContent miniGames={miniGames} />}
                 {icon.id === "cert-path" && <CertPathContent certPath={certPath} />}
+                {icon.id === "soc-journal" && <SOCJournalContent user={user} />}
+                {icon.id === "tickets" && <TicketsContent tickets={tickets} user={user} />}
+                {icon.id === "lab-files" && <LabFilesContent labFiles={labFiles} />}
                 {icon.id === "threat-feed" && <ThreatFeedContent threatFeed={threatFeed} />}
                 {icon.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} />}
                 {icon.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
@@ -2504,6 +2563,641 @@ function CertPathContent({ certPath }: { certPath: any }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Phase 3 Components - SOC Journal, Tickets, Lab Files
+
+function SOCJournalContent({ user }: { user: User | null }) {
+  const [entries, setEntries] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<any | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState("all")
+  const supabase = createClient()
+
+  // Load entries
+  useEffect(() => {
+    if (user) {
+      loadEntries()
+    } else {
+      setIsLoading(false)
+    }
+  }, [user])
+
+  const loadEntries = async () => {
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setEntries(data || [])
+    } catch (error) {
+      console.error('Error loading entries:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const createEntry = async (entry: any) => {
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .insert([{
+          user_id: user!.id,
+          ...entry
+        }])
+
+      if (error) throw error
+      await loadEntries()
+      setIsCreating(false)
+    } catch (error) {
+      console.error('Error creating entry:', error)
+      alert('Failed to create entry')
+    }
+  }
+
+  const deleteEntry = async (id: string) => {
+    if (!confirm('Delete this entry?')) return
+    
+    try {
+      const { error} = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      await loadEntries()
+      setSelectedEntry(null)
+    } catch (error) {
+      console.error('Error deleting entry:', error)
+      alert('Failed to delete entry')
+    }
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <BookMarked className="h-16 w-16 text-purple-400 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">SOC Journal</h2>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          Track your learning journey, document labs, and build your personal knowledge base.
+          Sign in to start journaling.
+        </p>
+        <Button variant="default">Sign In to Start</Button>
+      </div>
+    )
+  }
+
+  // Creating new entry
+  if (isCreating) {
+    return <JournalEntryForm onSave={createEntry} onCancel={() => setIsCreating(false)} />
+  }
+
+  // Viewing entry detail
+  if (selectedEntry) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedEntry(null)}>
+            <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+            Back
+          </Button>
+          <div className="flex-1" />
+          <Button variant="destructive" size="sm" onClick={() => deleteEntry(selectedEntry.id)}>
+            Delete
+          </Button>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>{selectedEntry.title}</CardTitle>
+                <CardDescription>
+                  {new Date(selectedEntry.created_at).toLocaleDateString()}
+                </CardDescription>
+              </div>
+              <Badge>{selectedEntry.entry_type}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none dark:prose-invert">
+            <div className="whitespace-pre-wrap">{selectedEntry.content}</div>
+            {selectedEntry.tags && selectedEntry.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {selectedEntry.tags.map((tag: string) => (
+                  <Badge key={tag} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Entry list
+  const filteredEntries = entries.filter(entry => {
+    const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         entry.content.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = filterType === "all" || entry.entry_type === filterType
+    return matchesSearch && matchesType
+  })
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 space-y-4 pb-4 border-b border-border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <BookMarked className="h-6 w-6 text-purple-400" />
+              SOC Journal
+            </h2>
+            <p className="text-sm text-muted-foreground">{entries.length} entries</p>
+          </div>
+          <Button onClick={() => setIsCreating(true)}>New Entry</Button>
+        </div>
+
+        <Input
+          placeholder="Search entries..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <div className="flex gap-2">
+          {["all", "study", "lab", "incident", "general"].map((type) => (
+            <Button
+              key={type}
+              variant={filterType === type ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType(type)}
+            >
+              {type === "all" ? "All" : type.charAt(0).toUpperCase() + type.slice(1)}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto mt-4">
+        {isLoading ? (
+          <div className="text-center p-8">Loading...</div>
+        ) : filteredEntries.length === 0 ? (
+          <div className="text-center p-8 text-muted-foreground">
+            {searchTerm ? "No entries match your search." : "No entries yet. Create your first one!"}
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {filteredEntries.map((entry) => (
+              <Card
+                key={entry.id}
+                className="cursor-pointer hover:border-purple-500/50 transition-all"
+                onClick={() => setSelectedEntry(entry)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{entry.title}</CardTitle>
+                      <CardDescription className="text-xs">
+                        {new Date(entry.created_at).toLocaleDateString()}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary">{entry.entry_type}</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {entry.content}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function JournalEntryForm({ onSave, onCancel }: { onSave: (entry: any) => void; onCancel: () => void }) {
+  const [title, setTitle] = useState("")
+  const [content, setContent] = useState("")
+  const [entryType, setEntryType] = useState("general")
+  const [tags, setTags] = useState("")
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave({
+      title,
+      content,
+      entry_type: entryType,
+      tags: tags.split(',').map(t => t.trim()).filter(Boolean)
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <div className="flex-1" />
+        <Button type="submit">Save Entry</Button>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Title</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What did you learn today?"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Type</label>
+          <div className="flex gap-2 mt-2">
+            {["study", "lab", "incident", "general"].map((type) => (
+              <Button
+                key={type}
+                type="button"
+                variant={entryType === type ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEntryType(type)}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Content</label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Write your notes here..."
+            className="w-full min-h-[300px] p-3 rounded-lg border bg-background"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Tags (comma-separated)</label>
+          <Input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="splunk, windows, malware"
+          />
+        </div>
+      </div>
+    </form>
+  )
+}
+
+function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }) {
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null)
+  const [mode, setMode] = useState<'guided' | 'expert'>('guided')
+  const [showHints, setShowHints] = useState(false)
+  const [showSolution, setShowSolution] = useState(false)
+
+  if (!selectedTicket) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+            <Ticket className="h-6 w-6 text-orange-400" />
+            Incident Ticket Simulator
+          </h2>
+          <p className="text-muted-foreground">
+            Practice SOC analyst skills with realistic incident tickets. Investigate, document, and resolve incidents.
+          </p>
+        </div>
+
+        <div className="grid gap-4">
+          {tickets.map((ticket) => {
+            const getDifficultyColor = (diff: string) => {
+              if (diff === "easy") return "bg-green-500/10 text-green-500 border-green-500/20"
+              if (diff === "medium") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+              return "bg-red-500/10 text-red-500 border-red-500/20"
+            }
+
+            return (
+              <Card key={ticket.id} className="cursor-pointer hover:border-orange-400/50 transition-all" onClick={() => setSelectedTicket(ticket)}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base">{ticket.title}</CardTitle>
+                      <Badge className="mt-1" variant="outline">{ticket.category}</Badge>
+                    </div>
+                    <Badge className={getDifficultyColor(ticket.difficulty)}>
+                      {ticket.difficulty.charAt(0).toUpperCase() + ticket.difficulty.slice(1)}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-xs mt-2">{ticket.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="default" size="sm">Start Investigation</Button>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {!user && (
+          <Card className="bg-muted/50">
+            <CardHeader>
+              <CardTitle className="text-sm">💡 Sign in to save progress</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Create an account to track completed tickets, save notes, and monitor your progress over time.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    )
+  }
+
+  // Ticket detail view
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => {
+          setSelectedTicket(null)
+          setShowHints(false)
+          setShowSolution(false)
+        }}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Tickets
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Ticket #{selectedTicket.id.toUpperCase()}</CardTitle>
+              <CardDescription>{selectedTicket.title}</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={mode === 'guided' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMode('guided')}
+              >
+                Guided
+              </Button>
+              <Button
+                variant={mode === 'expert' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setMode('expert')}
+              >
+                Expert
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h3 className="font-semibold mb-2">Scenario</h3>
+            <div className="text-sm whitespace-pre-wrap">{selectedTicket.scenario}</div>
+          </div>
+
+          {selectedTicket.logs && (
+            <div>
+              <h3 className="font-semibold mb-2">Logs</h3>
+              <pre className="p-3 bg-muted rounded-lg text-xs overflow-x-auto">
+                {selectedTicket.logs}
+              </pre>
+            </div>
+          )}
+
+          {mode === 'guided' && selectedTicket.guidedSteps && (
+            <div>
+              <h3 className="font-semibold mb-2">Investigation Steps</h3>
+              <div className="space-y-2">
+                {selectedTicket.guidedSteps.map((step: string, idx: number) => (
+                  <div key={idx} className="flex gap-2">
+                    <span className="text-muted-foreground">{idx + 1}.</span>
+                    <span className="text-sm">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowHints(!showHints)}>
+              {showHints ? 'Hide Hints' : 'Show Hints'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowSolution(!showSolution)}>
+              {showSolution ? 'Hide Solution' : 'Show Solution'}
+            </Button>
+          </div>
+
+          {showHints && selectedTicket.hints && (
+            <Card className="bg-blue-500/10 border-blue-500/20">
+              <CardHeader>
+                <CardTitle className="text-sm">💡 Hints</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1 text-sm">
+                  {selectedTicket.hints.map((hint: string, idx: number) => (
+                    <li key={idx}>• {hint}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {showSolution && selectedTicket.solution && (
+            <Card className="bg-green-500/10 border-green-500/20">
+              <CardHeader>
+                <CardTitle className="text-sm">✓ Solution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm whitespace-pre-wrap">{selectedTicket.solution}</div>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function LabFilesContent({ labFiles }: { labFiles: any[] }) {
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedFile, setSelectedFile] = useState<any | null>(null)
+
+  const categories = ["all", "pcap", "event-logs", "email"]
+
+  const filteredFiles = selectedCategory === "all" 
+    ? labFiles 
+    : labFiles.filter(f => f.category === selectedCategory)
+
+  if (selectedFile) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedFile(null)}>
+            <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+            Back to Files
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>{selectedFile.title}</CardTitle>
+                <CardDescription>{selectedFile.description}</CardDescription>
+              </div>
+              <Badge>{selectedFile.difficulty}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">📁 File Details</h3>
+              <div className="text-sm space-y-1">
+                <div>Category: {selectedFile.category}</div>
+                <div>Size: {selectedFile.fileSize}</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">🎯 Objectives</h3>
+              <ul className="space-y-1 text-sm">
+                {selectedFile.objectives.map((obj: string, idx: number) => (
+                  <li key={idx}>• {obj}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">🛠️ Recommended Tools</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedFile.tools.map((tool: string) => (
+                  <Badge key={tool} variant="outline">{tool}</Badge>
+                ))}
+              </div>
+            </div>
+
+            {selectedFile.hints && (
+              <div>
+                <h3 className="font-semibold mb-2">💡 Hints</h3>
+                <ul className="space-y-1 text-sm">
+                  {selectedFile.hints.map((hint: string, idx: number) => (
+                    <li key={idx}>• {hint}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {selectedFile.available ? (
+              <Button className="w-full">
+                <FolderDown className="h-4 w-4 mr-2" />
+                Download Lab File
+              </Button>
+            ) : (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-6 text-center text-sm text-muted-foreground">
+                  Lab files coming soon! Check back later for downloadable practice files.
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="bg-yellow-500/10 border-yellow-500/20">
+              <CardHeader>
+                <CardTitle className="text-sm">⚠️ Safety Notice</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                All lab files are sanitized and safe for analysis. However, always practice good security hygiene:
+                use isolated VMs, don't execute unknown code, and treat all samples as potentially malicious.
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 space-y-4 pb-4 border-border">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+            <FolderDown className="h-6 w-6 text-cyan-400" />
+            Lab Files
+          </h2>
+          <p className="text-muted-foreground">
+            Download safe, realistic samples for hands-on practice with industry tools.
+          </p>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {categories.map((cat) => (
+            <Button
+              key={cat}
+              variant={selectedCategory === cat ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(cat)}
+            >
+              {cat === "all" ? "All Files" : cat.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto mt-4">
+        <div className="grid gap-3">
+          {filteredFiles.map((file) => {
+            const getDifficultyColor = (diff: string) => {
+              if (diff === "Easy") return "bg-green-500/10 text-green-500 border-green-500/20"
+              if (diff === "Medium") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+              return "bg-red-500/10 text-red-500 border-red-500/20"
+            }
+
+            return (
+              <Card
+                key={file.id}
+                className="cursor-pointer hover:border-cyan-400/50 transition-all"
+                onClick={() => setSelectedFile(file)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{file.title}</CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        {file.category.toUpperCase()} • {file.fileSize}
+                      </CardDescription>
+                    </div>
+                    <Badge className={getDifficultyColor(file.difficulty)}>
+                      {file.difficulty}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{file.description}</p>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {filteredFiles.length === 0 && (
+          <div className="text-center p-8 text-muted-foreground">
+            No files in this category yet.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

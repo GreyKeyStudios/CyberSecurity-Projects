@@ -1101,6 +1101,122 @@
     ],
     "completed": []
   },
+  "labFiles": [
+    {
+      "id": "pcap-001",
+      "title": "Suspicious Network Traffic Analysis",
+      "category": "pcap",
+      "difficulty": "Medium",
+      "fileSize": "Coming Soon",
+      "path": "/lab-files/pcap/suspicious-traffic-001.pcap",
+      "description": "Analyze network capture containing potential malware C2 communication. Identify suspicious patterns and extract IOCs.",
+      "objectives": [
+        "Identify suspicious IP addresses and domains",
+        "Determine protocols used for communication",
+        "Extract IOCs (IPs, domains, file hashes)",
+        "Determine likely malware family based on behavior"
+      ],
+      "tools": ["Wireshark", "NetworkMiner", "tcpdump"],
+      "hints": [
+        "Look for repeated connections to unusual ports",
+        "Check DNS queries for suspicious domains",
+        "Filter for HTTP/HTTPS traffic to external IPs"
+      ],
+      "available": false
+    },
+    {
+      "id": "evtx-001",
+      "title": "Failed Login Investigation",
+      "category": "event-logs",
+      "difficulty": "Easy",
+      "fileSize": "Coming Soon",
+      "path": "/lab-files/event-logs/failed-logins-001.evtx",
+      "description": "Windows Event Log file containing multiple failed login attempts. Determine if this is a brute force attack.",
+      "objectives": [
+        "Count total failed login attempts",
+        "Identify source IP addresses",
+        "Determine if attack was successful",
+        "Create timeline of attack"
+      ],
+      "tools": ["Event Viewer", "EvtxECmd", "Splunk", "ELK Stack"],
+      "hints": [
+        "Filter for Event ID 4625 (failed logon)",
+        "Look for Event ID 4624 (successful logon) from same source",
+        "Check for account lockout events (4740)"
+      ],
+      "available": false
+    },
+    {
+      "id": "email-001",
+      "title": "Phishing Email Analysis",
+      "category": "email",
+      "difficulty": "Easy",
+      "fileSize": "Coming Soon",
+      "path": "/lab-files/email/phishing-001.eml",
+      "description": "Suspected phishing email. Analyze headers and content to determine legitimacy and extract IOCs.",
+      "objectives": [
+        "Verify sender authenticity",
+        "Identify phishing indicators",
+        "Extract suspicious URLs and domains",
+        "Determine attack type and goal"
+      ],
+      "tools": ["Email Header Analyzer", "URLScan.io", "VirusTotal"],
+      "hints": [
+        "Check SPF, DKIM, and DMARC records",
+        "Look for display name spoofing",
+        "Analyze any embedded links (without clicking!)"
+      ],
+      "available": false
+    }
+  ],
+  "tickets": [
+    {
+      "id": "ticket-001",
+      "title": "Multiple Failed Login Attempts",
+      "difficulty": "easy",
+      "category": "Account Compromise",
+      "description": "User reports receiving account lockout notifications. Security monitoring detected 50+ failed login attempts from an external IP in the last 30 minutes.",
+      "scenario": "**Date/Time:** 2024-02-10 14:30 UTC\n\n**Reporter:** helpdesk@company.com\n\n**User Affected:** jsmith@company.com\n\n**Symptoms:**\n- User received multiple \"Account Lockout\" emails\n- Legitimate user was unable to log in\n- Authentication logs show failed attempts from 203.0.113.45\n\n**Your Task:** Investigate this incident and document your findings.",
+      "logs": "```\n2024-02-10 14:15:32 | Failed login | jsmith | Source: 203.0.113.45 | Reason: Invalid password\n2024-02-10 14:15:45 | Failed login | jsmith | Source: 203.0.113.45 | Reason: Invalid password\n2024-02-10 14:16:01 | Failed login | jsmith | Source: 203.0.113.45 | Reason: Invalid password\n...(47 more attempts)...\n2024-02-10 14:29:12 | Failed login | jsmith | Source: 203.0.113.45 | Reason: Invalid password\n2024-02-10 14:30:05 | Account locked | jsmith | Reason: Too many failed attempts\n```",
+      "iocs": ["203.0.113.45"],
+      "guidedSteps": [
+        "Check if IP 203.0.113.45 is known malicious (use IOC Helper or AbuseIPDB)",
+        "Review authentication logs for pattern",
+        "Determine if attack was successful",
+        "Check for other affected accounts",
+        "Recommend containment actions"
+      ],
+      "hints": [
+        "This is a brute force attack attempt",
+        "The account was locked before attacker succeeded",
+        "Check if this IP has targeted other accounts"
+      ],
+      "solution": "**Incident Type:** Brute Force Attack (Failed)\n\n**Findings:**\n- 50 failed login attempts over 15 minutes\n- Source IP: 203.0.113.45 (check threat intel)\n- Attack was unsuccessful - account locked automatically\n- Only one account targeted\n\n**Recommended Actions:**\n1. Block source IP at firewall\n2. Reset user password as precaution\n3. Enable MFA for affected account\n4. Monitor for similar activity\n5. File incident report\n\n**Status:** Contained - No compromise detected"
+    },
+    {
+      "id": "ticket-002",
+      "title": "Suspicious Outbound Traffic",
+      "difficulty": "medium",
+      "category": "Malware / C2",
+      "description": "Firewall detected unusual outbound connections from workstation WS-SALES-05 to an unknown external IP on port 8443. Connection occurs every 60 seconds.",
+      "scenario": "**Date/Time:** 2024-02-10 16:45 UTC\n\n**Alert Source:** Firewall (Palo Alto)\n\n**Affected System:** WS-SALES-05 (10.50.20.105)\n\n**Alert Details:**\n- Repeated connections to 198.51.100.67:8443\n- Protocol: HTTPS\n- Frequency: Every 60 seconds (beacon behavior)\n- User logged in: mjohnson\n\n**Additional Context:**\n- User reports system running slowly\n- Antivirus scan: No threats detected\n- System was online during weekend",
+      "logs": "```\n2024-02-10 16:30:15 | ALLOW | 10.50.20.105:49234 -> 198.51.100.67:8443 | HTTPS\n2024-02-10 16:31:15 | ALLOW | 10.50.20.105:49235 -> 198.51.100.67:8443 | HTTPS\n2024-02-10 16:32:15 | ALLOW | 10.50.20.105:49236 -> 198.51.100.67:8443 | HTTPS\n...(pattern continues)...\n2024-02-10 16:45:15 | ALLOW | 10.50.20.105:49251 -> 198.51.100.67:8443 | HTTPS\n```",
+      "iocs": ["198.51.100.67", "WS-SALES-05", "10.50.20.105"],
+      "guidedSteps": [
+        "Identify if 198.51.100.67 is malicious (VirusTotal, AbuseIPDB)",
+        "Check for indicators of compromise on workstation",
+        "Review process execution logs",
+        "Determine infection vector",
+        "Recommend containment and remediation"
+      ],
+      "hints": [
+        "60-second beaconing is typical C2 behavior",
+        "Check VirusTotal for the IP address",
+        "User was away during weekend - possible unattended compromise"
+      ],
+      "solution": "**Incident Type:** Malware Infection - C2 Communication\n\n**Findings:**\n- Confirmed C2 beaconing to known malicious IP\n- Likely malware: [TrojanFamily] based on beacon interval\n- System compromised approximately 48 hours ago\n- Persistence mechanism: Scheduled task or startup registry\n\n**Immediate Actions:**\n1. Isolate workstation from network\n2. Block C2 IP at firewall for all systems\n3. Run full forensic scan\n4. Image system before remediation\n5. Reset user credentials\n\n**Investigation:**\n- Check email for phishing attempts\n- Review recent downloads\n- Scan other systems for same IOCs\n\n**Status:** Contained - System isolated for remediation"
+    }
+  ],
   "miniGames": [
     {
       "id": "find-malicious-ip",
