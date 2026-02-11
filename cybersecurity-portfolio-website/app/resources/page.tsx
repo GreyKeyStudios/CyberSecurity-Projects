@@ -29,8 +29,10 @@ interface WindowState {
 export default function ResourcesPage() {
   const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets } = resourcesData
   const [isVMActive, setIsVMActive] = useState(false)
+  const [showLoginScreen, setShowLoginScreen] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [isGuestMode, setIsGuestMode] = useState(false)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const supabase = createClient()
 
@@ -196,8 +198,8 @@ export default function ResourcesPage() {
 
             {/* Launch Button */}
             <div className="flex justify-center mb-16">
-              <Button 
-                onClick={() => setIsVMActive(true)}
+              <Button
+                onClick={() => setShowLoginScreen(true)}
                 size="lg"
                 className="gap-3 px-8 py-6 text-lg bg-primary hover:bg-primary/90 shadow-xl"
               >
@@ -249,6 +251,72 @@ export default function ResourcesPage() {
               </Card>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Login Screen */}
+      {showLoginScreen && !isVMActive && (
+        <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+          <div className="max-w-md w-full mx-4">
+            <Card className="bg-slate-900/90 backdrop-blur-xl border-white/20 shadow-2xl">
+              <CardHeader className="text-center">
+                <div className="flex justify-center mb-4">
+                  <Monitor className="h-16 w-16 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Welcome to SOC OS</CardTitle>
+                <CardDescription>Choose how you want to continue</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button
+                  onClick={() => setIsAuthDialogOpen(true)}
+                  className="w-full py-6 text-lg"
+                  size="lg"
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Sign In
+                </Button>
+                <Button
+                  onClick={() => {
+                    setIsGuestMode(true)
+                    setIsVMActive(true)
+                  }}
+                  variant="outline"
+                  className="w-full py-6 text-lg"
+                  size="lg"
+                >
+                  <Power className="mr-2 h-5 w-5" />
+                  Continue as Guest
+                </Button>
+
+                <div className="pt-4 border-t border-white/10">
+                  <p className="text-xs text-center text-muted-foreground">
+                    <strong>Sign in to unlock:</strong> SOC Journal, Progress Tracking, Saved Notes
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="text-center mt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowLoginScreen(false)}
+                className="text-white/70 hover:text-white"
+              >
+                ← Back to Portfolio
+              </Button>
+            </div>
+          </div>
+
+          {/* Auth Dialog */}
+          <AuthDialog 
+            open={isAuthDialogOpen} 
+            onOpenChange={setIsAuthDialogOpen}
+            onSuccess={() => {
+              setIsVMActive(true)
+              setShowLoginScreen(false)
+            }}
+          />
         </div>
       )}
 
@@ -328,10 +396,31 @@ export default function ResourcesPage() {
                     <div className="p-4 space-y-2">
                       <div className="text-xs text-white/50 font-semibold mb-2">SOC OPERATING SYSTEM</div>
                       
+                      {!user && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setIsAuthDialogOpen(true)
+                              setIsStartMenuOpen(false)
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left"
+                          >
+                            <LogIn className="h-5 w-5 text-primary" />
+                            <div>
+                              <div className="text-white font-medium">Sign In</div>
+                              <div className="text-xs text-white/50">Unlock all features</div>
+                            </div>
+                          </button>
+                          <div className="border-t border-white/10 my-2" />
+                        </>
+                      )}
+                      
                       <button
                         onClick={() => {
                           setIsVMActive(false)
                           setIsStartMenuOpen(false)
+                          setShowLoginScreen(false)
+                          setIsGuestMode(false)
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left"
                       >
@@ -345,6 +434,7 @@ export default function ResourcesPage() {
                       <div className="border-t border-white/10 my-2" />
 
                       <div className="text-xs text-white/50 px-4 py-2">
+                        {user ? `Logged in as ${user.email}` : 'Guest Mode'}<br />
                         Version 1.0 • By Michael Walton
                       </div>
                     </div>
@@ -376,25 +466,15 @@ export default function ResourcesPage() {
                 })}
               </div>
               
-              {/* Auth UI */}
-              <div className="flex items-center gap-2">
-                {user ? (
+              {/* User Menu (if logged in) */}
+              {user && (
+                <div className="flex items-center gap-2">
                   <UserMenu user={user} onSignOut={() => setUser(null)} />
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsAuthDialogOpen(true)}
-                    className="text-white hover:bg-white/10"
-                  >
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Sign In
-                  </Button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="text-xs text-white/70 font-mono">
-                SOC OS v1.0
+                {user ? `${user.email?.split('@')[0]} • ` : ''}SOC OS v1.0
               </div>
             </div>
           </div>
