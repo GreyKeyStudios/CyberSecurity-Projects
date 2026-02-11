@@ -2778,8 +2778,8 @@ function SOCJournalContent({ user }: { user: User | null }) {
             <div className="whitespace-pre-wrap">{selectedEntry.content}</div>
             {selectedEntry.tags && selectedEntry.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
-                {selectedEntry.tags.map((tag: string) => (
-                  <Badge key={tag} variant="outline">{tag}</Badge>
+                {selectedEntry.tags.map((tag: string, idx: number) => (
+                  <Badge key={idx} variant="outline">{tag}</Badge>
                 ))}
               </div>
             )}
