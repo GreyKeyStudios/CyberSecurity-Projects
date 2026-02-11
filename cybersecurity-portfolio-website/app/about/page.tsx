@@ -105,7 +105,7 @@ export default function AboutPage() {
             </Link>
           </Button>
           <Button asChild variant="outline" className="gap-2 border-border hover:border-primary hover:text-primary bg-transparent">
-            <Link href="https://resume.greykeystudios.com" target="_blank" rel="noopener noreferrer">
+            <Link href="https://resume.greykeystudios.dev" target="_blank" rel="noopener noreferrer">
               <FileText className="h-4 w-4" />
               Portfolio Website
             </Link>

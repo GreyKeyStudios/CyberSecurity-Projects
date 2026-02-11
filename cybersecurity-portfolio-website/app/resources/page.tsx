@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket } from "lucide-react"
+import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal as TerminalIcon, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket, FolderCog } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -104,6 +104,10 @@ export default function ResourcesPage() {
     { id: "interview-prep", label: "Interview Prep", icon: Briefcase, color: "text-indigo-500", bgColor: "bg-indigo-500/10", titleBar: "from-indigo-500/20 to-indigo-600/20" },
     { id: "cert-path", label: "Cert Roadmap", icon: Map, color: "text-blue-400", bgColor: "bg-blue-400/10", titleBar: "from-blue-400/20 to-blue-500/20" },
     { id: "sec-plus", label: "Sec+ Vault", icon: GraduationCap, color: "text-amber-500", bgColor: "bg-amber-500/10", titleBar: "from-amber-500/20 to-amber-600/20" },
+    
+    // Row 7: System Utilities
+    { id: "utilities", label: "Utilities", icon: FolderCog, color: "text-teal-400", bgColor: "bg-teal-400/10", titleBar: "from-teal-400/20 to-teal-500/20" },
+    { id: "terminal", label: "Terminal", icon: TerminalIcon, color: "text-green-400", bgColor: "bg-green-400/10", titleBar: "from-green-400/20 to-green-500/20" },
   ]
 
   const [windows, setWindows] = useState<WindowState[]>(
@@ -119,9 +123,24 @@ export default function ResourcesPage() {
   const [nextZIndex, setNextZIndex] = useState(11)
 
   const openWindow = (id: string) => {
-    setWindows(prev => prev.map(w => 
-      w.id === id ? { ...w, isOpen: true, isMinimized: false, zIndex: nextZIndex, navigationStack: [id], currentNavIndex: 0 } : w
-    ))
+    setWindows(prev => {
+      const existing = prev.find(w => w.id === id)
+      if (existing) {
+        return prev.map(w => 
+          w.id === id ? { ...w, isOpen: true, isMinimized: false, zIndex: nextZIndex, navigationStack: [id], currentNavIndex: 0 } : w
+        )
+      } else {
+        // Handle special windows like "about" that aren't desktop icons
+        return [...prev, {
+          id,
+          isOpen: true,
+          isMinimized: false,
+          zIndex: nextZIndex,
+          navigationStack: [id],
+          currentNavIndex: 0
+        }]
+      }
+    })
     setNextZIndex(prev => prev + 1)
   }
 
@@ -417,6 +436,22 @@ export default function ResourcesPage() {
                       )}
                       
                       <button
+                        onClick={() => {
+                          openWindow("about")
+                          setIsStartMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition-all text-left"
+                      >
+                        <Monitor className="h-5 w-5 text-blue-400" />
+                        <div>
+                          <div className="text-white font-medium">About / Changelog</div>
+                          <div className="text-xs text-white/50">Version history</div>
+                        </div>
+                      </button>
+
+                      <div className="border-t border-white/10 my-2" />
+                      
+                      <button
                         onClick={async () => {
                           // Sign out if user is logged in
                           if (user) {
@@ -453,8 +488,12 @@ export default function ResourcesPage() {
               <div className="flex items-center gap-2 flex-1 overflow-x-auto">
                 {windows.filter(w => w.isOpen).map(window => {
                   const icon = desktopIcons.find(i => i.id === window.id)
-                  if (!icon) return null
-                  const Icon = icon.icon
+                  const specialWindows: Record<string, any> = {
+                    about: { label: "About", icon: Monitor, color: "text-blue-400" }
+                  }
+                  const windowConfig = icon || specialWindows[window.id]
+                  if (!windowConfig) return null
+                  const Icon = windowConfig.icon
                   
                   return (
                     <button
@@ -466,8 +505,8 @@ export default function ResourcesPage() {
                           : 'bg-primary/30 hover:bg-primary/40 ring-1 ring-primary/50'
                       }`}
                     >
-                      <Icon className={`h-4 w-4 ${icon.color}`} />
-                      <span className="text-xs font-medium text-white max-w-[120px] truncate">{icon.label}</span>
+                      <Icon className={`h-4 w-4 ${windowConfig.color}`} />
+                      <span className="text-xs font-medium text-white max-w-[120px] truncate">{windowConfig.label}</span>
                     </button>
                   )
                 })}
@@ -496,9 +535,14 @@ export default function ResourcesPage() {
           />
 
           {/* Render Open Windows - Constrained to Monitor */}
-          {desktopIcons.map(icon => {
-            const window = windows.find(w => w.id === icon.id)
-            if (!window?.isOpen) return null
+          {windows.filter(w => w.isOpen).map(window => {
+            const icon = desktopIcons.find(i => i.id === window.id)
+            // Handle special windows like "about"
+            const specialWindows: Record<string, any> = {
+              about: { label: "About SOC OS", icon: Monitor, titleBar: "from-blue-400/20 to-blue-500/20" }
+            }
+            const windowConfig = icon || specialWindows[window.id]
+            if (!windowConfig) return null
 
             const currentPath = window.navigationStack[window.currentNavIndex]
             const canGoBack = window.currentNavIndex > 0
@@ -506,81 +550,84 @@ export default function ResourcesPage() {
 
             return (
               <DesktopWindow
-                key={icon.id}
-                id={icon.id}
-                title={`${icon.label}.app`}
-                icon={icon.icon}
-                iconColor={icon.titleBar}
+                key={window.id}
+                id={window.id}
+                title={`${windowConfig.label}.app`}
+                icon={windowConfig.icon}
+                iconColor={windowConfig.titleBar}
                 isMinimized={window.isMinimized}
                 zIndex={window.zIndex}
-                onClose={() => closeWindow(icon.id)}
-                onMinimize={() => minimizeWindow(icon.id)}
-                onFocus={() => focusWindow(icon.id)}
+                onClose={() => closeWindow(window.id)}
+                onMinimize={() => minimizeWindow(window.id)}
+                onFocus={() => focusWindow(window.id)}
                 canGoBack={canGoBack}
                 canGoForward={canGoForward}
-                onGoBack={() => goBack(icon.id)}
-                onGoForward={() => goForward(icon.id)}
+                onGoBack={() => goBack(window.id)}
+                onGoForward={() => goForward(window.id)}
               >
-                {icon.id === "start-here" && <StartHereContent onNavigate={(appId) => openWindow(appId)} />}
-                {icon.id === "daily-mission" && <DailyMissionContent onNavigate={(appId) => openWindow(appId)} />}
-                {icon.id === "30min-practice" && <PracticeContent />}
-                {icon.id === "quick-start" && <QuickStartContent quickStart={quickStart} />}
-                {icon.id === "templates" && (
+                {window.id === "start-here" && <StartHereContent onNavigate={(appId) => openWindow(appId)} />}
+                {window.id === "daily-mission" && <DailyMissionContent onNavigate={(appId) => openWindow(appId)} />}
+                {window.id === "30min-practice" && <PracticeContent />}
+                {window.id === "quick-start" && <QuickStartContent quickStart={quickStart} />}
+                {window.id === "templates" && (
                   <TemplatesContent 
                     templates={templates} 
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "case-files" && (
+                {window.id === "case-files" && (
                   <CaseFilesContent 
                     caseFiles={caseFiles}
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "playbooks" && (
+                {window.id === "playbooks" && (
                   <PlaybooksContent 
                     playbooks={playbooks}
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "sec-plus" && <SecPlusVaultContent secPlusVault={secPlusVault} />}
-                {icon.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} />}
-                {icon.id === "mini-game" && <MiniGameContent miniGames={miniGames} />}
-                {icon.id === "cert-path" && <CertPathContent certPath={certPath} />}
-                {icon.id === "soc-journal" && <SOCJournalContent user={user} />}
-                {icon.id === "tickets" && <TicketsContent tickets={tickets} user={user} />}
-                {icon.id === "lab-files" && <LabFilesContent labFiles={labFiles} />}
-                {icon.id === "threat-feed" && <ThreatFeedContent threatFeed={threatFeed} />}
-                {icon.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} />}
-                {icon.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
-                {icon.id === "glossary" && <GlossaryContent glossary={glossary} />}
-                {icon.id === "tools" && <ToolsContent tools={tools} />}
-                {icon.id === "cheat-sheets" && (
+                {window.id === "sec-plus" && <SecPlusVaultContent secPlusVault={secPlusVault} />}
+                {window.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} />}
+                {window.id === "mini-game" && <MiniGameContent miniGames={miniGames} />}
+                {window.id === "cert-path" && <CertPathContent certPath={certPath} />}
+                {window.id === "soc-journal" && <SOCJournalContent user={user} />}
+                {window.id === "tickets" && <TicketsContent tickets={tickets} user={user} />}
+                {window.id === "lab-files" && <LabFilesContent labFiles={labFiles} />}
+                {window.id === "threat-feed" && <ThreatFeedContent threatFeed={threatFeed} />}
+                {window.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} />}
+                {window.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
+                {window.id === "glossary" && <GlossaryContent glossary={glossary} />}
+                {window.id === "tools" && <ToolsContent tools={tools} />}
+                {window.id === "utilities" && <UtilitiesContent />}
+                {window.id === "terminal" && <TerminalContent />}
+                {window.id === "about" && <AboutContent />}
+                {window.id === "cheat-sheets" && (
                   <CheatSheetsContent 
                     cheatSheets={cheatSheets}
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "labs" && <LabsContent labs={labs} />}
-                {icon.id === "code-examples" && (
+                {window.id === "labs" && <LabsContent labs={labs} />}
+                {window.id === "code-examples" && (
                   <CodeExamplesContent 
                     codeExamples={codeExamples}
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "interview-prep" && (
+                {window.id === "interview-prep" && (
                   <InterviewPrepContent 
                     interviewPrep={interviewPrep}
                     currentPath={currentPath}
-                    onNavigate={(path) => navigateInWindow(icon.id, path)}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
-                {icon.id === "ioc-helper" && <IOCHelperContent />}
+                {window.id === "ioc-helper" && <IOCHelperContent />}
               </DesktopWindow>
             )
           })}
@@ -3285,6 +3332,569 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Phase 5 Components - Utilities & Terminal
+
+function UtilitiesContent() {
+  const [selectedUtility, setSelectedUtility] = useState<string | null>(null)
+
+  const utilities = [
+    { id: "hash", name: "Hash Identifier", description: "Identify hash types (MD5, SHA1, SHA256, etc.)", icon: "🔐" },
+    { id: "base64", name: "Base64 Toolkit", description: "Encode/decode Base64 strings", icon: "📝" },
+    { id: "timestamp", name: "Timestamp Converter", description: "Convert between Unix timestamps and dates", icon: "⏰" },
+    { id: "email-header", name: "Email Header Parser", description: "Parse and analyze email headers", icon: "📧" },
+    { id: "ip-info", name: "IP Info Lookup", description: "Quick IP address information", icon: "🌐" },
+    { id: "port-lookup", name: "Port Lookup", description: "Common port numbers and services", icon: "🔌" },
+    { id: "user-agent", name: "User-Agent Parser", description: "Decode browser user-agent strings", icon: "🖥️" },
+    { id: "evidence", name: "Evidence Locker", description: "Temporary evidence notes", icon: "📋" },
+    { id: "timeline", name: "Timeline Builder", description: "Build investigation timelines", icon: "📅" },
+  ]
+
+  if (selectedUtility) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={() => setSelectedUtility(null)}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Utilities
+        </Button>
+        {selectedUtility === "hash" && <HashIdentifierUtility />}
+        {selectedUtility === "base64" && <Base64Utility />}
+        {selectedUtility === "timestamp" && <TimestampUtility />}
+        {selectedUtility === "email-header" && <EmailHeaderUtility />}
+        {selectedUtility === "ip-info" && <IPInfoUtility />}
+        {selectedUtility === "port-lookup" && <PortLookupUtility />}
+        {selectedUtility === "user-agent" && <UserAgentUtility />}
+        {selectedUtility === "evidence" && <EvidenceLockerUtility />}
+        {selectedUtility === "timeline" && <TimelineBuilderUtility />}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <FolderCog className="h-6 w-6 text-teal-400" />
+          SOC Utilities
+        </h2>
+        <p className="text-muted-foreground">Quick tools for common SOC analyst tasks</p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {utilities.map((utility) => (
+          <Card
+            key={utility.id}
+            className="cursor-pointer hover:border-teal-400/50 transition-all"
+            onClick={() => setSelectedUtility(utility.id)}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{utility.icon}</span>
+                <div>
+                  <CardTitle className="text-base">{utility.name}</CardTitle>
+                  <CardDescription className="text-xs">{utility.description}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Individual Utility Components (Simplified)
+
+function HashIdentifierUtility() {
+  const [hash, setHash] = useState("")
+  const [result, setResult] = useState("")
+
+  const identifyHash = (h: string) => {
+    const len = h.trim().length
+    if (len === 32) return "Likely MD5 (32 hex characters)"
+    if (len === 40) return "Likely SHA-1 (40 hex characters)"
+    if (len === 64) return "Likely SHA-256 (64 hex characters)"
+    if (len === 128) return "Likely SHA-512 (128 hex characters)"
+    return "Unknown hash type"
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🔐 Hash Identifier</CardTitle>
+        <CardDescription>Paste a hash to identify its type</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          placeholder="Enter hash value..."
+          value={hash}
+          onChange={(e) => {
+            setHash(e.target.value)
+            setResult(identifyHash(e.target.value))
+          }}
+        />
+        {result && (
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="font-semibold">{result}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function Base64Utility() {
+  const [input, setInput] = useState("")
+  const [output, setOutput] = useState("")
+
+  const encode = () => {
+    try {
+      setOutput(btoa(input))
+    } catch (e) {
+      setOutput("Error encoding")
+    }
+  }
+
+  const decode = () => {
+    try {
+      setOutput(atob(input))
+    } catch (e) {
+      setOutput("Error decoding - invalid Base64")
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>📝 Base64 Toolkit</CardTitle>
+        <CardDescription>Encode or decode Base64 strings</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Input</label>
+          <textarea
+            className="w-full p-3 rounded-lg border bg-background mt-2"
+            rows={3}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter text or Base64..."
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={encode}>Encode</Button>
+          <Button onClick={decode} variant="outline">Decode</Button>
+        </div>
+        {output && (
+          <div>
+            <label className="text-sm font-medium">Output</label>
+            <div className="p-3 bg-muted rounded-lg mt-2 font-mono text-sm break-all">
+              {output}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function TimestampUtility() {
+  const [timestamp, setTimestamp] = useState("")
+  const [result, setResult] = useState("")
+
+  const convert = () => {
+    try {
+      const ts = parseInt(timestamp)
+      const date = new Date(ts * 1000)
+      setResult(date.toLocaleString())
+    } catch (e) {
+      setResult("Invalid timestamp")
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>⏰ Timestamp Converter</CardTitle>
+        <CardDescription>Convert Unix timestamps to readable dates</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          placeholder="Enter Unix timestamp..."
+          value={timestamp}
+          onChange={(e) => setTimestamp(e.target.value)}
+        />
+        <Button onClick={convert}>Convert</Button>
+        {result && (
+          <div className="p-3 bg-muted rounded-lg">
+            <p>{result}</p>
+          </div>
+        )}
+        <div className="pt-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Current timestamp: <span className="font-mono">{Math.floor(Date.now() / 1000)}</span>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EmailHeaderUtility() {
+  const [headers, setHeaders] = useState("")
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>📧 Email Header Parser</CardTitle>
+        <CardDescription>Analyze email headers for investigation</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <textarea
+          className="w-full p-3 rounded-lg border bg-background"
+          rows={10}
+          value={headers}
+          onChange={(e) => setHeaders(e.target.value)}
+          placeholder="Paste email headers here..."
+        />
+        <div className="text-sm text-muted-foreground">
+          <p>Look for:</p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Return-Path (sender email)</li>
+            <li>Received: (mail server chain)</li>
+            <li>X-Originating-IP (sender IP)</li>
+            <li>Authentication-Results (SPF, DKIM, DMARC)</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function IPInfoUtility() {
+  const [ip, setIp] = useState("")
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🌐 IP Info Lookup</CardTitle>
+        <CardDescription>Quick IP address information</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          placeholder="Enter IP address..."
+          value={ip}
+          onChange={(e) => setIp(e.target.value)}
+        />
+        <div className="space-y-2">
+          <Button className="w-full" onClick={() => window.open(`https://www.abuseipdb.com/check/${ip}`, '_blank')}>
+            Check on AbuseIPDB
+          </Button>
+          <Button className="w-full" variant="outline" onClick={() => window.open(`https://www.virustotal.com/gui/ip-address/${ip}`, '_blank')}>
+            Check on VirusTotal
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PortLookupUtility() {
+  const [search, setSearch] = useState("")
+  const commonPorts = [
+    { port: 20, service: "FTP Data", protocol: "TCP" },
+    { port: 21, service: "FTP Control", protocol: "TCP" },
+    { port: 22, service: "SSH", protocol: "TCP" },
+    { port: 23, service: "Telnet", protocol: "TCP" },
+    { port: 25, service: "SMTP", protocol: "TCP" },
+    { port: 53, service: "DNS", protocol: "TCP/UDP" },
+    { port: 80, service: "HTTP", protocol: "TCP" },
+    { port: 110, service: "POP3", protocol: "TCP" },
+    { port: 143, service: "IMAP", protocol: "TCP" },
+    { port: 443, service: "HTTPS", protocol: "TCP" },
+    { port: 445, service: "SMB", protocol: "TCP" },
+    { port: 3306, service: "MySQL", protocol: "TCP" },
+    { port: 3389, service: "RDP", protocol: "TCP" },
+    { port: 5432, service: "PostgreSQL", protocol: "TCP" },
+    { port: 8080, service: "HTTP Proxy", protocol: "TCP" },
+  ]
+
+  const filtered = commonPorts.filter(p => 
+    p.port.toString().includes(search) || 
+    p.service.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🔌 Port Lookup</CardTitle>
+        <CardDescription>Common ports and their services</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          placeholder="Search by port or service..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {filtered.map((p) => (
+            <div key={p.port} className="p-3 bg-muted rounded-lg flex justify-between items-center">
+              <div>
+                <span className="font-mono font-bold">{p.port}</span>
+                <span className="text-muted-foreground ml-2">{p.service}</span>
+              </div>
+              <Badge variant="outline">{p.protocol}</Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function UserAgentUtility() {
+  const [ua, setUa] = useState("")
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>🖥️ User-Agent Parser</CardTitle>
+        <CardDescription>Decode browser and device information</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <textarea
+          className="w-full p-3 rounded-lg border bg-background"
+          rows={4}
+          value={ua}
+          onChange={(e) => setUa(e.target.value)}
+          placeholder="Paste User-Agent string..."
+        />
+        <div className="text-sm text-muted-foreground">
+          <p>User-Agent strings contain:</p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>Browser name and version</li>
+            <li>Operating system</li>
+            <li>Device type</li>
+            <li>Rendering engine</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function EvidenceLockerUtility() {
+  const [notes, setNotes] = useState("")
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>📋 Evidence Locker</CardTitle>
+        <CardDescription>Temporary notes for current investigation</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <textarea
+          className="w-full p-3 rounded-lg border bg-background font-mono text-sm"
+          rows={15}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Document evidence here...
+
+IOCs found:
+- IP: 
+- Domain: 
+- Hash: 
+
+Timeline:
+- 
+
+Notes:
+- "
+        />
+        <p className="text-xs text-muted-foreground">
+          ⚠️ Notes are stored locally in browser and will be lost on refresh. Use SOC Journal for permanent storage.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function TimelineBuilderUtility() {
+  const [events, setEvents] = useState("")
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>📅 Timeline Builder</CardTitle>
+        <CardDescription>Build investigation timeline</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <textarea
+          className="w-full p-3 rounded-lg border bg-background font-mono text-sm"
+          rows={15}
+          value={events}
+          onChange={(e) => setEvents(e.target.value)}
+          placeholder="Build your timeline...
+
+Format:
+[TIME] - EVENT DESCRIPTION
+
+Example:
+[14:23 UTC] - Failed login attempts detected
+[14:25 UTC] - Account locked automatically
+[14:30 UTC] - User contacted helpdesk
+[14:45 UTC] - Incident escalated to SOC
+"
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
+function TerminalContent() {
+  const [history, setHistory] = useState<string[]>([
+    "SOC OS Terminal v1.0",
+    "Type 'help' for available commands",
+    ""
+  ])
+  const [input, setInput] = useState("")
+
+  const commands: Record<string, string> = {
+    help: "Available commands: help, clear, whoami, sysinfo, apps, motd, time, uptime",
+    clear: "",
+    whoami: "soc-analyst",
+    sysinfo: "SOC OS v1.0 | Build: 2024.02 | Runtime: Browser",
+    apps: "20 desktop applications installed",
+    motd: "Welcome to SOC OS - Your Personal Blue Team Desktop",
+    time: new Date().toLocaleString(),
+    uptime: "System uptime: " + Math.floor(Math.random() * 100) + " hours",
+  }
+
+  const executeCommand = (cmd: string) => {
+    const trimmed = cmd.trim().toLowerCase()
+    
+    if (trimmed === "clear") {
+      setHistory([])
+      return
+    }
+
+    const output = commands[trimmed] || `Command not found: ${cmd}`
+    setHistory([...history, `$ ${cmd}`, output, ""])
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      executeCommand(input)
+      setInput("")
+    }
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="bg-black text-green-400 font-mono text-sm p-4 rounded-lg flex-1 overflow-y-auto">
+        {history.map((line, idx) => (
+          <div key={idx}>{line}</div>
+        ))}
+        <div className="flex items-center gap-2">
+          <span>$</span>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="flex-1 bg-transparent outline-none border-none text-green-400"
+            autoFocus
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AboutContent() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Monitor className="h-6 w-6 text-blue-400" />
+          About SOC OS
+        </h2>
+        <p className="text-muted-foreground">Personal SOC analyst training platform</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Version 1.0</CardTitle>
+          <CardDescription>February 2024</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h3 className="font-semibold mb-2">What is SOC OS?</h3>
+            <p className="text-sm text-muted-foreground">
+              SOC OS is a personal learning platform designed to help aspiring SOC analysts practice, document, and track their cybersecurity journey. It simulates a desktop operating system with specialized tools, training materials, and hands-on challenges.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Built With</h3>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">Next.js 16</Badge>
+              <Badge variant="outline">React 19</Badge>
+              <Badge variant="outline">TypeScript</Badge>
+              <Badge variant="outline">Tailwind CSS</Badge>
+              <Badge variant="outline">Supabase</Badge>
+              <Badge variant="outline">shadcn/ui</Badge>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Changelog</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="font-semibold">v1.0 - February 2024</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+                  <li>Initial release with 20 desktop apps</li>
+                  <li>Authentication system with Supabase</li>
+                  <li>SOC Journal with full CRUD</li>
+                  <li>Incident Ticket Simulator</li>
+                  <li>Lab Files for hands-on practice</li>
+                  <li>9 SOC utilities tools</li>
+                  <li>Skill Drills and practice quizzes</li>
+                  <li>Certification roadmap tracking</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Developer</h3>
+            <p className="text-sm text-muted-foreground">
+              Built by <strong>Michael Walton</strong> as part of a cybersecurity portfolio and personal learning platform.
+            </p>
+            <div className="flex gap-2 mt-2">
+              <Button size="sm" variant="outline" onClick={() => window.open('https://github.com/GreyKeyStudios', '_blank')}>
+                <Github className="h-4 w-4 mr-2" />
+                GitHub
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => window.open('https://resume.greykeystudios.dev', '_blank')}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Resume
+              </Button>
+            </div>
+          </div>
+
+          <Card className="bg-muted/50">
+            <CardContent className="pt-6 text-xs text-muted-foreground">
+              <p>
+                This project was scaffolded and developed with AI assistance (Claude + Cursor).
+                All code and content are original implementations for educational purposes.
+              </p>
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
     </div>
   )
 }

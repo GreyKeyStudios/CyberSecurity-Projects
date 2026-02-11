@@ -68,4 +68,4 @@ Minneapolis, Minnesota, 55411 — Open to Remote/Hybrid positions
 - **Phone:** 612-598-2403
 - **LinkedIn:** [linkedin.com/in/michael-walton84](https://www.linkedin.com/in/michael-walton84)
 - **GitHub:** [github.com/GreyKeyStudios](https://www.github.com/GreyKeyStudios)
-- **Portfolio Website:** [resume.greykeystudios.com](https://resume.greykeystudios.com)
+- **Portfolio Website:** [resume.greykeystudios.dev](https://resume.greykeystudios.dev)

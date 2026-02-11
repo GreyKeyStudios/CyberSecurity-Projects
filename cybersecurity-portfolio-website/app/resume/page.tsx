@@ -53,7 +53,7 @@ export default function ResumePage() {
             <CardContent>
               <Button asChild variant="outline" size="lg" className="w-full gap-2 bg-transparent">
                 <Link 
-                  href="https://resume.greykeystudios.com" 
+                  href="https://resume.greykeystudios.dev" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >

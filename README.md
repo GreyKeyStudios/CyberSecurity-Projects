@@ -11,6 +11,12 @@ This repository contains hands-on cybersecurity labs and SOC-style investigation
 - Network forensics
 - Malware analysis
 
+## 🛠️ SOC Operating System
+
+I've organized this into a **personal SOC Operating System** — a curated learning environment with investigation templates, IOC workflows, Splunk queries, cheat sheets, and interview prep resources. Developed using AI-assisted workflows and refined through hands-on testing.
+
+**📖 Important:** See `HOW_TO_TALK_ABOUT_THIS.md` for interview-safe language when describing this project.
+
 ## ⭐ Best Work (Start Here)
 
 These three projects best demonstrate SOC analyst capabilities:
@@ -74,7 +80,7 @@ Each casefile includes: alert summary, investigation steps, findings, resolution
 - **Email:** michaelwalton1984@gmail.com
 - **LinkedIn:** [linkedin.com/in/michael-walton84](https://www.linkedin.com/in/michael-walton84)
 - **GitHub:** [@GreyKeyStudios](https://github.com/GreyKeyStudios)
-- **Portfolio:** [resume.greykeystudios.com](https://resume.greykeystudios.com)
+- **Portfolio:** [resume.greykeystudios.dev](https://resume.greykeystudios.dev)
 
 ---
 

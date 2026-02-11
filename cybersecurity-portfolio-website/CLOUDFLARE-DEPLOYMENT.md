@@ -75,7 +75,7 @@ cd cybersecurity-portfolio-website && pnpm install
 After deployment:
 1. Go to your Pages project
 2. Click **"Custom domains"**
-3. Add your domain (e.g., `portfolio.greykeystudios.com`)
+3. Add your domain (e.g., `portfolio.greykeystudios.dev`)
 4. Cloudflare will automatically configure DNS
 
 ---
