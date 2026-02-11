@@ -621,7 +621,7 @@ export default function ResourcesPage() {
                 {window.id === "glossary" && <GlossaryContent glossary={glossary} />}
                 {window.id === "tools" && <ToolsContent tools={tools} />}
                 {window.id === "utilities" && <UtilitiesContent onNavigate={(appId) => openWindow(appId)} />}
-                {window.id === "terminal" && <TerminalContent />}
+                {window.id === "terminal" && <TerminalContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "about" && <AboutContent />}
                 {window.id === "util-hash" && <HashIdentifierUtility />}
                 {window.id === "util-base64" && <Base64Utility />}
@@ -3758,35 +3758,338 @@ Example:
   )
 }
 
-function TerminalContent() {
+function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
   const [history, setHistory] = useState<string[]>([
-    "SOC OS Terminal v1.0",
-    "Type 'help' for available commands",
+    "SOC OS Terminal v1.0 - Command Center",
+    "Type 'help' for available commands or 'help <command>' for details",
     ""
   ])
   const [input, setInput] = useState("")
 
-  const commands: Record<string, string> = {
-    help: "Available commands: help, clear, whoami, sysinfo, apps, motd, time, uptime",
-    clear: "",
-    whoami: "soc-analyst",
-    sysinfo: "SOC OS v1.0 | Build: 2024.02 | Runtime: Browser",
-    apps: "20 desktop applications installed",
-    motd: "Welcome to SOC OS - Your Personal Blue Team Desktop",
-    time: new Date().toLocaleString(),
-    uptime: "System uptime: " + Math.floor(Math.random() * 100) + " hours",
+  const addToHistory = (lines: string[]) => {
+    setHistory(prev => [...prev, ...lines])
   }
 
   const executeCommand = (cmd: string) => {
-    const trimmed = cmd.trim().toLowerCase()
+    const trimmed = cmd.trim()
     
-    if (trimmed === "clear") {
+    if (!trimmed) return
+
+    // Add command to history
+    addToHistory([`$ ${cmd}`])
+
+    // Parse command and args
+    const parts = trimmed.split(' ')
+    const command = parts[0].toLowerCase()
+    const args = parts.slice(1)
+
+    // Clear command
+    if (command === "clear") {
       setHistory([])
       return
     }
 
-    const output = commands[trimmed] || `Command not found: ${cmd}`
-    setHistory([...history, `$ ${cmd}`, output, ""])
+    // System info commands
+    if (command === "whoami") {
+      addToHistory(["soc-analyst", ""])
+      return
+    }
+
+    if (command === "sysinfo") {
+      addToHistory([
+        "SOC OS v1.0",
+        "Build: 2024.02",
+        "Runtime: Browser-based Virtual Environment",
+        "Apps: 21 installed",
+        ""
+      ])
+      return
+    }
+
+    if (command === "time") {
+      addToHistory([new Date().toLocaleString(), ""])
+      return
+    }
+
+    if (command === "uptime") {
+      addToHistory([`System uptime: ${Math.floor(Math.random() * 100)} hours`, ""])
+      return
+    }
+
+    if (command === "motd") {
+      addToHistory([
+        "╔══════════════════════════════════════╗",
+        "║   Welcome to SOC OS                  ║",
+        "║   Your Personal Blue Team Desktop    ║",
+        "╚══════════════════════════════════════╝",
+        ""
+      ])
+      return
+    }
+
+    // Help system
+    if (command === "help") {
+      if (args.length === 0) {
+        addToHistory([
+          "Available Commands:",
+          "",
+          "SYSTEM:",
+          "  whoami, sysinfo, time, uptime, motd, clear",
+          "",
+          "APPS:",
+          "  apps              - list all applications",
+          "  open <app>        - open application",
+          "",
+          "TOOLS:",
+          "  check-ip <ip>     - lookup IP address",
+          "  decode <base64>   - decode Base64 string",
+          "  hash <string>     - identify hash type",
+          "  parse-header      - open email header parser",
+          "",
+          "TICKETS:",
+          "  ticket list       - list all tickets",
+          "  ticket open <id>  - open specific ticket",
+          "",
+          "JOURNAL:",
+          "  journal add       - add journal entry",
+          "  journal search    - search journal",
+          "",
+          "SEARCH:",
+          "  find <query>      - search all content",
+          "",
+          "Type 'help <command>' for detailed information",
+          ""
+        ])
+      } else {
+        const helpCmd = args[0].toLowerCase()
+        const helpText: Record<string, string[]> = {
+          open: [
+            "USAGE: open <app-name>",
+            "",
+            "Opens a desktop application.",
+            "Example: open journal, open tickets, open utilities",
+            ""
+          ],
+          "check-ip": [
+            "USAGE: check-ip <ip-address>",
+            "",
+            "Opens IP Info Lookup tool with the specified IP.",
+            "Example: check-ip 192.168.1.1",
+            ""
+          ],
+          decode: [
+            "USAGE: decode <base64-string>",
+            "",
+            "Opens Base64 Toolkit with the string ready to decode.",
+            "Example: decode SGVsbG8gV29ybGQ=",
+            ""
+          ],
+          hash: [
+            "USAGE: hash <hash-string>",
+            "",
+            "Opens Hash Identifier with the hash value.",
+            "Example: hash 5d41402abc4b2a76b9719d911017c592",
+            ""
+          ],
+          ticket: [
+            "USAGE: ticket <list|open> [id]",
+            "",
+            "Manage incident tickets.",
+            "  ticket list    - show all tickets",
+            "  ticket open 1  - open ticket by number",
+            ""
+          ],
+          find: [
+            "USAGE: find <search-query>",
+            "",
+            "Search across glossary, playbooks, and cheat sheets.",
+            "Example: find event id 4625",
+            ""
+          ]
+        }
+
+        if (helpText[helpCmd]) {
+          addToHistory(helpText[helpCmd])
+        } else {
+          addToHistory([`No help available for '${helpCmd}'`, ""])
+        }
+      }
+      return
+    }
+
+    // Apps command
+    if (command === "apps") {
+      addToHistory([
+        "Installed Applications:",
+        "",
+        "  journal          SOC Journal",
+        "  tickets          Incident Tickets",
+        "  playbooks        SOC Playbooks",
+        "  case-files       Case Files",
+        "  utilities        Utilities Folder",
+        "  terminal         Terminal",
+        "  glossary         SOC Dictionary",
+        "  cli-cheats       CLI Cheatbook",
+        "  threat-feed      Intel Feed",
+        "  toolbox          Blue Team Toolbox",
+        "  skill-drills     Skill Drills",
+        "  cert-path        Cert Roadmap",
+        "  sec-plus         Sec+ Vault",
+        "  interview-prep   Interview Prep",
+        "  ioc-helper       IOC Helper",
+        "  lab-files        Lab Files",
+        "",
+        "Use 'open <app-name>' to launch",
+        ""
+      ])
+      return
+    }
+
+    // Open command
+    if (command === "open") {
+      if (args.length === 0) {
+        addToHistory(["Usage: open <app-name>", "Type 'apps' to see available applications", ""])
+        return
+      }
+
+      const appMap: Record<string, string> = {
+        journal: "soc-journal",
+        tickets: "tickets",
+        playbooks: "playbooks",
+        "case-files": "case-files",
+        cases: "case-files",
+        utilities: "utilities",
+        utils: "utilities",
+        terminal: "terminal",
+        glossary: "glossary",
+        dictionary: "glossary",
+        "cli-cheats": "cli-cheats",
+        cli: "cli-cheats",
+        "threat-feed": "threat-feed",
+        intel: "threat-feed",
+        toolbox: "toolbox",
+        tools: "toolbox",
+        "skill-drills": "skill-drills",
+        drills: "skill-drills",
+        "cert-path": "cert-path",
+        certs: "cert-path",
+        "sec-plus": "sec-plus",
+        secplus: "sec-plus",
+        interview: "interview-prep",
+        ioc: "ioc-helper",
+        labs: "lab-files"
+      }
+
+      const appName = args[0].toLowerCase()
+      const appId = appMap[appName]
+
+      if (appId) {
+        addToHistory([`Opening ${appName}...`, ""])
+        setTimeout(() => onNavigate(appId), 100)
+      } else {
+        addToHistory([`Unknown application: ${appName}`, "Type 'apps' for list", ""])
+      }
+      return
+    }
+
+    // IP lookup
+    if (command === "check-ip") {
+      if (args.length === 0) {
+        addToHistory(["Usage: check-ip <ip-address>", ""])
+        return
+      }
+      addToHistory([`Opening IP Lookup for ${args[0]}...`, ""])
+      setTimeout(() => onNavigate("util-ip"), 100)
+      return
+    }
+
+    // Base64 decode
+    if (command === "decode") {
+      if (args.length === 0) {
+        addToHistory(["Usage: decode <base64-string>", ""])
+        return
+      }
+      addToHistory([`Opening Base64 Toolkit...`, ""])
+      setTimeout(() => onNavigate("util-base64"), 100)
+      return
+    }
+
+    // Hash identifier
+    if (command === "hash") {
+      if (args.length === 0) {
+        addToHistory(["Usage: hash <hash-string>", ""])
+        return
+      }
+      addToHistory([`Opening Hash Identifier...`, ""])
+      setTimeout(() => onNavigate("util-hash"), 100)
+      return
+    }
+
+    // Email parser
+    if (command === "parse-header") {
+      addToHistory(["Opening Email Header Parser...", ""])
+      setTimeout(() => onNavigate("util-email"), 100)
+      return
+    }
+
+    // Ticket commands
+    if (command === "ticket") {
+      if (args.length === 0 || args[0] === "list") {
+        addToHistory([
+          "Incident Tickets:",
+          "",
+          "  1. Multiple Failed Login Attempts (Easy)",
+          "  2. Suspicious PowerShell Execution (Medium)",
+          "",
+          "Use 'ticket open <number>' to view ticket",
+          ""
+        ])
+        return
+      }
+
+      if (args[0] === "open") {
+        addToHistory(["Opening Tickets app...", ""])
+        setTimeout(() => onNavigate("tickets"), 100)
+        return
+      }
+    }
+
+    // Journal commands
+    if (command === "journal") {
+      if (args.length === 0 || args[0] === "add") {
+        addToHistory(["Opening SOC Journal...", ""])
+        setTimeout(() => onNavigate("soc-journal"), 100)
+        return
+      }
+
+      if (args[0] === "search") {
+        addToHistory(["Opening SOC Journal with search...", ""])
+        setTimeout(() => onNavigate("soc-journal"), 100)
+        return
+      }
+    }
+
+    // Find/Search command
+    if (command === "find") {
+      if (args.length === 0) {
+        addToHistory(["Usage: find <search-query>", ""])
+        return
+      }
+      const query = args.join(" ")
+      addToHistory([
+        `Searching for: "${query}"`,
+        "Try: glossary, playbooks, cli-cheats",
+        ""
+      ])
+      return
+    }
+
+    // Unknown command
+    addToHistory([
+      `Command not found: ${command}`,
+      "Type 'help' for available commands",
+      ""
+    ])
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
