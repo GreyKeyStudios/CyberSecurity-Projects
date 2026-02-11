@@ -26,15 +26,21 @@ export default function ResumePage() {
                 Get the latest PDF version of my resume
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <Button asChild size="lg" className="w-full gap-2">
-                <Link href="/resume.pdf" download>
+                <Link href="/Michael Walton Tech Resume - 2026.pdf" download>
                   <Download className="h-4 w-4" />
                   Download PDF
                 </Link>
               </Button>
+              <Button asChild size="lg" variant="outline" className="w-full gap-2">
+                <Link href="/Michael Walton Tech Resume - 2026.docx" download>
+                  <Download className="h-4 w-4" />
+                  Download DOCX
+                </Link>
+              </Button>
               <p className="text-xs text-muted-foreground mt-3 text-center">
-                PDF format, updated regularly
+                Updated February 2026
               </p>
             </CardContent>
           </Card>
