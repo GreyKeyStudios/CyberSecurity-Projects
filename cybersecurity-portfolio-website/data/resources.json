@@ -117,9 +117,787 @@
       ]
     }
   ],
+  "quickStart": [
+    {
+      "id": "roadmap-sh",
+      "title": "Roadmap.sh - Cyber Security",
+      "description": "Step-by-step learning paths for cybersecurity careers including SOC analyst, penetration testing, and more.",
+      "url": "https://roadmap.sh/cyber-security",
+      "type": "Learning Path"
+    },
+    {
+      "id": "tryhackme-soc1",
+      "title": "TryHackMe - SOC Level 1",
+      "description": "Complete beginner-friendly path to learn the core responsibilities of a Junior Security Analyst.",
+      "url": "https://tryhackme.com/path/outline/soclevel1",
+      "type": "Training Platform"
+    },
+    {
+      "id": "letsdefend-soc",
+      "title": "LetsDefend - SOC Analyst Learning Path",
+      "description": "Hands-on SOC training with real-world scenarios and alert investigations.",
+      "url": "https://letsdefend.io/",
+      "type": "Training Platform"
+    },
+    {
+      "id": "cybrary-soc",
+      "title": "Cybrary - SOC Analyst",
+      "description": "Free course covering the fundamentals of SOC operations and security monitoring.",
+      "url": "https://www.cybrary.it/course/soc-analyst",
+      "type": "Online Course"
+    }
+  ],
+  "tools": [
+    {
+      "id": "virustotal",
+      "title": "VirusTotal",
+      "description": "Analyze suspicious files, URLs, domains, and IP addresses for malware and threats.",
+      "url": "https://www.virustotal.com/",
+      "category": "Threat Intelligence",
+      "useCase": "File/URL/IP/Domain reputation checking"
+    },
+    {
+      "id": "abuseipdb",
+      "title": "AbuseIPDB",
+      "description": "Check IP addresses for malicious activity reports from the community.",
+      "url": "https://www.abuseipdb.com/",
+      "category": "Threat Intelligence",
+      "useCase": "IP reputation and abuse reporting"
+    },
+    {
+      "id": "alienvault-otx",
+      "title": "AlienVault OTX",
+      "description": "Open Threat Exchange - community-driven threat intelligence platform.",
+      "url": "https://otx.alienvault.com/",
+      "category": "Threat Intelligence",
+      "useCase": "IOC feeds and threat intelligence"
+    },
+    {
+      "id": "anyrun",
+      "title": "Any.Run",
+      "description": "Interactive malware analysis sandbox with real-time results.",
+      "url": "https://app.any.run/",
+      "category": "Malware Analysis",
+      "useCase": "Dynamic malware analysis and behavior observation"
+    },
+    {
+      "id": "hybrid-analysis",
+      "title": "Hybrid Analysis",
+      "description": "Free malware analysis service powered by Falcon Sandbox.",
+      "url": "https://www.hybrid-analysis.com/",
+      "category": "Malware Analysis",
+      "useCase": "Automated malware analysis and reporting"
+    },
+    {
+      "id": "urlscan",
+      "title": "URLScan.io",
+      "description": "Website scanner for suspicious and malicious URLs.",
+      "url": "https://urlscan.io/",
+      "category": "Threat Intelligence",
+      "useCase": "URL scanning and website analysis"
+    },
+    {
+      "id": "shodan",
+      "title": "Shodan",
+      "description": "Search engine for Internet-connected devices and services.",
+      "url": "https://www.shodan.io/",
+      "category": "Reconnaissance",
+      "useCase": "Internet-wide asset discovery and research"
+    },
+    {
+      "id": "mxtoolbox",
+      "title": "MXToolbox",
+      "description": "Email and DNS diagnostic tools for phishing investigations.",
+      "url": "https://mxtoolbox.com/",
+      "category": "Email Analysis",
+      "useCase": "Email header analysis and DNS lookups"
+    },
+    {
+      "id": "cisco-talos",
+      "title": "Cisco Talos Intelligence",
+      "description": "IP and domain reputation lookups from Cisco's threat intelligence team.",
+      "url": "https://talosintelligence.com/",
+      "category": "Threat Intelligence",
+      "useCase": "IP/Domain reputation checking"
+    },
+    {
+      "id": "cyberchef",
+      "title": "CyberChef",
+      "description": "The Cyber Swiss Army Knife for data encoding/decoding and analysis.",
+      "url": "https://gchq.github.io/CyberChef/",
+      "category": "Analysis Tool",
+      "useCase": "Data manipulation, decoding, and forensic analysis"
+    }
+  ],
+  "labs": [
+    {
+      "id": "thm-jr-soc",
+      "title": "TryHackMe - Junior Security Analyst Intro",
+      "description": "Introduction to the role and responsibilities of a SOC analyst.",
+      "url": "https://tryhackme.com/room/jrsecanalystintrouxo",
+      "platform": "TryHackMe",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "thm-investigating-windows",
+      "title": "TryHackMe - Investigating Windows",
+      "description": "Practice using Windows Event Logs and built-in tools for investigation.",
+      "url": "https://tryhackme.com/room/investigatingwindows",
+      "platform": "TryHackMe",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "splunk-bots",
+      "title": "Splunk Boss of the SOC (BOTS)",
+      "description": "Real-world SIEM investigation scenarios using Splunk with downloadable datasets.",
+      "url": "https://github.com/splunk/botsv1",
+      "platform": "Splunk",
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": "letsdefend-alerts",
+      "title": "LetsDefend - SOC Alerts",
+      "description": "Real SOC alert investigations with guided walkthroughs.",
+      "url": "https://app.letsdefend.io/monitoring",
+      "platform": "LetsDefend",
+      "difficulty": "Easy-Medium"
+    },
+    {
+      "id": "cyberdefenders",
+      "title": "CyberDefenders",
+      "description": "Blue team CTF platform with DFIR challenges and datasets.",
+      "url": "https://cyberdefenders.org/blueteam-ctf-challenges/",
+      "platform": "CyberDefenders",
+      "difficulty": "Various"
+    },
+    {
+      "id": "malware-traffic-analysis",
+      "title": "Malware Traffic Analysis",
+      "description": "PCAP files and malware traffic scenarios for analysis practice.",
+      "url": "https://www.malware-traffic-analysis.net/",
+      "platform": "Independent",
+      "difficulty": "Intermediate"
+    }
+  ],
+  "codeExamples": [
+    {
+      "id": "ioc-enrichment",
+      "title": "IOC Enrichment Script",
+      "description": "Python script to enrich IOCs with VirusTotal and AbuseIPDB data.",
+      "language": "Python",
+      "githubPath": "Code-Examples/ioc-enrichment.py",
+      "topics": ["API Integration", "Threat Intelligence", "Automation"]
+    },
+    {
+      "id": "log-parser",
+      "title": "Log Parser Examples",
+      "description": "Python examples for parsing common log formats (Syslog, Windows Event Logs, etc.).",
+      "language": "Python",
+      "githubPath": "Code-Examples/log-parser-examples.py",
+      "topics": ["Log Analysis", "Regex", "Data Parsing"]
+    },
+    {
+      "id": "splunk-queries",
+      "title": "Splunk SPL Query Library",
+      "description": "Collection of useful Splunk queries for SOC investigations.",
+      "language": "SPL",
+      "githubPath": "Code-Examples/splunk-queries.md",
+      "topics": ["SIEM", "Splunk", "Query Development"]
+    },
+    {
+      "id": "regex-extractors",
+      "title": "Regex IOC Extractors",
+      "description": "Regular expressions for extracting IPs, domains, URLs, and hashes from text.",
+      "language": "Regex/Python",
+      "githubPath": "Code-Examples/regex-extractors.py",
+      "topics": ["Regex", "IOC Extraction", "Data Processing"]
+    }
+  ],
+  "interviewPrep": [
+    {
+      "id": "soc-questions",
+      "title": "Common SOC Interview Questions",
+      "description": "Frequently asked technical and behavioral questions for SOC analyst positions.",
+      "file": "Interview-Prep/SOC-Interview-Questions.md",
+      "githubPath": "Interview-Prep/SOC-Interview-Questions.md",
+      "topics": ["Technical Questions", "Behavioral Questions", "Scenario-Based Questions"]
+    },
+    {
+      "id": "star-method",
+      "title": "STAR Method for SOC Stories",
+      "description": "How to structure incident response stories using the STAR method.",
+      "file": "Interview-Prep/STAR-Method-Guide.md",
+      "githubPath": "Interview-Prep/STAR-Method-Guide.md",
+      "topics": ["Behavioral Interviews", "Story Structure", "Examples"]
+    },
+    {
+      "id": "incident-explanation",
+      "title": "How to Explain an Incident",
+      "description": "Framework for clearly explaining security incidents to technical and non-technical audiences.",
+      "file": "Interview-Prep/Explaining-Incidents.md",
+      "githubPath": "Interview-Prep/Explaining-Incidents.md",
+      "topics": ["Communication", "Technical Writing", "Presentation"]
+    }
+  ],
+  "caseFiles": [
+    {
+      "id": "phishing-triage",
+      "title": "Phishing Email Triage",
+      "caseNumber": "001",
+      "date": "2024-01-15",
+      "severity": "Medium",
+      "duration": "45 minutes",
+      "outcome": "Malicious - Blocked sender",
+      "githubPath": "SOC-Casefiles/001-Phishing-Triage/README.md",
+      "description": "Investigation of a suspected phishing email reported by an employee. Analysis of email headers, URLs, and attachments."
+    },
+    {
+      "id": "brute-force-rdp",
+      "title": "RDP Brute Force Attack",
+      "caseNumber": "002",
+      "date": "2024-01-20",
+      "severity": "High",
+      "duration": "60 minutes",
+      "outcome": "True Positive - IP blocked",
+      "githubPath": "SOC-Casefiles/002-Brute-Force-RDP/README.md",
+      "description": "Multiple failed RDP login attempts from external IP. Investigation and remediation."
+    },
+    {
+      "id": "unusual-outbound",
+      "title": "Unusual Outbound Traffic",
+      "caseNumber": "003",
+      "date": "2024-02-01",
+      "severity": "High",
+      "duration": "90 minutes",
+      "outcome": "True Positive - Malware removed",
+      "githubPath": "SOC-Casefiles/003-Unusual-Outbound-Traffic/README.md",
+      "description": "Workstation communicating with suspicious external IPs. Malware investigation and containment."
+    },
+    {
+      "id": "privilege-escalation",
+      "title": "Privilege Escalation Attempt",
+      "caseNumber": "004",
+      "date": "2024-02-10",
+      "severity": "Critical",
+      "duration": "120 minutes",
+      "outcome": "True Positive - Account disabled",
+      "githubPath": "SOC-Casefiles/004-Privilege-Escalation/README.md",
+      "description": "User account attempting unauthorized privilege escalation via scheduled tasks."
+    },
+    {
+      "id": "data-exfiltration",
+      "title": "Suspected Data Exfiltration",
+      "caseNumber": "005",
+      "date": "2024-02-15",
+      "severity": "Critical",
+      "duration": "180 minutes",
+      "outcome": "True Positive - Incident escalated",
+      "githubPath": "SOC-Casefiles/005-Data-Exfiltration/README.md",
+      "description": "Large file upload to external cloud storage. Investigation of potential data breach."
+    }
+  ],
+  "playbooks": [
+    {
+      "id": "phishing-response",
+      "title": "Phishing Email Response",
+      "severity": "High",
+      "estimatedTime": "30-60 min",
+      "applicableTo": ["Email security", "User reports"],
+      "githubPath": "SOC-Casefiles/_Playbooks/Phishing-Email-Response.md",
+      "description": "Step-by-step response procedures for handling phishing email reports."
+    },
+    {
+      "id": "malware-infection",
+      "title": "Malware Infection Response",
+      "severity": "Critical",
+      "estimatedTime": "60-90 min",
+      "applicableTo": ["Endpoint security", "Antivirus alerts"],
+      "githubPath": "SOC-Casefiles/_Playbooks/Malware-Infection-Response.md",
+      "description": "Procedures for containing and removing malware from compromised systems."
+    },
+    {
+      "id": "brute-force",
+      "title": "Brute Force Attack Response",
+      "severity": "High",
+      "estimatedTime": "30-45 min",
+      "applicableTo": ["Authentication", "Network security"],
+      "githubPath": "SOC-Casefiles/_Playbooks/Brute-Force-Response.md",
+      "description": "Response procedures for brute force password attacks."
+    },
+    {
+      "id": "ransomware",
+      "title": "Ransomware Incident Response",
+      "severity": "Critical",
+      "estimatedTime": "120+ min",
+      "applicableTo": ["Malware", "Data security"],
+      "githubPath": "SOC-Casefiles/_Playbooks/Ransomware-Response.md",
+      "description": "Comprehensive response plan for ransomware incidents."
+    },
+    {
+      "id": "impossible-travel",
+      "title": "Impossible Travel Detection",
+      "severity": "Medium",
+      "estimatedTime": "20-30 min",
+      "applicableTo": ["Authentication", "User behavior"],
+      "githubPath": "SOC-Casefiles/_Playbooks/Impossible-Travel-Response.md",
+      "description": "Procedures for investigating impossible travel login alerts."
+    }
+  ],
+  "secPlusVault": {
+    "studyPlan": {
+      "title": "Security+ Study Guide",
+      "description": "Structured approach to Security+ exam preparation",
+      "topics": [
+        "Threats, Attacks, and Vulnerabilities",
+        "Architecture and Design",
+        "Implementation",
+        "Operations and Incident Response",
+        "Governance, Risk, and Compliance"
+      ]
+    },
+    "cheatSheets": [
+      {
+        "id": "ports-protocols",
+        "title": "Ports & Protocols",
+        "description": "Essential ports and protocols for Security+ exam",
+        "content": "Common network ports and their associated protocols"
+      },
+      {
+        "id": "security-acronyms",
+        "title": "Security Acronyms",
+        "description": "Master list of security acronyms and abbreviations",
+        "content": "CIA, AAA, SIEM, SOAR, EDR, XDR, IDS, IPS, etc."
+      },
+      {
+        "id": "attack-types",
+        "title": "Attack Types & Mitigations",
+        "description": "Common attacks and their countermeasures",
+        "content": "Phishing, DDoS, Man-in-the-Middle, SQL Injection, XSS, etc."
+      },
+      {
+        "id": "encryption-standards",
+        "title": "Encryption Standards",
+        "description": "Symmetric, asymmetric, hashing algorithms",
+        "content": "AES, RSA, SHA, MD5, 3DES, etc."
+      }
+    ],
+    "resources": [
+      {
+        "title": "Professor Messer Videos",
+        "url": "https://www.professormesser.com/security-plus/sy0-601/sy0-601-video/sy0-601-comptia-security-plus-course/",
+        "type": "Video Course"
+      },
+      {
+        "title": "CompTIA Security+ Objectives",
+        "url": "https://www.comptia.org/certifications/security",
+        "type": "Official Resource"
+      },
+      {
+        "title": "ExamCompass Practice Tests",
+        "url": "https://www.examcompass.com/comptia/security-plus-certification/free-security-plus-practice-tests",
+        "type": "Practice Exams"
+      }
+    ]
+  },
+  "threatFeed": [
+    {
+      "id": "cisa",
+      "title": "CISA Cybersecurity Advisories",
+      "category": "Government",
+      "url": "https://www.cisa.gov/news-events/cybersecurity-advisories",
+      "updateFrequency": "Daily",
+      "description": "Official security advisories and alerts from US CISA"
+    },
+    {
+      "id": "krebs",
+      "title": "KrebsOnSecurity",
+      "category": "News",
+      "url": "https://krebsonse curity.com/",
+      "updateFrequency": "Daily",
+      "description": "In-depth security news and investigation by Brian Krebs"
+    },
+    {
+      "id": "dfir-report",
+      "title": "The DFIR Report",
+      "category": "Research",
+      "url": "https://thedfirreport.com/",
+      "updateFrequency": "Weekly",
+      "description": "Real-world intrusion case studies and threat intelligence"
+    },
+    {
+      "id": "bleeping-computer",
+      "title": "BleepingComputer",
+      "category": "News",
+      "url": "https://www.bleepingcomputer.com/",
+      "updateFrequency": "Daily",
+      "description": "Breaking cybersecurity news and analysis"
+    },
+    {
+      "id": "sans-isc",
+      "title": "SANS Internet Storm Center",
+      "category": "Research",
+      "url": "https://isc.sans.edu/",
+      "updateFrequency": "Daily",
+      "description": "Global threat detection and analysis"
+    },
+    {
+      "id": "msrc",
+      "title": "Microsoft Security Response Center",
+      "category": "Vendor",
+      "url": "https://msrc.microsoft.com/blog/",
+      "updateFrequency": "Weekly",
+      "description": "Microsoft security updates and advisories"
+    },
+    {
+      "id": "otx",
+      "title": "AlienVault OTX",
+      "category": "Threat Intel",
+      "url": "https://otx.alienvault.com/browse/global/pulses",
+      "updateFrequency": "Real-time",
+      "description": "Community-driven threat intelligence pulses"
+    },
+    {
+      "id": "threatpost",
+      "title": "Threatpost",
+      "category": "News",
+      "url": "https://threatpost.com/",
+      "updateFrequency": "Daily",
+      "description": "Latest cybersecurity threats and vulnerabilities"
+    }
+  ],
+  "cliCommands": [
+    {
+      "id": "grep-logs",
+      "category": "Linux - Log Analysis",
+      "command": "grep -i 'failed' /var/log/auth.log",
+      "description": "Search auth logs for failed login attempts",
+      "examples": [
+        "grep -i 'error' /var/log/syslog",
+        "grep -E '(fail|error|warn)' /var/log/*"
+      ]
+    },
+    {
+      "id": "tail-follow",
+      "category": "Linux - Log Analysis",
+      "command": "tail -f /var/log/syslog",
+      "description": "Follow log file in real-time",
+      "examples": [
+        "tail -n 100 /var/log/apache2/access.log",
+        "tail -f /var/log/syslog | grep 'ssh'"
+      ]
+    },
+    {
+      "id": "netstat-connections",
+      "category": "Linux - Network",
+      "command": "netstat -tunap",
+      "description": "Show all active network connections with PIDs",
+      "examples": [
+        "netstat -tunap | grep ESTABLISHED",
+        "ss -tunap"
+      ]
+    },
+    {
+      "id": "tcpdump-capture",
+      "category": "Linux - Network",
+      "command": "tcpdump -i eth0 -w capture.pcap",
+      "description": "Capture network traffic to PCAP file",
+      "examples": [
+        "tcpdump -i any port 80",
+        "tcpdump -i eth0 host 192.168.1.1"
+      ]
+    },
+    {
+      "id": "ps-processes",
+      "category": "Linux - System",
+      "command": "ps aux | grep -v grep | grep <process>",
+      "description": "Find running processes by name",
+      "examples": [
+        "ps aux --sort=-%mem | head",
+        "ps -ef | grep apache"
+      ]
+    },
+    {
+      "id": "find-files",
+      "category": "Linux - System",
+      "command": "find / -name '*.log' -mtime -1",
+      "description": "Find files modified in last 24 hours",
+      "examples": [
+        "find /var/log -type f -size +100M",
+        "find /home -name '.ssh' -type d"
+      ]
+    },
+    {
+      "id": "windows-eventlog",
+      "category": "Windows - Log Analysis",
+      "command": "Get-WinEvent -LogName Security -MaxEvents 100",
+      "description": "Query Windows Security event log",
+      "examples": [
+        "Get-WinEvent -FilterHashtable @{LogName='Security';ID=4625}",
+        "Get-EventLog -LogName System -Newest 50"
+      ]
+    },
+    {
+      "id": "windows-netstat",
+      "category": "Windows - Network",
+      "command": "netstat -ano | findstr ESTABLISHED",
+      "description": "Show established connections with PIDs",
+      "examples": [
+        "netstat -ano | findstr :443",
+        "Get-NetTCPConnection -State Established"
+      ]
+    },
+    {
+      "id": "windows-processes",
+      "category": "Windows - System",
+      "command": "Get-Process | Sort-Object CPU -Descending | Select -First 10",
+      "description": "Top 10 processes by CPU usage",
+      "examples": [
+        "tasklist /V",
+        "Get-Process | Where-Object {$_.CPU -gt 100}"
+      ]
+    },
+    {
+      "id": "splunk-failed-logins",
+      "category": "Splunk - Authentication",
+      "command": "index=windows EventCode=4625 | stats count by src_ip",
+      "description": "Count failed login attempts by source IP",
+      "examples": [
+        "index=* 'failed' OR 'error' | timechart count",
+        "index=windows EventCode=4624 user=admin"
+      ]
+    },
+    {
+      "id": "splunk-suspicious-traffic",
+      "category": "Splunk - Network",
+      "command": "index=firewall action=blocked | stats count by dest_port",
+      "description": "Count blocked connections by destination port",
+      "examples": [
+        "index=proxy | stats count by url",
+        "index=firewall bytes>1000000 | table src_ip dest_ip bytes"
+      ]
+    },
+    {
+      "id": "wireshark-http",
+      "category": "Wireshark",
+      "command": "http.request.method == \"POST\"",
+      "description": "Filter for HTTP POST requests",
+      "examples": [
+        "ip.addr == 192.168.1.1",
+        "tcp.port == 443 && ssl.handshake.type == 1"
+      ]
+    }
+  ],
+  "toolbox": {
+    "description": "Essential tools and software for SOC analyst workstation setup",
+    "categories": [
+      {
+        "name": "Essential Tools",
+        "tools": [
+          {
+            "name": "Wireshark",
+            "description": "Network protocol analyzer for packet inspection",
+            "install": "sudo apt install wireshark",
+            "url": "https://www.wireshark.org/"
+          },
+          {
+            "name": "Splunk",
+            "description": "SIEM platform for log analysis and correlation",
+            "install": "Download from splunk.com",
+            "url": "https://www.splunk.com/en_us/download.html"
+          },
+          {
+            "name": "Sysinternals Suite",
+            "description": "Windows troubleshooting and analysis utilities",
+            "install": "Download from Microsoft",
+            "url": "https://docs.microsoft.com/en-us/sysinternals/"
+          }
+        ]
+      },
+      {
+        "name": "SOC Analysis Tools",
+        "tools": [
+          {
+            "name": "CyberChef",
+            "description": "Data encoding/decoding and analysis",
+            "install": "Web-based tool",
+            "url": "https://gchq.github.io/CyberChef/"
+          },
+          {
+            "name": "Volatility",
+            "description": "Memory forensics framework",
+            "install": "pip install volatility3",
+            "url": "https://www.volatilityfoundation.org/"
+          },
+          {
+            "name": "Autopsy",
+            "description": "Digital forensics platform",
+            "install": "Download from sleuthkit.org",
+            "url": "https://www.autopsy.com/"
+          }
+        ]
+      },
+      {
+        "name": "Monitoring & Detection",
+        "tools": [
+          {
+            "name": "Sysmon",
+            "description": "Windows system monitoring",
+            "install": "Download from Microsoft",
+            "url": "https://docs.microsoft.com/en-us/sysinternals/downloads/sysmon"
+          },
+          {
+            "name": "OSSEC / Wazuh",
+            "description": "Host-based intrusion detection",
+            "install": "See wazuh.com for install",
+            "url": "https://wazuh.com/"
+          },
+          {
+            "name": "Suricata",
+            "description": "Network IDS/IPS",
+            "install": "sudo apt install suricata",
+            "url": "https://suricata.io/"
+          }
+        ]
+      }
+    ]
+  },
+  "glossary": [
+    {
+      "term": "SIEM",
+      "definition": "Security Information and Event Management - Centralized platform for collecting, correlating, and analyzing security logs and events in real-time.",
+      "category": "Tools",
+      "relatedTerms": ["SOAR", "Log Management", "Correlation"]
+    },
+    {
+      "term": "IOC",
+      "definition": "Indicator of Compromise - Forensic data that identifies potentially malicious activity on a system or network (IPs, domains, file hashes, etc.).",
+      "category": "Threat Intel",
+      "relatedTerms": ["TTP", "Threat Intelligence", "IOA"]
+    },
+    {
+      "term": "SOAR",
+      "definition": "Security Orchestration, Automation, and Response - Platform that automates security operations tasks and incident response workflows.",
+      "category": "Tools",
+      "relatedTerms": ["SIEM", "Playbook", "Automation"]
+    },
+    {
+      "term": "EDR",
+      "definition": "Endpoint Detection and Response - Security solution that monitors endpoint devices for threats and provides investigation and remediation capabilities.",
+      "category": "Tools",
+      "relatedTerms": ["XDR", "Antivirus", "Endpoint Protection"]
+    },
+    {
+      "term": "TTP",
+      "definition": "Tactics, Techniques, and Procedures - The behavior patterns used by threat actors, as categorized in frameworks like MITRE ATT&CK.",
+      "category": "Threat Intel",
+      "relatedTerms": ["MITRE ATT&CK", "IOC", "Threat Hunting"]
+    },
+    {
+      "term": "Lateral Movement",
+      "definition": "Technique where an attacker moves through a network after initial compromise to access additional systems and escalate privileges.",
+      "category": "Attack Technique",
+      "relatedTerms": ["Privilege Escalation", "Persistence", "C2"]
+    },
+    {
+      "term": "C2",
+      "definition": "Command and Control - Infrastructure used by attackers to communicate with and control compromised systems.",
+      "category": "Attack Technique",
+      "relatedTerms": ["Backdoor", "Beaconing", "Exfiltration"]
+    },
+    {
+      "term": "Beaconing",
+      "definition": "Regular communication pattern between malware and its C2 server, often at predictable intervals.",
+      "category": "Detection",
+      "relatedTerms": ["C2", "Network Analysis", "IOC"]
+    },
+    {
+      "term": "Persistence",
+      "definition": "Techniques attackers use to maintain access to a system across reboots and credential changes.",
+      "category": "Attack Technique",
+      "relatedTerms": ["Backdoor", "Scheduled Tasks", "Registry"]
+    },
+    {
+      "term": "Privilege Escalation",
+      "definition": "Exploiting vulnerabilities or misconfigurations to gain higher-level permissions than initially granted.",
+      "category": "Attack Technique",
+      "relatedTerms": ["Lateral Movement", "Exploitation", "UAC Bypass"]
+    },
+    {
+      "term": "PCAP",
+      "definition": "Packet Capture - File format for storing network traffic data, commonly analyzed with Wireshark.",
+      "category": "Network Analysis",
+      "relatedTerms": ["Wireshark", "tcpdump", "Network Forensics"]
+    },
+    {
+      "term": "MITRE ATT&CK",
+      "definition": "Globally-accessible knowledge base of adversary tactics and techniques based on real-world observations.",
+      "category": "Framework",
+      "relatedTerms": ["TTP", "Threat Hunting", "Detection Engineering"]
+    },
+    {
+      "term": "Event ID",
+      "definition": "Unique identifier for Windows event log entries, used to categorize and filter security events.",
+      "category": "Log Analysis",
+      "relatedTerms": ["Windows Event Log", "SIEM", "4625"]
+    },
+    {
+      "term": "SPL",
+      "definition": "Search Processing Language - Splunk's query language for searching and analyzing log data.",
+      "category": "SIEM",
+      "relatedTerms": ["Splunk", "Log Analysis", "Query"]
+    },
+    {
+      "term": "False Positive",
+      "definition": "Alert triggered by legitimate activity incorrectly identified as malicious.",
+      "category": "Detection",
+      "relatedTerms": ["True Positive", "Tuning", "Alert Fatigue"]
+    },
+    {
+      "term": "Mean Time to Detect (MTTD)",
+      "definition": "Average time between when an incident occurs and when it is detected by security teams.",
+      "category": "Metrics",
+      "relatedTerms": ["MTTR", "Dwell Time", "Detection"]
+    },
+    {
+      "term": "Mean Time to Respond (MTTR)",
+      "definition": "Average time from detecting an incident to fully containing and resolving it.",
+      "category": "Metrics",
+      "relatedTerms": ["MTTD", "Incident Response", "Containment"]
+    },
+    {
+      "term": "Phishing",
+      "definition": "Social engineering attack using fraudulent communications to trick recipients into revealing sensitive information or installing malware.",
+      "category": "Attack Type",
+      "relatedTerms": ["Spear Phishing", "Social Engineering", "Email Security"]
+    },
+    {
+      "term": "Zero-Day",
+      "definition": "Vulnerability unknown to the software vendor, often exploited before a patch is available.",
+      "category": "Vulnerability",
+      "relatedTerms": ["CVE", "Patch Management", "Exploit"]
+    },
+    {
+      "term": "CVE",
+      "definition": "Common Vulnerabilities and Exposures - Standardized identifier for known security vulnerabilities.",
+      "category": "Vulnerability",
+      "relatedTerms": ["CVSS", "Patch Management", "Vulnerability Management"]
+    }
+  ],
   "stats": {
-    "total": 7,
+    "total": 92,
     "templates": 3,
-    "cheatSheets": 4
+    "cheatSheets": 4,
+    "quickStart": 4,
+    "tools": 10,
+    "labs": 6,
+    "codeExamples": 4,
+    "interviewPrep": 3,
+    "caseFiles": 5,
+    "playbooks": 5,
+    "secPlusVault": 8,
+    "threatFeed": 8,
+    "cliCommands": 12,
+    "toolbox": 10,
+    "glossary": 20
   }
 }
