@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { DesktopWindow } from "@/components/desktop-window"
 import { MarkdownContent } from "@/components/markdown-content"
 import { AuthDialog } from "@/components/auth/auth-dialog"
@@ -416,7 +417,13 @@ export default function ResourcesPage() {
                       )}
                       
                       <button
-                        onClick={() => {
+                        onClick={async () => {
+                          // Sign out if user is logged in
+                          if (user) {
+                            await supabase.auth.signOut()
+                            setUser(null)
+                          }
+                          // Reset all states
                           setIsVMActive(false)
                           setIsStartMenuOpen(false)
                           setShowLoginScreen(false)
@@ -427,7 +434,7 @@ export default function ResourcesPage() {
                         <Power className="h-5 w-5 text-red-400" />
                         <div>
                           <div className="text-white font-medium">Exit SOC OS</div>
-                          <div className="text-xs text-white/50">Return to portfolio</div>
+                          <div className="text-xs text-white/50">{user ? 'Sign out & return' : 'Return to portfolio'}</div>
                         </div>
                       </button>
 
