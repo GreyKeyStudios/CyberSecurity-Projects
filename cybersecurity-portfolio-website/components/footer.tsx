@@ -1,7 +1,13 @@
+"use client"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Github, Linkedin, Mail, Shield } from "lucide-react"
 
 export function Footer() {
+  const pathname = usePathname()
+  if (pathname === "/resources") return null
+
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">

@@ -1,0 +1,12 @@
+# Sample auth log (educational - safe to analyze)
+# Use with: grep, awk, or import into SIEM. Look for failed logins and patterns.
+
+Feb 10 09:15:22 server01 sshd[12001]: Accepted publickey for admin from 10.0.0.5 port 22
+Feb 10 09:16:01 server01 sshd[12002]: Failed password for root from 192.168.50.100 port 33456 ssh2
+Feb 10 09:16:03 server01 sshd[12003]: Failed password for root from 192.168.50.100 port 33457 ssh2
+Feb 10 09:16:05 server01 sshd[12004]: Failed password for root from 192.168.50.100 port 33458 ssh2
+Feb 10 09:16:07 server01 sshd[12005]: Accepted password for root from 192.168.50.100 port 33459 ssh2
+Feb 10 09:17:00 server01 sudo: admin : TTY=pts/0 ; PWD=/var/www ; USER=root ; COMMAND=/usr/bin/id
+Feb 10 09:20:15 server01 sshd[12010]: Failed password for deploy from 203.0.113.50 port 22 ssh2
+Feb 10 09:20:17 server01 sshd[12011]: Failed password for deploy from 203.0.113.50 port 22 ssh2
+Feb 10 09:22:00 server01 sshd[12012]: Accepted publickey for deploy from 10.0.0.5 port 22

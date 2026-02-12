@@ -1,6 +1,7 @@
 "use client"
 
 import { ReactNode, useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Minimize2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface DesktopWindowProps {
@@ -14,6 +15,7 @@ interface DesktopWindowProps {
   isMinimized: boolean
   zIndex: number
   onFocus: () => void
+  onMaximizeChange?: (maximized: boolean) => void
   canGoBack?: boolean
   canGoForward?: boolean
   onGoBack?: () => void
@@ -31,6 +33,7 @@ export function DesktopWindow({
   isMinimized,
   zIndex,
   onFocus,
+  onMaximizeChange,
   canGoBack = false,
   canGoForward = false,
   onGoBack,
@@ -97,26 +100,37 @@ export function DesktopWindow({
 
   const handleMaximize = () => {
     setIsMaximized(!isMaximized)
+    onMaximizeChange?.(!isMaximized)
     onFocus()
   }
 
+  // When window is closed (not just minimized), clear maximized so parent can re-enable desktop scroll.
+  // Do not clear maximized on minimize so restoring from taskbar remembers maximized state.
+
+  useEffect(() => {
+    return () => { onMaximizeChange?.(false) }
+  }, [onMaximizeChange])
+
   if (isMinimized) return null
 
-  return (
+  const windowEl = (
     <div
       ref={windowRef}
       className={`absolute bg-card border-2 border-border shadow-2xl rounded-lg overflow-hidden ${
         isDragging ? '' : 'transition-all duration-200'
       } ${
-        isMaximized ? '!left-4 !top-4 !right-4 !bottom-[60px]' : ''
+        isMaximized ? '!left-0 !top-0 !right-0 !bottom-14' : ''
       }`}
       style={{
         left: isMaximized ? undefined : `${position.x}px`,
         top: isMaximized ? undefined : `${position.y}px`,
-        width: isMaximized ? 'calc(100% - 32px)' : 'clamp(400px, 60vw, 900px)',
-        maxHeight: isMaximized ? 'calc(100vh - 80px)' : 'calc(100vh - 200px)',
-        zIndex: zIndex,
-        cursor: isDragging ? 'grabbing' : 'auto'
+        width: isMaximized ? '100%' : 'clamp(400px, 60vw, 900px)',
+        height: isMaximized ? 'calc(100vh - 56px)' : undefined,
+        maxHeight: isMaximized ? undefined : 'calc(100vh - 200px)',
+        zIndex: isMaximized ? 99999 : zIndex,
+        cursor: isDragging ? 'grabbing' : 'auto',
+        pointerEvents: 'auto',
+        isolation: 'isolate'
       }}
       onClick={onFocus}
     >
@@ -206,11 +220,21 @@ export function DesktopWindow({
       )}
 
       {/* Window Content */}
-      <div className={`overflow-y-auto p-6 bg-card/50 ${
-        isMaximized ? 'h-[calc(100vh-140px)]' : 'max-h-[calc(100vh-260px)]'
+      <div className={`overflow-y-auto p-6 bg-card/50 min-h-0 ${
+        isMaximized ? 'h-[calc(100vh-8rem)]' : 'max-h-[calc(100vh-260px)]'
       }`}>
         {children}
       </div>
     </div>
   )
+
+  // When maximized, render into a portal above the desktop so the window reliably receives pointer/scroll
+  if (isMaximized && typeof document !== 'undefined') {
+    const portalTarget = document.getElementById('window-portal-root')
+    if (portalTarget) {
+      return createPortal(windowEl, portalTarget)
+    }
+  }
+
+  return windowEl
 }

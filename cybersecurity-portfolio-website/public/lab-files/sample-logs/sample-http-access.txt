@@ -1,0 +1,8 @@
+# Sample Apache-style access log (educational)
+# Practice: grep, awk, or Splunk. Find suspicious requests.
+
+192.168.1.50 - - [10/Feb/2024:14:22:01] "GET /wp-admin/ HTTP/1.1" 200 5123
+192.168.1.50 - - [10/Feb/2024:14:22:05] "GET /wp-content/../wp-config.php HTTP/1.1" 200 1024
+192.168.1.50 - - [10/Feb/2024:14:22:07] "GET /index.html HTTP/1.1" 200 2048
+192.168.1.50 - - [10/Feb/2024:14:22:09] "GET /.env HTTP/1.1" 404 -
+10.0.1.100 - - [10/Feb/2024:14:25:00] "GET /api/health HTTP/1.1" 200 12

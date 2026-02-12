@@ -1,22 +1,50 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal as TerminalIcon, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket, FolderCog } from "lucide-react"
+import { useState, useEffect, useRef, useMemo, useCallback } from "react"
+import { Shield, Zap, Compass, FileText, Wrench, BookOpen, FlaskConical, Code2, Briefcase, ExternalLink, ArrowRight, ArrowLeft, Github, X, Monitor, Menu, Power, Sparkles, Target, FolderOpen, ClipboardList, GraduationCap, Radio, Terminal as TerminalIcon, Package, BookA, Dumbbell, Gamepad2, Map, LogIn, BookMarked, FolderDown, Ticket, FolderCog, BarChart2, Globe, CheckSquare, Bell, Image as ImageIcon, Lock, ScrollText, Layers, Plus, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DesktopWindow } from "@/components/desktop-window"
+import { AppIntro } from "@/components/app-intro"
 import { MarkdownContent } from "@/components/markdown-content"
 import { AuthDialog } from "@/components/auth/auth-dialog"
 import { UserMenu } from "@/components/auth/user-menu"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
 import resourcesData from "@/data/resources.json"
+import projectsData from "@/data/projects.json"
 
-const GITHUB_BASE_URL = "https://github.com/KreerB/CyberSecurity-Projects"
+const GITHUB_BASE_URL = "https://github.com/GreyKeyStudios/CyberSecurity-Projects"
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/GreyKeyStudios/CyberSecurity-Projects/main"
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs)
+    return () => clearTimeout(t)
+  }, [value, delayMs])
+  return debounced
+}
+
+const DESKTOP_WIDTH = 1920
+const DESKTOP_HEIGHT = 1080
+const DESKTOP_ICON_ORDER_KEY = "soc-os-desktop-icon-order"
+const DESKTOP_ICON_SIZE_KEY = "soc-os-desktop-icon-size"
+const DESKTOP_THEME_KEY = "soc-os-desktop-theme"
+
+type DesktopThemeId = "default" | "emerald" | "synth" | "mono"
+const DESKTOP_THEMES: Record<DesktopThemeId, { label: string; wallpaper: string; overlayClass: string }> = {
+  default: { label: "Default (Midnight)", wallpaper: "/mockdesktopbackground.png", overlayClass: "bg-black/30" },
+  emerald: { label: "Emerald Ops", wallpaper: "/mockdesktopbackground.png", overlayClass: "bg-emerald-950/35" },
+  synth: { label: "Synthwave", wallpaper: "/mockdesktopbackground.png", overlayClass: "bg-fuchsia-950/35" },
+  mono: { label: "Monochrome", wallpaper: "/mockdesktopbackground.png", overlayClass: "bg-slate-950/45" },
+}
 
 interface WindowState {
   id: string
@@ -27,14 +55,52 @@ interface WindowState {
   currentNavIndex: number
 }
 
+function DesktopTaskbarClock() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const time = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" })
+  const date = now.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+  return (
+    <div className="text-right text-xs text-white/90 font-mono shrink-0 px-2">
+      <div>{time}</div>
+      <div className="text-white/60">{date}</div>
+    </div>
+  )
+}
+
+function JumpScareOverlay({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 1800)
+    return () => clearTimeout(t)
+  }, [onClose])
+  return (
+    <div
+      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black animate-in fade-in duration-75"
+      onClick={onClose}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+      aria-label="Close"
+    >
+      <div className="text-white text-9xl font-black select-none animate-in zoom-in duration-150">
+        👻 BOO!
+      </div>
+    </div>
+  )
+}
+
 export default function ResourcesPage() {
-  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets } = resourcesData
+  const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, cliSyntaxGuide, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets, logSamples = [], behavioralBank = [], technicalTrivia = [], appIntros = {}, projectsWalkthrough, projectWalkthroughs = {}, runbooks = [] } = resourcesData
   const [isVMActive, setIsVMActive] = useState(false)
   const [showLoginScreen, setShowLoginScreen] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isGuestMode, setIsGuestMode] = useState(false)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const [desktopTheme, setDesktopTheme] = useState<DesktopThemeId>("default")
   const supabase = createClient()
 
   // Prevent body scroll when VM is active
@@ -69,8 +135,7 @@ export default function ResourcesPage() {
   const desktopIcons = [
     // Row 1: Onboarding & Daily Use
     { id: "start-here", label: "Start Here", icon: Sparkles, color: "text-emerald-500", bgColor: "bg-emerald-500/10", titleBar: "from-emerald-500/20 to-emerald-600/20" },
-    { id: "daily-mission", label: "Daily Mission", icon: Target, color: "text-sky-500", bgColor: "bg-sky-500/10", titleBar: "from-sky-500/20 to-sky-600/20" },
-    { id: "30min-practice", label: "30-Min Practice", icon: Zap, color: "text-yellow-500", bgColor: "bg-yellow-500/10", titleBar: "from-yellow-500/20 to-yellow-600/20" },
+    { id: "missions", label: "Missions", icon: Target, color: "text-sky-500", bgColor: "bg-sky-500/10", titleBar: "from-sky-500/20 to-sky-600/20" },
     { id: "quick-start", label: "Learning Paths", icon: Compass, color: "text-green-500", bgColor: "bg-green-500/10", titleBar: "from-green-500/20 to-green-600/20" },
     
     // Row 2: Documentation & Resources
@@ -81,19 +146,21 @@ export default function ResourcesPage() {
     
     // Row 3: Tools & Reference
     { id: "tools", label: "Daily Tools", icon: Wrench, color: "text-cyan-500", bgColor: "bg-cyan-500/10", titleBar: "from-cyan-500/20 to-cyan-600/20" },
-    { id: "cli-cheats", label: "CLI Cheats", icon: Code2, color: "text-lime-500", bgColor: "bg-lime-500/10", titleBar: "from-lime-500/20 to-lime-600/20" },
+    { id: "log-viewer", label: "Log Viewer", icon: ScrollText, color: "text-amber-600", bgColor: "bg-amber-600/10", titleBar: "from-amber-600/20 to-amber-700/20" },
+    { id: "cli-cheats", label: "CLI Cheats", icon: Code2, color: "text-[#4e7cf6]", bgColor: "bg-[#4e7cf6]/10", titleBar: "from-[#4e7cf6]/20 to-[#4e7cf6]/30" },
     { id: "glossary", label: "SOC Dictionary", icon: BookA, color: "text-fuchsia-500", bgColor: "bg-fuchsia-500/10", titleBar: "from-fuchsia-500/20 to-fuchsia-600/20" },
     { id: "ioc-helper", label: "IOC Helper", icon: Shield, color: "text-red-500", bgColor: "bg-red-500/10", titleBar: "from-red-500/20 to-red-600/20" },
     
     // Row 4: Training & Practice
     { id: "labs", label: "Practice Labs", icon: FlaskConical, color: "text-pink-500", bgColor: "bg-pink-500/10", titleBar: "from-pink-500/20 to-pink-600/20" },
+    { id: "projects", label: "Projects", icon: Layers, color: "text-sky-600", bgColor: "bg-sky-600/10", titleBar: "from-sky-600/20 to-sky-700/20" },
     { id: "code-examples", label: "Automation Scripts", icon: Code2, color: "text-orange-500", bgColor: "bg-orange-500/10", titleBar: "from-orange-500/20 to-orange-600/20" },
     { id: "threat-feed", label: "Intel Feed", icon: Radio, color: "text-teal-500", bgColor: "bg-teal-500/10", titleBar: "from-teal-500/20 to-teal-600/20" },
     { id: "toolbox", label: "Toolbox", icon: Package, color: "text-slate-400", bgColor: "bg-slate-400/10", titleBar: "from-slate-400/20 to-slate-500/20" },
     
     // Row 4: Skill Building
     { id: "skill-drills", label: "Skill Drills", icon: Dumbbell, color: "text-emerald-400", bgColor: "bg-emerald-400/10", titleBar: "from-emerald-400/20 to-emerald-500/20" },
-    { id: "mini-game", label: "Mini Game", icon: Gamepad2, color: "text-pink-400", bgColor: "bg-pink-400/10", titleBar: "from-pink-400/20 to-pink-500/20" },
+    { id: "games", label: "Games", icon: Gamepad2, color: "text-pink-400", bgColor: "bg-pink-400/10", titleBar: "from-pink-400/20 to-pink-500/20" },
     
     // Row 5: Practice & Training
     { id: "soc-journal", label: "SOC Journal", icon: BookMarked, color: "text-purple-400", bgColor: "bg-purple-400/10", titleBar: "from-purple-400/20 to-purple-500/20" },
@@ -105,22 +172,139 @@ export default function ResourcesPage() {
     { id: "cert-path", label: "Cert Roadmap", icon: Map, color: "text-blue-400", bgColor: "bg-blue-400/10", titleBar: "from-blue-400/20 to-blue-500/20" },
     { id: "sec-plus", label: "Sec+ Vault", icon: GraduationCap, color: "text-amber-500", bgColor: "bg-amber-500/10", titleBar: "from-amber-500/20 to-amber-600/20" },
     
-    // Row 7: System Utilities
+    // Row 7: More SOC tools
+    { id: "report-builder", label: "Report Builder", icon: BarChart2, color: "text-amber-500", bgColor: "bg-amber-500/10", titleBar: "from-amber-500/20 to-amber-600/20" },
+    { id: "threat-map", label: "Threat Map", icon: Globe, color: "text-red-400", bgColor: "bg-red-400/10", titleBar: "from-red-400/20 to-red-500/20" },
+    { id: "compliance", label: "Compliance", icon: CheckSquare, color: "text-green-500", bgColor: "bg-green-500/10", titleBar: "from-green-500/20 to-green-600/20" },
+    { id: "runbooks", label: "Runbooks", icon: BookOpen, color: "text-indigo-400", bgColor: "bg-indigo-400/10", titleBar: "from-indigo-400/20 to-indigo-500/20" },
+    { id: "alerts", label: "Alerts", icon: Bell, color: "text-yellow-500", bgColor: "bg-yellow-500/10", titleBar: "from-yellow-500/20 to-yellow-600/20" },
+    // Row 8: System Utilities
     { id: "utilities", label: "Utilities", icon: FolderCog, color: "text-teal-400", bgColor: "bg-teal-400/10", titleBar: "from-teal-400/20 to-teal-500/20" },
-    { id: "terminal", label: "Terminal", icon: TerminalIcon, color: "text-green-400", bgColor: "bg-green-400/10", titleBar: "from-green-400/20 to-green-500/20" },
+    { id: "terminal", label: "Terminal", icon: TerminalIcon, color: "text-[#4e7cf6]", bgColor: "bg-[#4e7cf6]/10", titleBar: "from-[#4e7cf6]/20 to-[#4e7cf6]/30" },
+    // Easter eggs / joke content
+    { id: "weird-pics", label: "Weird Pics", icon: ImageIcon, color: "text-rose-400", bgColor: "bg-rose-400/10", titleBar: "from-rose-400/20 to-rose-500/20" },
+    { id: "funny-docs", label: "Funny Documents", icon: FileText, color: "text-lime-400", bgColor: "bg-lime-400/10", titleBar: "from-lime-400/20 to-lime-500/20" },
   ]
 
-  const [windows, setWindows] = useState<WindowState[]>(
-    desktopIcons.map(icon => ({ 
-      id: icon.id, 
-      isOpen: false, 
-      isMinimized: false, 
-      zIndex: 10,
-      navigationStack: [icon.id],
-      currentNavIndex: 0
-    }))
-  )
+  const initialWindowsState: WindowState[] = desktopIcons.map(icon => ({
+    id: icon.id,
+    isOpen: false,
+    isMinimized: false,
+    zIndex: 10,
+    navigationStack: [icon.id],
+    currentNavIndex: 0
+  }))
+  const [windows, setWindows] = useState<WindowState[]>(initialWindowsState)
   const [nextZIndex, setNextZIndex] = useState(11)
+  const [maximizedWindowId, setMaximizedWindowId] = useState<string | null>(null)
+  const [showJumpScare, setShowJumpScare] = useState(false)
+  const hasVisibleWindow = windows.some(w => w.isOpen && !w.isMinimized)
+
+  // Desktop dimensions: fixed size, no scroll. Icon order and size persisted.
+  const desktopRef = useRef<HTMLDivElement>(null)
+  const [desktopScale, setDesktopScale] = useState(1)
+  const [desktopIconOrder, setDesktopIconOrder] = useState<string[]>(() => {
+    if (typeof window === "undefined") return desktopIcons.map(i => i.id)
+    try {
+      const stored = localStorage.getItem(DESKTOP_ICON_ORDER_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[]
+        const valid = parsed.filter(id => desktopIcons.some(i => i.id === id))
+        const missing = desktopIcons.filter(i => !valid.includes(i.id)).map(i => i.id)
+        return [...valid, ...missing]
+      }
+    } catch (_) {}
+    return desktopIcons.map(i => i.id)
+  })
+  const [desktopIconSize, setDesktopIconSize] = useState<'sm' | 'md' | 'lg'>(() => {
+    if (typeof window === "undefined") return "lg"
+    try {
+      const s = localStorage.getItem(DESKTOP_ICON_SIZE_KEY)
+      if (s === "sm" || s === "md" || s === "lg") return s
+    } catch (_) {}
+    return "lg"
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem(DESKTOP_ICON_ORDER_KEY, JSON.stringify(desktopIconOrder)) } catch (_) {}
+  }, [desktopIconOrder])
+  useEffect(() => {
+    try { localStorage.setItem(DESKTOP_ICON_SIZE_KEY, desktopIconSize) } catch (_) {}
+  }, [desktopIconSize])
+
+  // Desktop scale: base on the actual desktop area (above taskbar),
+  // so icons never end up behind the taskbar in larger icon modes.
+  useEffect(() => {
+    if (!isVMActive) return
+    const el = desktopRef.current
+    if (!el) return
+    const update = () => {
+      const w = el.clientWidth
+      const h = el.clientHeight
+      setDesktopScale(Math.min(w / DESKTOP_WIDTH, h / DESKTOP_HEIGHT, 1))
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [isVMActive])
+
+  // VM session: guest exit = lose work; logged-in = save/restore like a real VM
+  const VM_SESSION_KEY = "soc-os-vm-session"
+  const getSessionKey = () => (user?.id ? `${VM_SESSION_KEY}-${user.id}` : null)
+
+  // Theme gating: guests always use Default. Signed-in users can choose and persist.
+  useEffect(() => {
+    if (!user?.id) {
+      setDesktopTheme("default")
+      return
+    }
+    try {
+      const stored = localStorage.getItem(`${DESKTOP_THEME_KEY}-${user.id}`)
+      if (stored && stored in DESKTOP_THEMES) setDesktopTheme(stored as DesktopThemeId)
+    } catch (_) {}
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      localStorage.setItem(`${DESKTOP_THEME_KEY}-${user.id}`, desktopTheme)
+    } catch (_) {}
+  }, [desktopTheme, user?.id])
+
+  // Restore session when entering VM as logged-in user
+  useEffect(() => {
+    if (!isVMActive || !user?.id) return
+    try {
+      const key = getSessionKey()
+      if (!key) return
+      const raw = localStorage.getItem(key)
+      if (!raw) return
+      const data = JSON.parse(raw) as { openIds?: string[]; maximizedId?: string | null }
+      const openIds = data.openIds ?? []
+      const maximizedId = data.maximizedId ?? null
+      if (openIds.length === 0) return
+      setWindows(prev => {
+        const existingIds = new Set(prev.map(w => w.id))
+        const next = prev.map(w => ({ ...w, isOpen: openIds.includes(w.id), isMinimized: !openIds.includes(w.id) }))
+        openIds.forEach(id => {
+          if (!existingIds.has(id)) next.push({ id, isOpen: true, isMinimized: false, zIndex: 10, navigationStack: [id], currentNavIndex: 0 })
+        })
+        return next
+      })
+      setMaximizedWindowId(maximizedId)
+    } catch (_) {}
+  }, [isVMActive, user?.id])
+
+  // Guest entry: always start with a clean desktop (no open apps from a previous session)
+  const prevVMActiveRef = useRef(false)
+  useEffect(() => {
+    if (isVMActive && !prevVMActiveRef.current && !user) {
+      setWindows(initialWindowsState)
+      setMaximizedWindowId(null)
+    }
+    prevVMActiveRef.current = isVMActive
+  }, [isVMActive, user])
 
   const openWindow = (id: string) => {
     setWindows(prev => {
@@ -145,6 +329,7 @@ export default function ResourcesPage() {
   }
 
   const closeWindow = (id: string) => {
+    setMaximizedWindowId(prev => prev === id ? null : prev)
     setWindows(prev => prev.map(w => w.id === id ? { ...w, isOpen: false } : w))
   }
 
@@ -196,77 +381,77 @@ export default function ResourcesPage() {
 
   return (
     <>
-      {/* Splash Page - Default View */}
+      {/* Splash Page - Desktop mode entry: back to site or launch OS; no main nav on resources */}
       {!isVMActive && (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-          <div className="container mx-auto px-4 py-16">
-            {/* Header */}
-            <div className="text-center mb-12">
+        <div className="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
+          <Link
+            href="/"
+            className="absolute top-6 left-6 z-10 flex items-center gap-2 rounded-lg border border-border bg-background/90 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to site
+          </Link>
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 min-h-0">
+            <div className="text-center mb-10 flex-shrink-0">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Shield className="h-12 w-12 text-primary" />
-                <h1 className="text-5xl font-bold">My SOC Operating System</h1>
+                <h1 className="text-4xl md:text-5xl font-bold">My SOC Operating System</h1>
               </div>
-              <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-4">
-                This is my personal SOC Operating System — a living toolkit I use while studying and practicing blue team workflows. 
-                It includes investigation templates, IOC lookup tools, Splunk queries, cheat sheets, practice labs, and interview prep notes.
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-2">
+                A living toolkit for blue team workflows: investigation templates, IOC tools, Splunk queries, cheat sheets, labs, tickets, and interview prep — all in a desktop OS you can use while studying.
               </p>
-              <p className="text-base text-muted-foreground max-w-3xl mx-auto">
-                Much of the structure was built using AI-assisted development, then refined through testing and hands-on learning. 
-                The goal isn&apos;t perfection — it&apos;s consistency.
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                Built with AI-assisted development and refined through testing. Goal: consistency.
               </p>
             </div>
-
-            {/* Launch Button */}
-            <div className="flex justify-center mb-16">
+            <div className="flex justify-center mb-10 flex-shrink-0">
               <Button
                 onClick={() => setShowLoginScreen(true)}
                 size="lg"
-                className="gap-3 px-8 py-6 text-lg bg-primary hover:bg-primary/90 shadow-xl"
+                className="gap-2 px-8 py-6 text-lg bg-primary hover:bg-primary/90 shadow-xl"
               >
                 <Monitor className="h-6 w-6" />
                 Launch SOC Operating System
                 <ArrowRight className="h-6 w-6" />
               </Button>
             </div>
-
-            {/* Info Cards */}
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <Card className="border-border bg-card/50">
-                <CardHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full flex-1 min-h-0 overflow-auto">
+              <Card className="border-border bg-card/50 overflow-auto">
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Monitor className="h-5 w-5 text-primary" />
                     What&apos;s Inside
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div>✨ <strong>30-Minute Practice</strong> - Quick wins and deep practice tasks</div>
-                  <div>🧭 <strong>Learning Paths</strong> - Roadmap.sh, TryHackMe, LetsDefend</div>
-                  <div>📝 <strong>Templates</strong> - Investigation and incident response forms</div>
-                  <div>🔧 <strong>Daily Tools</strong> - VirusTotal, AbuseIPDB, Shodan, etc.</div>
-                  <div>📚 <strong>Cheat Sheets</strong> - Splunk SPL, Windows logs, MITRE ATT&CK</div>
-                  <div>🧪 <strong>Practice Labs</strong> - Hands-on SOC scenarios</div>
-                  <div>💻 <strong>Automation Scripts</strong> - Python IOC enrichment, log parsing</div>
-                  <div>🎤 <strong>Interview Prep</strong> - STAR method, common questions</div>
-                  <div>🛡️ <strong>IOC Helper</strong> - Quick threat intel lookups</div>
+                <CardContent className="space-y-1.5 text-sm">
+                  <div>🎯 <strong>Missions</strong> — Daily & timed practice</div>
+                  <div>🧭 <strong>Learning Paths</strong> — Roadmap, TryHackMe, LetsDefend</div>
+                  <div>📝 <strong>Templates</strong> — Investigation & IR forms</div>
+                  <div>🔧 <strong>Daily Tools</strong> — VirusTotal, AbuseIPDB, Shodan</div>
+                  <div>📚 <strong>Quick Reference</strong> — Splunk SPL, logs, MITRE ATT&CK</div>
+                  <div>💻 <strong>CLI Cheats</strong> — Command-line cheatbook</div>
+                  <div>📖 <strong>SOC Dictionary</strong> — Glossary of terms</div>
+                  <div>🛡️ <strong>IOC Helper</strong> — Threat intel lookups (in-window)</div>
+                  <div>🎮 <strong>Games</strong> — Mini Games + Corporate Espionage Simulator (coming soon)</div>
+                  <div>🧪 <strong>Labs, Tickets, Journal</strong> — Practice & case work</div>
+                  <div>🎤 <strong>Interview Prep</strong> — STAR method, questions</div>
                 </CardContent>
               </Card>
-
-              <Card className="border-border bg-card/50">
-                <CardHeader>
+              <Card className="border-border bg-card/50 overflow-auto">
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="h-5 w-5 text-yellow-500" />
-                    How to Use the Desktop OS
+                    How to Use the Desktop
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div>🖱️ <strong>Double-click</strong> any icon to launch that app</div>
-                  <div>↔️ <strong>Drag</strong> the title bar to move windows around</div>
-                  <div>🔴 <strong>Red button</strong> closes the window</div>
-                  <div>🟡 <strong>Yellow button</strong> minimizes to taskbar</div>
-                  <div>🟢 <strong>Green button</strong> maximizes the window</div>
-                  <div>📊 <strong>Taskbar</strong> at bottom shows all open apps</div>
-                  <div>🚪 <strong>Exit button</strong> (top right) returns here</div>
-                  <div>💡 <strong>Tip:</strong> Open multiple apps at once!</div>
+                <CardContent className="space-y-1.5 text-sm">
+                  <div>🖱️ <strong>Double-click</strong> any icon to open an app</div>
+                  <div>↔️ <strong>Drag</strong> title bar to move; <strong>drag icons</strong> to reorder</div>
+                  <div>📐 <strong>Icon size</strong> — Sm / Md / Lg (top-right of desktop)</div>
+                  <div>🔴 <strong>Red</strong> close · 🟡 <strong>Yellow</strong> minimize · 🟢 <strong>Green</strong> maximize</div>
+                  <div>📊 <strong>Taskbar</strong> — Restore or minimize open apps</div>
+                  <div>🚪 <strong>Exit</strong> (top right) returns here</div>
+                  <div>💡 Open multiple apps; windows remember size & position</div>
                 </CardContent>
               </Card>
             </div>
@@ -317,14 +502,12 @@ export default function ResourcesPage() {
             </Card>
 
             <div className="text-center mt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowLoginScreen(false)}
-                className="text-white/70 hover:text-white"
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white/70 hover:text-white transition-colors px-4 py-2 hover:bg-white/10"
               >
-                ← Back to Portfolio
-              </Button>
+                ← Back to portfolio
+              </Link>
             </div>
           </div>
 
@@ -343,47 +526,108 @@ export default function ResourcesPage() {
       {/* Full-Screen VM Interface */}
       {isVMActive && (
         <div className="fixed inset-0 z-50 bg-black">
+          {/* Jump scare overlay - triggered from Funny Documents */}
+          {showJumpScare && <JumpScareOverlay onClose={() => setShowJumpScare(false)} />}
+          {/* Portal target for maximized windows - keeps them above desktop so they receive events */}
+          <div id="window-portal-root" className="absolute inset-0 z-[100000]" style={{ pointerEvents: 'none' }} />
 
           {/* The "Monitor" - Full viewport VM */}
           <div 
             id="desktop-monitor"
             className="relative h-full w-full"
             style={{
-              backgroundImage: 'url(/mockdesktopbackground.png)',
+              backgroundImage: `url(${DESKTOP_THEMES[desktopTheme].wallpaper})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
           >
           {/* Overlay for better icon contrast */}
-          <div className="absolute inset-0 bg-black/30" />
+          <div className={`absolute inset-0 ${DESKTOP_THEMES[desktopTheme].overlayClass}`} />
 
           {/* Desktop Content Area */}
-          <div className="relative h-full flex flex-col">
-            {/* Desktop Icons Grid */}
-            <div className="flex-1 p-8 overflow-auto">
-              <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
-                {desktopIcons.map(icon => {
-                  const Icon = icon.icon
-                  const window = windows.find(w => w.id === icon.id)
-                  const isActive = window?.isOpen && !window?.isMinimized
-                  
-                  return (
+            <div className="relative h-full flex flex-col">
+            {/* Desktop - fixed dimensions, no scroll; scale to fit; icons reorderable and resizable */}
+            <div
+              ref={desktopRef}
+              className={`flex-1 min-h-0 overflow-hidden flex items-start justify-start ${maximizedWindowId ? "pointer-events-none" : ""}`}
+            >
+              <div
+                className="relative flex flex-col items-start justify-start pt-8 pb-4 pl-8 pr-4"
+                style={{
+                  width: DESKTOP_WIDTH,
+                  height: DESKTOP_HEIGHT,
+                  transform: `scale(${desktopScale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <div className="absolute top-2 right-4 flex items-center gap-2">
+                  <span className="text-white/50 text-xs">Icon size:</span>
+                  {(["sm", "md", "lg"] as const).map((size) => (
                     <button
-                      key={icon.id}
-                      onDoubleClick={() => openWindow(icon.id)}
-                      className={`group flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 hover:bg-white/5 ${
-                        isActive ? 'bg-white/10' : 'hover:scale-105'
+                      key={size}
+                      type="button"
+                      onClick={() => setDesktopIconSize(size)}
+                      className={`px-2 py-0.5 rounded text-xs uppercase ${
+                        desktopIconSize === size ? "bg-white/20 text-white" : "text-white/60 hover:text-white hover:bg-white/10"
                       }`}
                     >
-                      <div className={`p-3 rounded-xl ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg`}>
-                        <Icon className={`h-8 w-8 ${icon.color}`} />
-                      </div>
-                      <span className="text-xs font-medium text-center leading-tight text-white drop-shadow-lg">
-                        {icon.label}
-                      </span>
+                      {size}
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
+                <div className="grid grid-cols-6 gap-10 w-full max-w-[1400px] justify-items-start content-start">
+                  {desktopIconOrder.map((id) => {
+                    const icon = desktopIcons.find((i) => i.id === id)
+                    if (!icon) return null
+                    const Icon = icon.icon
+                    const window = windows.find((w) => w.id === icon.id)
+                    const isActive = window?.isOpen && !window?.isMinimized
+                    const sizeClasses = {
+                      sm: "p-2 gap-1 [&>div]:p-2 [&>div>svg]:h-5 [&>div>svg]:w-5 text-[10px]",
+                      md: "p-3 gap-2 [&>div]:p-3 [&>div>svg]:h-8 [&>div>svg]:w-8 text-xs",
+                      lg: "p-4 gap-3 [&>div]:p-4 [&>div>svg]:h-10 [&>div>svg]:w-10 text-sm",
+                    }
+                    return (
+                      <button
+                        key={icon.id}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("text/plain", icon.id)
+                          e.dataTransfer.effectAllowed = "move"
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = "move"
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          const fromId = e.dataTransfer.getData("text/plain")
+                          if (!fromId || fromId === icon.id) return
+                          setDesktopIconOrder((prev) => {
+                            const fromIdx = prev.indexOf(fromId)
+                            const toIdx = prev.indexOf(icon.id)
+                            if (fromIdx === -1 || toIdx === -1) return prev
+                            const next = [...prev]
+                            next.splice(fromIdx, 1)
+                            next.splice(toIdx, 0, fromId)
+                            return next
+                          })
+                        }}
+                        onDoubleClick={() => openWindow(icon.id)}
+                        className={`group flex flex-col items-center rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 ${sizeClasses[desktopIconSize]} ${
+                          isActive ? "bg-white/15 border-primary/40 ring-1 ring-primary/30" : "hover:scale-105"
+                        }`}
+                      >
+                        <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20`}>
+                          <Icon className={icon.color} />
+                        </div>
+                        <span className="font-medium text-center leading-tight text-white drop-shadow-md">
+                          {icon.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 
@@ -467,12 +711,22 @@ export default function ResourcesPage() {
                       
                       <button
                         onClick={async () => {
-                          // Sign out if user is logged in
                           if (user) {
+                            try {
+                              const key = getSessionKey()
+                              if (key) {
+                                localStorage.setItem(key, JSON.stringify({
+                                  openIds: windows.filter(w => w.isOpen).map(w => w.id),
+                                  maximizedId: maximizedWindowId
+                                }))
+                              }
+                            } catch (_) {}
                             await supabase.auth.signOut()
                             setUser(null)
+                          } else {
+                            setWindows(initialWindowsState)
+                            setMaximizedWindowId(null)
                           }
-                          // Reset all states
                           setIsVMActive(false)
                           setIsStartMenuOpen(false)
                           setShowLoginScreen(false)
@@ -505,6 +759,8 @@ export default function ResourcesPage() {
                   const specialWindows: Record<string, any> = {
                     about: { label: "About", icon: Monitor, color: "text-blue-400" },
                     settings: { label: "Settings", icon: Wrench, color: "text-slate-400" },
+                    games: { label: "Games", icon: Gamepad2, color: "text-pink-400" },
+                    "mini-game": { label: "Mini Games", icon: Gamepad2, color: "text-pink-400" },
                     "util-hash": { label: "Hash ID", icon: Shield, color: "text-teal-400" },
                     "util-base64": { label: "Base64", icon: FileText, color: "text-teal-400" },
                     "util-timestamp": { label: "Timestamp", icon: Monitor, color: "text-teal-400" },
@@ -543,7 +799,10 @@ export default function ResourcesPage() {
                 </div>
               )}
 
-              <div className="text-xs text-white/70 font-mono">
+              {/* Live date & time */}
+              <DesktopTaskbarClock />
+
+              <div className="text-xs text-white/70 font-mono shrink-0">
                 {user ? `${user.email?.split('@')[0]} • ` : ''}SOC OS v1.0
               </div>
             </div>
@@ -565,6 +824,8 @@ export default function ResourcesPage() {
             const specialWindows: Record<string, any> = {
               about: { label: "About SOC OS", icon: Monitor, titleBar: "from-blue-400/20 to-blue-500/20" },
               settings: { label: "Settings", icon: Wrench, titleBar: "from-slate-400/20 to-slate-500/20" },
+              games: { label: "Games", icon: Gamepad2, titleBar: "from-pink-400/20 to-pink-500/20" },
+              "mini-game": { label: "Mini Games", icon: Gamepad2, titleBar: "from-pink-400/20 to-pink-500/20" },
               "util-hash": { label: "Hash Identifier", icon: Shield, titleBar: "from-teal-400/20 to-teal-500/20" },
               "util-base64": { label: "Base64 Toolkit", icon: FileText, titleBar: "from-teal-400/20 to-teal-500/20" },
               "util-timestamp": { label: "Timestamp Converter", icon: Monitor, titleBar: "from-teal-400/20 to-teal-500/20" },
@@ -594,14 +855,14 @@ export default function ResourcesPage() {
                 onClose={() => closeWindow(window.id)}
                 onMinimize={() => minimizeWindow(window.id)}
                 onFocus={() => focusWindow(window.id)}
+                onMaximizeChange={(maximized) => setMaximizedWindowId(maximized ? window.id : null)}
                 canGoBack={canGoBack}
                 canGoForward={canGoForward}
                 onGoBack={() => goBack(window.id)}
                 onGoForward={() => goForward(window.id)}
               >
                 {window.id === "start-here" && <StartHereContent onNavigate={(appId) => openWindow(appId)} />}
-                {window.id === "daily-mission" && <DailyMissionContent onNavigate={(appId) => openWindow(appId)} />}
-                {window.id === "30min-practice" && <PracticeContent />}
+                {window.id === "missions" && <MissionsContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "quick-start" && <QuickStartContent quickStart={quickStart} />}
                 {window.id === "templates" && (
                   <TemplatesContent 
@@ -615,6 +876,7 @@ export default function ResourcesPage() {
                     caseFiles={caseFiles}
                     currentPath={currentPath}
                     onNavigate={(path) => navigateInWindow(window.id, path)}
+                    appIntros={appIntros}
                   />
                 )}
                 {window.id === "playbooks" && (
@@ -622,24 +884,57 @@ export default function ResourcesPage() {
                     playbooks={playbooks}
                     currentPath={currentPath}
                     onNavigate={(path) => navigateInWindow(window.id, path)}
+                    appIntros={appIntros}
                   />
                 )}
                 {window.id === "sec-plus" && <SecPlusVaultContent secPlusVault={secPlusVault} />}
-                {window.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} />}
-                {window.id === "mini-game" && <MiniGameContent miniGames={miniGames} />}
-                {window.id === "cert-path" && <CertPathContent certPath={certPath} />}
+                {window.id === "skill-drills" && <SkillDrillsContent skillDrills={skillDrills} currentPath={currentPath} onNavigate={(path) => navigateInWindow(window.id, path)} onGoBack={() => goBack(window.id)} />}
+                {window.id === "games" && <GamesContent onOpenApp={openWindow} />}
+                {window.id === "mini-game" && <MiniGameContent miniGames={miniGames} currentPath={currentPath} onNavigate={(path) => navigateInWindow(window.id, path)} onGoBack={() => goBack(window.id)} />}
+                {window.id === "cert-path" && <CertPathContent certPath={certPath} appIntros={appIntros} />}
                 {window.id === "soc-journal" && <SOCJournalContent user={user} />}
-                {window.id === "tickets" && <TicketsContent tickets={tickets} user={user} />}
-                {window.id === "lab-files" && <LabFilesContent labFiles={labFiles} />}
+                {window.id === "tickets" && (
+                  <TicketsContent
+                    tickets={tickets}
+                    user={user}
+                    currentPath={currentPath}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
+                    onOpenApp={openWindow}
+                    appIntros={appIntros}
+                  />
+                )}
+                {window.id === "lab-files" && (
+                  <LabFilesContent
+                    labFiles={labFiles}
+                    currentPath={currentPath}
+                    onNavigate={(path) => navigateInWindow(window.id, path)}
+                  />
+                )}
                 {window.id === "threat-feed" && <ThreatFeedContent threatFeed={threatFeed} />}
-                {window.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} />}
+                {window.id === "log-viewer" && <LogViewerContent logSamples={logSamples} appIntros={appIntros} currentPath={currentPath} onNavigate={(path) => navigateInWindow(window.id, path)} onGoBack={() => goBack(window.id)} />}
+                {window.id === "cli-cheats" && <CLICheatsContent cliCommands={cliCommands} cliSyntaxGuide={cliSyntaxGuide} appIntros={appIntros} />}
                 {window.id === "toolbox" && <ToolboxContent toolbox={toolbox} />}
                 {window.id === "glossary" && <GlossaryContent glossary={glossary} />}
                 {window.id === "tools" && <ToolsContent tools={tools} />}
                 {window.id === "utilities" && <UtilitiesContent onNavigate={(appId) => openWindow(appId)} />}
-                {window.id === "terminal" && <TerminalContent onNavigate={(appId) => openWindow(appId)} />}
+                {window.id === "terminal" && (
+                  <TerminalContent
+                    onNavigate={(appId) => openWindow(appId)}
+                    openWindows={windows.filter(w => w.isOpen).map(w => ({ id: w.id, label: desktopIcons.find(i => i.id === w.id)?.label ?? w.id }))}
+                    onCloseWindow={closeWindow}
+                    onMinimizeWindow={minimizeWindow}
+                    glossary={glossary}
+                    tickets={tickets}
+                  />
+                )}
                 {window.id === "about" && <AboutContent />}
-                {window.id === "settings" && <SettingsContent />}
+                {window.id === "settings" && (
+                  <SettingsContent
+                    isLoggedIn={!!user}
+                    theme={desktopTheme}
+                    onThemeChange={setDesktopTheme}
+                  />
+                )}
                 {window.id === "util-hash" && <HashIdentifierUtility />}
                 {window.id === "util-base64" && <Base64Utility />}
                 {window.id === "util-timestamp" && <TimestampUtility />}
@@ -657,6 +952,7 @@ export default function ResourcesPage() {
                   />
                 )}
                 {window.id === "labs" && <LabsContent labs={labs} />}
+                {window.id === "projects" && <ProjectsContent projects={projectsData.projects} appIntros={appIntros} walkthrough={projectsWalkthrough} projectWalkthroughs={projectWalkthroughs} currentPath={currentPath} onNavigate={(path) => navigateInWindow(window.id, path)} onGoBack={() => goBack(window.id)} />}
                 {window.id === "code-examples" && (
                   <CodeExamplesContent 
                     codeExamples={codeExamples}
@@ -667,11 +963,20 @@ export default function ResourcesPage() {
                 {window.id === "interview-prep" && (
                   <InterviewPrepContent 
                     interviewPrep={interviewPrep}
+                    behavioralBank={behavioralBank}
+                    technicalTrivia={technicalTrivia}
                     currentPath={currentPath}
                     onNavigate={(path) => navigateInWindow(window.id, path)}
                   />
                 )}
                 {window.id === "ioc-helper" && <IOCHelperContent />}
+                {window.id === "report-builder" && <ReportBuilderPlaceholder />}
+                {window.id === "threat-map" && <ThreatMapPlaceholder />}
+                {window.id === "compliance" && <CompliancePlaceholder />}
+                {window.id === "runbooks" && <RunbooksContent runbooks={runbooks} appIntros={appIntros} />}
+                {window.id === "alerts" && <AlertsContent tickets={tickets} onOpenApp={openWindow} appIntros={appIntros} />}
+                {window.id === "weird-pics" && <WeirdPicsContent />}
+                {window.id === "funny-docs" && <FunnyDocsContent onJumpScare={() => setShowJumpScare(true)} />}
               </DesktopWindow>
             )
           })}
@@ -923,6 +1228,7 @@ function ToolsContent({ tools }: { tools: any[] }) {
 function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatSheets: any[], currentPath: string, onNavigate: (path: string) => void }) {
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   
   // Parse current path (e.g., "cheat-sheets" or "cheat-sheets:sheet-id")
   const [view, itemId] = currentPath.split(':')
@@ -930,20 +1236,39 @@ function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatShe
   
   // Fetch content when viewing a specific cheat sheet
   useEffect(() => {
-    if (sheet) {
-      setLoading(true)
-      fetch(`${GITHUB_RAW_BASE}/${sheet.githubPath}`)
-        .then(res => res.ok ? res.text() : null)
-        .then(text => {
-          setContent(text && text.length > 50 ? text : null)
-          setLoading(false)
-        })
-        .catch(() => {
-          setContent(null)
-          setLoading(false)
-        })
+    if (!sheet) {
+      setContent(null)
+      setFetchError(null)
+      return
     }
-  }, [sheet])
+    setContent(null)
+    setFetchError(null)
+    setLoading(true)
+    const url = `${GITHUB_RAW_BASE}/${sheet.githubPath}`
+    fetch(url)
+      .then(res => {
+        if (!res.ok) {
+          setLoading(false)
+          setFetchError(`Failed to load (${res.status})`)
+          return null
+        }
+        return res.text()
+      })
+      .then(text => {
+        setLoading(false)
+        if (text != null && text.trim().length > 0) {
+          setContent(text)
+          setFetchError(null)
+        } else {
+          setFetchError("File is empty or unavailable.")
+        }
+      })
+      .catch(() => {
+        setLoading(false)
+        setContent(null)
+        setFetchError("Network error. Check connection or view on GitHub.")
+      })
+  }, [sheet?.id])
   
   // If viewing a specific cheat sheet
   if (sheet) {
@@ -978,7 +1303,7 @@ function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatShe
           </div>
         ) : (
           <div className="p-8 text-center border border-border rounded-lg">
-            <p className="text-muted-foreground mb-2">Content could not be loaded.</p>
+            <p className="text-muted-foreground mb-2">{fetchError || "Content could not be loaded."}</p>
             <Button asChild variant="outline" size="sm" className="gap-2">
               <a
                 href={`${GITHUB_BASE_URL}/blob/main/${sheet.githubPath}`}
@@ -1058,6 +1383,313 @@ function LabsContent({ labs }: { labs: any[] }) {
                 </a>
               </Button>
             </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProjectsContent({
+  projects,
+  appIntros,
+  walkthrough,
+  projectWalkthroughs = {},
+  currentPath,
+  onNavigate,
+  onGoBack,
+}: {
+  projects: any[]
+  appIntros?: Record<string, string>
+  walkthrough?: { intro: string; steps: { title: string; body: string }[] }
+  projectWalkthroughs?: Record<string, {
+    id: string
+    title: string
+    difficulty?: string
+    timeEstimate?: string
+    steps: { title: string; body: string }[]
+    troubleshooting?: { issue: string; fix: string }[]
+    references?: { title: string; url: string }[]
+    cliCheatSheet?: { command: string; syntax: string; purpose: string }[]
+  }>
+  currentPath?: string
+  onNavigate?: (path: string) => void
+  onGoBack?: () => void
+}) {
+  const [tab, setTab] = useState<"projects" | "walkthrough">("projects")
+  const [stepIndex, setStepIndex] = useState(0)
+  const repoSteps = walkthrough?.steps ?? []
+  const hasRepoWalkthrough = repoSteps.length > 0
+
+  const pathPart = (currentPath || "projects").split(":")[1]
+  const projectWalkthrough = pathPart && projectWalkthroughs[pathPart] ? projectWalkthroughs[pathPart] : null
+  const projSteps = projectWalkthrough?.steps ?? []
+  const [projectStepIndex, setProjectStepIndex] = useState(0)
+  useEffect(() => {
+    if (projectWalkthrough) setProjectStepIndex(0)
+  }, [pathPart])
+
+  // Per-project walkthrough detail view
+  if (projectWalkthrough && projSteps.length > 0) {
+    const step = projSteps[projectStepIndex]
+    const hasTroubleshooting = (projectWalkthrough.troubleshooting?.length ?? 0) > 0
+    const hasReferences = (projectWalkthrough.references?.length ?? 0) > 0
+    const hasCliCheatSheet = (projectWalkthrough.cliCheatSheet?.length ?? 0) > 0
+    const hasExtraSections = hasTroubleshooting || hasReferences || hasCliCheatSheet
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-2 -ml-1" onClick={() => onGoBack?.()}>
+          <ArrowLeft className="h-4 w-4" /> Back to projects
+        </Button>
+        <div>
+          <h2 className="text-xl font-semibold mb-1">{projectWalkthrough.title}</h2>
+          {(projectWalkthrough.difficulty || projectWalkthrough.timeEstimate) && (
+            <p className="text-sm text-muted-foreground">
+              {[projectWalkthrough.difficulty, projectWalkthrough.timeEstimate].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+        <Card className="bg-card border-border">
+          <CardHeader className="py-3">
+            <CardTitle className="text-base">
+              Step {projectStepIndex + 1} of {projSteps.length}: {step.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{step.body}</p>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setProjectStepIndex((i) => Math.max(0, i - 1))} disabled={projectStepIndex === 0}>
+                <ArrowLeft className="h-3 w-3 mr-1" /> Back
+              </Button>
+              <Button variant="default" size="sm" onClick={() => setProjectStepIndex((i) => Math.min(projSteps.length - 1, i + 1))} disabled={projectStepIndex === projSteps.length - 1}>
+                Next <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        {hasExtraSections && (
+          <Accordion type="multiple" className="w-full">
+            {hasTroubleshooting && (
+              <AccordionItem value="troubleshooting">
+                <AccordionTrigger className="text-sm font-medium">Troubleshooting</AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-3 text-sm">
+                    {projectWalkthrough.troubleshooting!.map((item: { issue: string; fix: string }, i: number) => (
+                      <li key={i} className="rounded-md border border-border bg-muted/30 p-3">
+                        <p className="font-medium text-foreground mb-1">{item.issue}</p>
+                        <p className="text-muted-foreground whitespace-pre-wrap">{item.fix}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            {hasReferences && (
+              <AccordionItem value="references">
+                <AccordionTrigger className="text-sm font-medium">References</AccordionTrigger>
+                <AccordionContent>
+                  <ul className="space-y-2 text-sm">
+                    {projectWalkthrough.references!.map((ref: { title: string; url: string }, i: number) => (
+                      <li key={i}>
+                        <a href={ref.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          {ref.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            {hasCliCheatSheet && (
+              <AccordionItem value="cliCheatSheet">
+                <AccordionTrigger className="text-sm font-medium">CLI Cheat Sheet</AccordionTrigger>
+                <AccordionContent>
+                  <div className="rounded-md border border-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-muted/50 border-b border-border">
+                          <th className="text-left p-2 font-medium">Command</th>
+                          <th className="text-left p-2 font-medium">Syntax / Purpose</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {projectWalkthrough.cliCheatSheet!.map((row: { command: string; syntax: string; purpose: string }, i: number) => (
+                          <tr key={i} className="border-b border-border last:border-0">
+                            <td className="p-2 font-mono text-xs align-top">{row.command}</td>
+                            <td className="p-2 text-muted-foreground">
+                              <span className="block font-medium text-foreground text-xs">{row.syntax}</span>
+                              <span className="block mt-0.5">{row.purpose}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2">Projects</h2>
+          <p className="text-muted-foreground">Repo project folders with READMEs. Lab walkthroughs and evidence.</p>
+        </div>
+        {hasRepoWalkthrough && (
+          <Tabs value={tab} onValueChange={(v) => { setTab(v as "projects" | "walkthrough"); if (v === "walkthrough") setStepIndex(0) }}>
+            <TabsList>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
+              <TabsTrigger value="walkthrough">Walkthrough</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+      </div>
+      <AppIntro appId="projects" appIntros={appIntros} />
+      {tab === "walkthrough" && hasRepoWalkthrough && walkthrough ? (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">{walkthrough.intro}</p>
+          <Card className="bg-card border-border">
+            <CardHeader className="py-3">
+              <CardTitle className="text-base">
+                Step {stepIndex + 1} of {repoSteps.length}: {repoSteps[stepIndex].title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{repoSteps[stepIndex].body}</p>
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setStepIndex((i) => Math.max(0, i - 1))} disabled={stepIndex === 0}>
+                  <ArrowLeft className="h-3 w-3 mr-1" /> Back
+                </Button>
+                <Button variant="default" size="sm" onClick={() => setStepIndex((i) => Math.min(repoSteps.length - 1, i + 1))} disabled={stepIndex === repoSteps.length - 1}>
+                  Next <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {(projects || []).map((proj: any) => {
+            const readmeUrl = `${GITHUB_BASE_URL}/blob/main/${(proj.githubPath || "").replace(/\/?$/, "/")}README.md`
+            const hasProjectWalkthrough = projectWalkthroughs[proj.id]
+            return (
+              <Card key={proj.id} className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-sm">{proj.title}</CardTitle>
+                  <Badge variant="outline" className="text-xs w-fit">{proj.category}</Badge>
+                  <CardDescription className="text-xs mt-2">{proj.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  <Button asChild variant="default" size="sm" className="gap-2">
+                    <a href={readmeUrl} target="_blank" rel="noopener noreferrer">
+                      View README
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </Button>
+                  {hasProjectWalkthrough && (
+                    <Button variant="secondary" size="sm" className="gap-2" onClick={() => onNavigate?.("projects:" + proj.id)}>
+                      View walkthrough
+                      <ArrowRight className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {proj.link && (
+                    <Button asChild variant="outline" size="sm">
+                      <a href={proj.link}>Portfolio page</a>
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LogViewerContent({ logSamples, appIntros, currentPath, onNavigate, onGoBack }: { logSamples: any[]; appIntros?: Record<string, string>; currentPath?: string; onNavigate?: (path: string) => void; onGoBack?: () => void }) {
+  const pathPart = (currentPath || "log-viewer").split(":")[1]
+  const selectedId = pathPart || null
+  const sample = selectedId ? logSamples.find((s: any) => s.id === selectedId) : null
+
+  if (sample) {
+    const lines = (sample.rawLog || "").split("\n")
+    const suspiciousSet = new Set((sample.suspiciousLineNumbers || []).map((n: number) => n))
+
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-2 -ml-1" onClick={() => onGoBack?.()}>
+          <ArrowLeft className="h-4 w-4" /> Back to samples
+        </Button>
+        <div>
+          <h2 className="text-xl font-semibold">{sample.title}</h2>
+          <Badge variant="secondary" className="mt-1">{sample.logType}</Badge>
+        </div>
+        <div>
+          <h3 className="text-sm font-medium mb-2">Raw log — what&apos;s suspicious?</h3>
+          <pre className="bg-muted/50 border rounded-md p-3 text-xs font-mono overflow-x-auto max-h-48 overflow-y-auto">
+            {lines.map((line: string, i: number) => (
+              <div
+                key={i}
+                className={suspiciousSet.has(i + 1) ? "bg-destructive/15 text-destructive border-l-2 border-destructive pl-2 -ml-2" : ""}
+              >
+                {line || " "}
+              </div>
+            ))}
+          </pre>
+        </div>
+        <Card className="bg-card border-border">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Explanation</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground pt-0">
+            {sample.explanation}
+          </CardContent>
+        </Card>
+        {sample.mitreTactic && (
+          <p className="text-xs text-muted-foreground">
+            <strong>MITRE ATT&amp;CK:</strong> {sample.mitreTactic}
+          </p>
+        )}
+        {sample.splQuery && (
+          <div>
+            <h3 className="text-sm font-medium mb-2">Example SPL query</h3>
+            <pre className="bg-muted/50 border rounded-md p-3 text-xs font-mono overflow-x-auto">
+              {sample.splQuery}
+            </pre>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">Log Viewer</h2>
+        <p className="text-muted-foreground">Sample logs with &quot;What&apos;s suspicious?&quot; challenges. Click a sample to see the analysis.</p>
+      </div>
+      <AppIntro appId="log-viewer" appIntros={appIntros} />
+      <div className="grid gap-4">
+        {(logSamples || []).map((s: any) => (
+          <Card
+            key={s.id}
+            className="bg-card border-border cursor-pointer hover:border-amber-500/50 transition-colors"
+            onClick={() => onNavigate?.("log-viewer:" + s.id)}
+          >
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm">{s.title}</CardTitle>
+              <Badge variant="outline" className="text-xs w-fit">{s.logType}</Badge>
+              <CardDescription className="text-xs mt-1">
+                Click to view log snippet and analysis.
+              </CardDescription>
+            </CardHeader>
           </Card>
         ))}
       </div>
@@ -1197,7 +1829,9 @@ function CodeExamplesContent({ codeExamples, currentPath, onNavigate }: { codeEx
   )
 }
 
-function InterviewPrepContent({ interviewPrep, currentPath, onNavigate }: { interviewPrep: any[], currentPath: string, onNavigate: (path: string) => void }) {
+const STAR_STORIES_KEY = "soc-os-star-stories"
+
+function InterviewPrepContent({ interviewPrep, behavioralBank, technicalTrivia, currentPath, onNavigate }: { interviewPrep: any[], behavioralBank: any[], technicalTrivia: any[], currentPath: string, onNavigate: (path: string) => void }) {
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -1235,7 +1869,7 @@ function InterviewPrepContent({ interviewPrep, currentPath, onNavigate }: { inte
     }
   }, [resource])
   
-  // If viewing a specific resource
+  // If viewing a specific resource (guide)
   if (resource) {
     return (
       <div className="space-y-6">
@@ -1288,36 +1922,162 @@ function InterviewPrepContent({ interviewPrep, currentPath, onNavigate }: { inte
     )
   }
   
-  // Default: Show list of resources
+  // Default: Tabbed view (Guides, Mock Interview, STAR Builder, Behavioral Bank, Technical Trivia)
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
         <h2 className="text-2xl font-semibold mb-2">Interview Prep</h2>
-        <p className="text-muted-foreground">Questions I've been asked. Study these while job hunting.</p>
+        <p className="text-muted-foreground text-sm">Guides, mock interview, STAR stories, behavioral bank, and technical trivia.</p>
       </div>
-      <div className="grid gap-4">
-        {interviewPrep.map((resource) => (
-          <Card key={resource.id} className="bg-card border-border">
+      <Tabs defaultValue="guides" className="w-full">
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="guides">Guides</TabsTrigger>
+          <TabsTrigger value="mock">Mock Interview</TabsTrigger>
+          <TabsTrigger value="star">STAR Builder</TabsTrigger>
+          <TabsTrigger value="behavioral">Behavioral Bank</TabsTrigger>
+          <TabsTrigger value="trivia">Technical Trivia</TabsTrigger>
+        </TabsList>
+        <TabsContent value="guides" className="mt-4 space-y-4">
+          <div className="grid gap-4">
+            {interviewPrep.map((r) => (
+              <Card key={r.id} className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-sm">{r.title}</CardTitle>
+                  <CardDescription className="text-xs">{r.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex gap-2">
+                  <Button onClick={() => onNavigate(`interview-prep:${r.id}`)} variant="default" size="sm" className="flex-1 gap-2">
+                    Read Guide <ArrowRight className="h-3 w-3" />
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <a href={`${GITHUB_BASE_URL}/blob/main/${r.githubPath}`} target="_blank" rel="noopener noreferrer"><Github className="h-3 w-3" /></a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="mock" className="mt-4">
+          <InterviewMockSimulator technicalTrivia={technicalTrivia} behavioralBank={behavioralBank} />
+        </TabsContent>
+        <TabsContent value="star" className="mt-4">
+          <InterviewSTARBuilder />
+        </TabsContent>
+        <TabsContent value="behavioral" className="mt-4">
+          <InterviewBehavioralBank behavioralBank={behavioralBank} />
+        </TabsContent>
+        <TabsContent value="trivia" className="mt-4">
+          <InterviewTechnicalTrivia technicalTrivia={technicalTrivia} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+function InterviewMockSimulator({ technicalTrivia, behavioralBank }: { technicalTrivia: any[], behavioralBank: any[] }) {
+  const pool = [...(technicalTrivia || []).map((t: any) => ({ ...t, type: "technical" })), ...(behavioralBank || []).map((b: any) => ({ ...b, question: b.question, answer: b.sampleAnswer, type: "behavioral" }))]
+  const [current, setCurrent] = useState<{ question: string; answer: string } | null>(null)
+  const [revealed, setRevealed] = useState(false)
+  const [seconds, setSeconds] = useState(120)
+  const [running, setRunning] = useState(false)
+  useEffect(() => {
+    if (!running || seconds <= 0) return
+    const t = setInterval(() => setSeconds((s) => s - 1), 1000)
+    return () => clearInterval(t)
+  }, [running, seconds])
+  const pickRandom = () => {
+    if (pool.length === 0) return
+    const item = pool[Math.floor(Math.random() * pool.length)]
+    setCurrent({ question: item.question, answer: item.answer || item.sampleAnswer })
+    setRevealed(false)
+    setSeconds(120)
+    setRunning(true)
+  }
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Get a random question and practice answering (2 min). Reveal the sample answer when ready.</p>
+      {pool.length === 0 && <p className="text-sm text-muted-foreground">No questions loaded.</p>}
+      {pool.length > 0 && !current && (
+        <Button onClick={pickRandom}>Start mock question</Button>
+      )}
+      {current && (
+        <>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Time: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</span>
+            <Button variant="ghost" size="sm" onClick={() => setRunning((r) => !r)}>{running ? "Pause" : "Resume"}</Button>
+          </div>
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-sm">{resource.title}</CardTitle>
-              <CardDescription className="text-xs">{resource.description}</CardDescription>
+              <CardTitle className="text-sm">Question</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-2">
-              <Button 
-                onClick={() => onNavigate(`interview-prep:${resource.id}`)}
-                variant="default" 
-                size="sm" 
-                className="flex-1 gap-2"
-              >
-                Read Guide
-                <ArrowRight className="h-3 w-3" />
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <a href={`${GITHUB_BASE_URL}/blob/main/${resource.githubPath}`} target="_blank" rel="noopener noreferrer">
-                  <Github className="h-3 w-3" />
-                </a>
-              </Button>
-            </CardContent>
+            <CardContent className="text-sm pt-0">{current.question}</CardContent>
+          </Card>
+          {!revealed ? (
+            <Button variant="secondary" onClick={() => setRevealed(true)}>Reveal sample answer</Button>
+          ) : (
+            <Card className="bg-muted/30 border-border">
+              <CardHeader>
+                <CardTitle className="text-sm">Sample answer</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground whitespace-pre-wrap pt-0">{current.answer}</CardContent>
+            </Card>
+          )}
+          <Button onClick={pickRandom}>Next question</Button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function InterviewSTARBuilder() {
+  const [stories, setStories] = useState<{ id: string; title: string; situation: string; task: string; action: string; result: string }[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const raw = localStorage.getItem(STAR_STORIES_KEY)
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const [editing, setEditing] = useState<{ title: string; situation: string; task: string; action: string; result: string }>({ title: "", situation: "", task: "", action: "", result: "" })
+  const [adding, setAdding] = useState(false)
+  const saveToStorage = (next: typeof stories) => {
+    setStories(next)
+    try { localStorage.setItem(STAR_STORIES_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+  }
+  const addStory = () => {
+    if (!editing.title.trim()) return
+    saveToStorage([...stories, { ...editing, id: `star-${Date.now()}` }])
+    setEditing({ title: "", situation: "", task: "", action: "", result: "" })
+    setAdding(false)
+  }
+  const deleteStory = (id: string) => { saveToStorage(stories.filter((s) => s.id !== id)) }
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Build STAR stories (Situation, Task, Action, Result) and save them for practice. Stored in this browser only.</p>
+      {!adding ? (
+        <Button onClick={() => setAdding(true)}>Add STAR story</Button>
+      ) : (
+        <Card className="bg-card border-border p-4 space-y-3">
+          <Input placeholder="Story title (e.g. Phishing investigation)" value={editing.title} onChange={(e) => setEditing((x) => ({ ...x, title: e.target.value }))} />
+          <Input placeholder="Situation" value={editing.situation} onChange={(e) => setEditing((x) => ({ ...x, situation: e.target.value }))} />
+          <Input placeholder="Task" value={editing.task} onChange={(e) => setEditing((x) => ({ ...x, task: e.target.value }))} />
+          <Input placeholder="Action" value={editing.action} onChange={(e) => setEditing((x) => ({ ...x, action: e.target.value }))} />
+          <Input placeholder="Result" value={editing.result} onChange={(e) => setEditing((x) => ({ ...x, result: e.target.value }))} />
+          <div className="flex gap-2">
+            <Button onClick={addStory}>Save story</Button>
+            <Button variant="outline" onClick={() => { setAdding(false); setEditing({ title: "", situation: "", task: "", action: "", result: "" }) }}>Cancel</Button>
+          </div>
+        </Card>
+      )}
+      <div className="space-y-2">
+        {stories.map((s) => (
+          <Card key={s.id} className="bg-card border-border">
+            <CardHeader className="py-3">
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-sm">{s.title || "Untitled"}</CardTitle>
+                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteStory(s.id)}>Delete</Button>
+              </div>
+              <CardDescription className="text-xs mt-1"><strong>S:</strong> {s.situation} <strong>T:</strong> {s.task} <strong>A:</strong> {s.action} <strong>R:</strong> {s.result}</CardDescription>
+            </CardHeader>
           </Card>
         ))}
       </div>
@@ -1325,31 +2085,61 @@ function InterviewPrepContent({ interviewPrep, currentPath, onNavigate }: { inte
   )
 }
 
+function InterviewBehavioralBank({ behavioralBank }: { behavioralBank: any[] }) {
+  const [openId, setOpenId] = useState<string | null>(null)
+  const list = behavioralBank || []
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">Common behavioral questions with sample STAR-style answers.</p>
+      {list.map((b: any) => (
+        <Card key={b.id} className="bg-card border-border">
+          <CardHeader className="py-3 cursor-pointer" onClick={() => setOpenId(openId === b.id ? null : b.id)}>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-sm">{b.question}</CardTitle>
+              <Badge variant="outline" className="text-xs">{b.category}</Badge>
+            </div>
+          </CardHeader>
+          {openId === b.id && (
+            <CardContent className="text-sm text-muted-foreground whitespace-pre-wrap pt-0">{b.sampleAnswer}</CardContent>
+          )}
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+function InterviewTechnicalTrivia({ technicalTrivia }: { technicalTrivia: any[] }) {
+  const [index, setIndex] = useState(0)
+  const [flipped, setFlipped] = useState(false)
+  const list = technicalTrivia || []
+  const item = list[index]
+  const next = () => { setIndex((i) => (i + 1) % list.length); setFlipped(false) }
+  if (list.length === 0) return <p className="text-sm text-muted-foreground">No trivia loaded.</p>
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Flashcard style. Click to reveal answer, then Next.</p>
+      <Card className="bg-card border-border min-h-[120px] flex items-center justify-center p-6 cursor-pointer" onClick={() => setFlipped((f) => !f)}>
+        <div className="text-center">
+          <p className="font-medium">{flipped ? "Answer" : "Question"}</p>
+          <p className="text-sm text-muted-foreground mt-2">{flipped ? item.answer : item.question}</p>
+        </div>
+      </Card>
+      <div className="flex justify-between">
+        <span className="text-xs text-muted-foreground">{index + 1} / {list.length}</span>
+        <Button onClick={next}>Next</Button>
+      </div>
+    </div>
+  )
+}
+
 function IOCHelperContent() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold mb-2">IOC Helper Tool</h2>
-        <p className="text-muted-foreground mb-4">
-          Quick tool to check IPs, domains, and hashes. Get threat intel links + auto-generated notes.
-        </p>
-      </div>
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-        <CardHeader>
-          <CardTitle className="text-base">Launch Full IOC Helper</CardTitle>
-          <CardDescription>
-            Opens in a new browser tab with full functionality
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild variant="default" size="lg" className="w-full gap-2">
-            <a href="/resources/ioc-helper" target="_blank" rel="noopener noreferrer">
-              Open IOC Helper
-              <ArrowRight className="h-4 w-4" />
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
+    <div className="h-full min-h-0 flex flex-col">
+      <iframe
+        src="/resources/ioc-helper"
+        title="IOC Helper"
+        className="flex-1 min-h-0 w-full border-0 rounded bg-background"
+      />
     </div>
   )
 }
@@ -1541,45 +2331,116 @@ function StartHereContent({ onNavigate }: { onNavigate: (appId: string) => void 
   )
 }
 
+function MissionsContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
+  const [tab, setTab] = useState<'daily' | 'practice'>('daily')
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0 flex gap-2 mb-4 border-b border-border pb-4">
+        <Button
+          variant={tab === 'daily' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setTab('daily')}
+        >
+          <Target className="h-4 w-4 mr-2" />
+          Daily Mission
+        </Button>
+        <Button
+          variant={tab === 'practice' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setTab('practice')}
+        >
+          <Zap className="h-4 w-4 mr-2" />
+          30-Min Practice
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {tab === 'daily' && <DailyMissionContent onNavigate={onNavigate} />}
+        {tab === 'practice' && <PracticeContent />}
+      </div>
+    </div>
+  )
+}
+
+const MISSIONS_STORAGE_KEY = "soc-os-missions"
+const MISSION_POOL = [
+  { id: 1, duration: "10 MIN", badge: "Quick Mission", title: "Review 3 MITRE techniques", description: "Pick a tactic and study 3 techniques", appId: "cheat-sheets", appName: "Cheat Sheets" },
+  { id: 2, duration: "30 MIN", badge: "Standard Mission", title: "Read a case file investigation", description: "Study a real SOC investigation walkthrough", appId: "case-files", appName: "Case Files" },
+  { id: 3, duration: "60 MIN", badge: "Stretch Mission", title: "Complete a practice lab", description: "Hands-on training from start to finish", appId: "labs", appName: "Labs" },
+  { id: 4, duration: "10 MIN", badge: "Quick Mission", title: "Run 5 Skill Drill questions", description: "Test your knowledge with random drills", appId: "skill-drills", appName: "Skill Drills" },
+  { id: 5, duration: "30 MIN", badge: "Standard Mission", title: "Review a playbook", description: "Read one incident response playbook", appId: "playbooks", appName: "Playbooks" },
+  { id: 6, duration: "15 MIN", badge: "Quick Mission", title: "Check threat intel feed", description: "Skim one threat intel source", appId: "threat-feed", appName: "Intel Feed" },
+  { id: 7, duration: "20 MIN", badge: "Standard Mission", title: "Practice one mini game", description: "Play Port Quiz or Spot the Phishing", appId: "games", appName: "Games" },
+  { id: 8, duration: "30 MIN", badge: "Standard Mission", title: "Work one incident ticket", description: "Read scenario and guided steps", appId: "tickets", appName: "Tickets" }
+]
+
+function seededShuffle<T>(arr: T[], seed: string): T[] {
+  const a = [...arr]
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h << 5) - h + seed.charCodeAt(i) | 0
+  for (let i = a.length - 1; i > 0; i--) {
+    h = (h * 16807) % 2147483647
+    const j = Math.abs(h) % (i + 1)
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+function getTodayKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
 function DailyMissionContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
-  const [missions] = useState([
-    { 
-      id: 1, 
-      duration: "10 MIN", 
-      badge: "Quick Mission",
-      title: "Review 3 MITRE techniques",
-      description: "Pick a tactic and study 3 techniques",
-      appId: "cheat-sheets",
-      appName: "Cheat Sheets"
-    },
-    { 
-      id: 2, 
-      duration: "30 MIN", 
-      badge: "Standard Mission",
-      title: "Read a case file investigation",
-      description: "Study a real SOC investigation walkthrough",
-      appId: "case-files",
-      appName: "Case Files"
-    },
-    { 
-      id: 3, 
-      duration: "60 MIN", 
-      badge: "Stretch Mission",
-      title: "Complete a practice lab",
-      description: "Hands-on training from start to finish",
-      appId: "labs",
-      appName: "Labs"
-    }
-  ])
+  const todayKey = getTodayKey()
+  const missions = useMemo(() => seededShuffle(MISSION_POOL, todayKey).slice(0, 3), [todayKey])
   
-  const [completedToday, setCompletedToday] = useState<number[]>([])
-  
+  const [completedToday, setCompletedToday] = useState<number[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const raw = localStorage.getItem(MISSIONS_STORAGE_KEY)
+      if (!raw) return []
+      const data = JSON.parse(raw) as Record<string, number[]>
+      return data[todayKey] ?? []
+    } catch { return [] }
+  })
+
+  const [historyDates, setHistoryDates] = useState<string[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const raw = localStorage.getItem(MISSIONS_STORAGE_KEY)
+      if (!raw) return []
+      const data = JSON.parse(raw) as Record<string, number[]>
+      return Object.keys(data).filter(d => (data[d]?.length ?? 0) > 0).sort().reverse().slice(0, 14)
+    } catch { return [] }
+  })
+
+  const streak = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(MISSIONS_STORAGE_KEY)
+      if (!raw) return 0
+      const data = JSON.parse(raw) as Record<string, number[]>
+      let count = 0
+      for (let i = 0; i < 30; i++) {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+        if ((data[key]?.length ?? 0) > 0) count++
+        else break
+      }
+      return count
+    } catch { return 0 }
+  }, [completedToday, historyDates])
+
   const markComplete = (id: number) => {
-    if (completedToday.includes(id)) {
-      setCompletedToday(completedToday.filter(cid => cid !== id))
-    } else {
-      setCompletedToday([...completedToday, id])
-    }
+    const next = completedToday.includes(id) ? completedToday.filter(cid => cid !== id) : [...completedToday, id]
+    setCompletedToday(next)
+    try {
+      const raw = localStorage.getItem(MISSIONS_STORAGE_KEY)
+      const data: Record<string, number[]> = raw ? JSON.parse(raw) : {}
+      data[todayKey] = next
+      localStorage.setItem(MISSIONS_STORAGE_KEY, JSON.stringify(data))
+      setHistoryDates(Object.keys(data).filter(d => (data[d]?.length ?? 0) > 0).sort().reverse().slice(0, 14))
+    } catch (_) {}
   }
   
   const getBadgeColor = (duration: string) => {
@@ -1600,7 +2461,7 @@ function DailyMissionContent({ onNavigate }: { onNavigate: (appId: string) => vo
         </p>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-2xl">🔥</span>
-          <span className="font-semibold">Keep the streak going!</span>
+          <span className="font-semibold">Streak: {streak} day{streak !== 1 ? "s" : ""}</span>
         </div>
       </div>
       
@@ -1655,11 +2516,29 @@ function DailyMissionContent({ onNavigate }: { onNavigate: (appId: string) => vo
           </p>
         </CardContent>
       </Card>
+
+      <Card className="bg-muted/30">
+        <CardHeader>
+          <CardTitle className="text-sm">Recent activity</CardTitle>
+          <CardDescription className="text-xs">Days you completed at least one mission</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {historyDates.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Complete a mission to see history here.</p>
+          ) : (
+            <ul className="text-xs text-muted-foreground space-y-1">
+              {historyDates.slice(0, 7).map((d) => (
+                <li key={d}>{d}</li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
-function CaseFilesContent({ caseFiles, currentPath, onNavigate }: { caseFiles: any[], currentPath: string, onNavigate: (path: string) => void }) {
+function CaseFilesContent({ caseFiles, currentPath, onNavigate, appIntros }: { caseFiles: any[], currentPath: string, onNavigate: (path: string) => void; appIntros?: Record<string, string> }) {
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   
@@ -1739,6 +2618,7 @@ function CaseFilesContent({ caseFiles, currentPath, onNavigate }: { caseFiles: a
         <h2 className="text-2xl font-semibold mb-2">Case Files</h2>
         <p className="text-muted-foreground">Real investigations from my SOC training. Walkthroughs and lessons learned.</p>
       </div>
+      <AppIntro appId="case-files" appIntros={appIntros} />
       <div className="grid gap-4">
         {caseFiles.map((caseFile) => {
           const getSeverityColor = (severity: string) => {
@@ -1785,7 +2665,7 @@ function CaseFilesContent({ caseFiles, currentPath, onNavigate }: { caseFiles: a
   )
 }
 
-function PlaybooksContent({ playbooks, currentPath, onNavigate }: { playbooks: any[], currentPath: string, onNavigate: (path: string) => void }) {
+function PlaybooksContent({ playbooks, currentPath, onNavigate, appIntros }: { playbooks: any[], currentPath: string, onNavigate: (path: string) => void; appIntros?: Record<string, string> }) {
   const [content, setContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   
@@ -1864,6 +2744,7 @@ function PlaybooksContent({ playbooks, currentPath, onNavigate }: { playbooks: a
         <h2 className="text-2xl font-semibold mb-2">SOC Playbooks</h2>
         <p className="text-muted-foreground">Step-by-step response procedures for common security incidents.</p>
       </div>
+      <AppIntro appId="playbooks" appIntros={appIntros} />
       <div className="grid gap-4">
         {playbooks.map((playbook) => {
           const getSeverityColor = (severity: string) => {
@@ -1958,6 +2839,12 @@ function SecPlusVaultContent({ secPlusVault }: { secPlusVault: any }) {
                   </div>
                 ))}
               </div>
+              {secPlusVault.studyPlan.twoWeekPlan && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm font-semibold mb-2">2-Week Study Plan:</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{secPlusVault.studyPlan.twoWeekPlan}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
           
@@ -2022,9 +2909,7 @@ function ThreatFeedContent({ threatFeed }: { threatFeed: any[] }) {
   
   const categories = ['all', 'Government', 'News', 'Research', 'Vendor', 'Threat Intel']
   
-  const filteredFeed = selectedCategory === 'all' 
-    ? threatFeed 
-    : threatFeed.filter(item => item.category === selectedCategory)
+  const filteredFeed = useMemo(() => selectedCategory === 'all' ? threatFeed : threatFeed.filter((item: any) => item.category === selectedCategory), [threatFeed, selectedCategory])
   
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -2039,7 +2924,6 @@ function ThreatFeedContent({ threatFeed }: { threatFeed: any[] }) {
   
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed header section */}
       <div className="flex-shrink-0 space-y-4 pb-4 border-b border-border">
         <div>
           <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
@@ -2049,7 +2933,6 @@ function ThreatFeedContent({ threatFeed }: { threatFeed: any[] }) {
           <p className="text-muted-foreground">Stay current with the latest security advisories and threat intelligence.</p>
         </div>
         
-        {/* Category filters */}
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <Button
@@ -2064,7 +2947,6 @@ function ThreatFeedContent({ threatFeed }: { threatFeed: any[] }) {
         </div>
       </div>
       
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto mt-4">
         <div className="grid gap-4 pr-2">
         {filteredFeed.map((source) => (
@@ -2093,18 +2975,19 @@ function ThreatFeedContent({ threatFeed }: { threatFeed: any[] }) {
   )
 }
 
-function CLICheatsContent({ cliCommands }: { cliCommands: any[] }) {
+function CLICheatsContent({ cliCommands, cliSyntaxGuide, appIntros }: { cliCommands: any[]; cliSyntaxGuide?: { sections: { title: string; body: string }[] }; appIntros?: Record<string, string> }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
   
-  const categories = ['all', ...Array.from(new Set(cliCommands.map(cmd => cmd.category)))]
+  const categories = useMemo(() => ['all', ...Array.from(new Set(cliCommands.map((cmd: any) => cmd.category)))], [cliCommands])
   
-  const filteredCommands = cliCommands.filter(cmd => {
+  const filteredCommands = useMemo(() => cliCommands.filter((cmd: any) => {
     const matchesCategory = selectedCategory === 'all' || cmd.category === selectedCategory
-    const matchesSearch = cmd.command.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          cmd.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = debouncedSearch.toLowerCase()
+    const matchesSearch = !q || cmd.command.toLowerCase().includes(q) || cmd.description.toLowerCase().includes(q) || (cmd.syntax && cmd.syntax.toLowerCase().includes(q))
     return matchesCategory && matchesSearch
-  })
+  }), [cliCommands, selectedCategory, debouncedSearch])
   
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -2112,17 +2995,32 @@ function CLICheatsContent({ cliCommands }: { cliCommands: any[] }) {
   
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed header section */}
       <div className="flex-shrink-0 space-y-4 pb-4 border-b border-border">
         <div>
           <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-            <Terminal className="h-6 w-6 text-lime-500" />
+            <Code2 className="h-6 w-6 text-[#4e7cf6]" />
             Command Line Cheatbook
           </h2>
           <p className="text-muted-foreground">Essential commands for SOC log analysis and investigation.</p>
         </div>
+        <AppIntro appId="cli-cheats" appIntros={appIntros} />
+
+        {cliSyntaxGuide?.sections && cliSyntaxGuide.sections.length > 0 && (
+          <Card className="bg-muted/30 border-[#4e7cf6]/20">
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm">Understanding the syntax</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              {cliSyntaxGuide.sections.map((s: { title: string; body: string }, i: number) => (
+                <div key={i}>
+                  <span className="text-xs font-semibold text-foreground">{s.title}</span>
+                  <p className="text-xs text-muted-foreground mt-0.5">{s.body}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
         
-        {/* Category filters */}
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <Button
@@ -2136,7 +3034,6 @@ function CLICheatsContent({ cliCommands }: { cliCommands: any[] }) {
           ))}
         </div>
         
-        {/* Search */}
         <input
           type="text"
           placeholder="Search commands..."
@@ -2146,8 +3043,7 @@ function CLICheatsContent({ cliCommands }: { cliCommands: any[] }) {
         />
       </div>
       
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto mt-4">
+      <div className="flex-1 min-h-0 overflow-y-auto mt-4">
         <div className="space-y-3 pr-2">
         {filteredCommands.map((cmd, idx) => (
           <Card key={idx} className="bg-card border-border">
@@ -2173,6 +3069,13 @@ function CLICheatsContent({ cliCommands }: { cliCommands: any[] }) {
                   </Button>
                 </div>
               </div>
+
+              {cmd.syntax && (
+                <div>
+                  <p className="text-xs font-semibold mb-1">Syntax / breakdown</p>
+                  <p className="text-xs text-muted-foreground">{cmd.syntax}</p>
+                </div>
+              )}
               
               {cmd.examples && cmd.examples.length > 0 && (
                 <div>
@@ -2248,15 +3151,16 @@ function ToolboxContent({ toolbox }: { toolbox: any }) {
 function GlossaryContent({ glossary }: { glossary: any[] }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
   
-  const categories = ['all', ...Array.from(new Set(glossary.map(term => term.category)))]
+  const categories = useMemo(() => ['all', ...Array.from(new Set(glossary.map((term: any) => term.category)))], [glossary])
   
-  const filteredTerms = glossary.filter(term => {
+  const filteredTerms = useMemo(() => glossary.filter((term: any) => {
     const matchesCategory = selectedCategory === 'all' || term.category === selectedCategory
-    const matchesSearch = term.term.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          term.definition.toLowerCase().includes(searchQuery.toLowerCase())
+    const q = debouncedSearch.toLowerCase()
+    const matchesSearch = !q || term.term.toLowerCase().includes(q) || term.definition.toLowerCase().includes(q)
     return matchesCategory && matchesSearch
-  }).sort((a, b) => a.term.localeCompare(b.term))
+  }).sort((a: any, b: any) => a.term.localeCompare(b.term)), [glossary, selectedCategory, debouncedSearch])
   
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -2276,9 +3180,9 @@ function GlossaryContent({ glossary }: { glossary: any[] }) {
   }
   
   return (
-    <div className="flex flex-col h-full">
-      {/* Fixed header section */}
-      <div className="flex-shrink-0 space-y-4 pb-4 border-b border-border">
+    <div className="space-y-4">
+      {/* Header - no nested scroll; window content area handles all scrolling */}
+      <div className="space-y-4 pb-4 border-b border-border">
         <div>
           <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
             <BookA className="h-6 w-6 text-fuchsia-500" />
@@ -2316,9 +3220,8 @@ function GlossaryContent({ glossary }: { glossary: any[] }) {
         </p>
       </div>
       
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto mt-4">
-        <div className="space-y-3 pr-2">
+      {/* Content - single scroll context from parent window */}
+      <div className="space-y-3 pr-2">
           {filteredTerms.map((term, idx) => (
             <Card key={idx} className="bg-card border-border">
               <CardHeader>
@@ -2348,7 +3251,6 @@ function GlossaryContent({ glossary }: { glossary: any[] }) {
               <p className="text-muted-foreground">No terms found matching your search.</p>
             </div>
           )}
-        </div>
       </div>
     </div>
   )
@@ -2356,8 +3258,9 @@ function GlossaryContent({ glossary }: { glossary: any[] }) {
 
 // Phase 4 Components
 
-function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
-  const [selectedCategory, setSelectedCategory] = useState<any | null>(null)
+function SkillDrillsContent({ skillDrills, currentPath, onNavigate, onGoBack }: { skillDrills: any; currentPath?: string; onNavigate?: (path: string) => void; onGoBack?: () => void }) {
+  const pathCategoryId = (currentPath || "skill-drills").split(":")[1]
+  const selectedCategory = pathCategoryId ? skillDrills.categories.find((c: any) => c.id === pathCategoryId) ?? null : null
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [score, setScore] = useState(0)
   const [showExplanation, setShowExplanation] = useState(false)
@@ -2382,7 +3285,7 @@ function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
               key={cat.id}
               className="cursor-pointer hover:border-emerald-500/50 transition-all"
               onClick={() => {
-                setSelectedCategory(cat)
+                onNavigate?.("skill-drills:" + cat.id)
                 setCurrentQuestion(0)
                 setScore(0)
                 setShowExplanation(false)
@@ -2441,7 +3344,7 @@ function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
           }}>
             Try Again
           </Button>
-          <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+          <Button variant="outline" onClick={() => onGoBack?.()}>
             Back to Categories
           </Button>
         </div>
@@ -2540,7 +3443,7 @@ function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
             {currentQuestion < selectedCategory.drills.length - 1 ? 'Next Question →' : 'Finish Quiz'}
           </Button>
         )}
-        <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+        <Button variant="outline" onClick={() => onGoBack?.()}>
           Back to Categories
         </Button>
       </div>
@@ -2548,8 +3451,414 @@ function SkillDrillsContent({ skillDrills }: { skillDrills: any }) {
   )
 }
 
-function MiniGameContent({ miniGames }: { miniGames: any[] }) {
-  const [selectedGame, setSelectedGame] = useState<any | null>(null)
+function GamesContent({ onOpenApp, currentPath, onNavigate, onGoBack }: { onOpenApp: (appId: string) => void; currentPath?: string; onNavigate?: (path: string) => void; onGoBack?: () => void }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Gamepad2 className="h-6 w-6 text-pink-400" />
+          Games
+        </h2>
+        <p className="text-muted-foreground">Training games and simulations.</p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-primary/20 bg-muted/30 opacity-90">
+          <CardHeader>
+            <CardTitle className="text-base">Corporate Espionage Simulator</CardTitle>
+            <CardDescription>Full game experience — coming soon.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+          </CardContent>
+        </Card>
+        <Card
+          className="cursor-pointer hover:border-pink-400/50 transition-all"
+          onClick={() => onOpenApp("mini-game")}
+        >
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-pink-400" />
+              Mini Games
+            </CardTitle>
+            <CardDescription>Quick SOC training games (Port Quiz, etc.)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="default" size="sm">Open</Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function ReportBuilderPlaceholder() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <BarChart2 className="h-6 w-6 text-amber-500" />
+          Report Builder
+        </h2>
+        <p className="text-muted-foreground">Build incident reports and post-mortems from templates. Export to PDF or share with stakeholders.</p>
+      </div>
+      <Card className="border-amber-500/20 bg-muted/30">
+        <CardContent className="pt-6 space-y-3">
+          <p className="text-sm font-medium">What this will do</p>
+          <p className="text-sm text-muted-foreground">Templates for incident reports, executive summaries, and timeline exports. You’ll pick a template, fill in fields, and export or copy the result for tickets and handoffs.</p>
+          <Badge variant="secondary">Coming Soon</Badge>
+          <p className="text-sm text-muted-foreground mt-2">In the meantime: use the <strong>Templates</strong> app for report structure and the <strong>Tickets</strong> app to document investigations.</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ThreatMapPlaceholder() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Globe className="h-6 w-6 text-red-400" />
+          Threat Map
+        </h2>
+        <p className="text-muted-foreground">Visualize live or sample threat intel data on a world map. See attack origins, targets, and trends.</p>
+      </div>
+      <Card className="border-red-400/20 bg-muted/30">
+        <CardContent className="pt-6 space-y-3">
+          <p className="text-sm font-medium">What this will do</p>
+          <p className="text-sm text-muted-foreground">An interactive map showing threat feed data: source/target locations, attack types, and time-based filtering for situational awareness and briefings.</p>
+          <Badge variant="secondary">Coming Soon</Badge>
+          <p className="text-sm text-muted-foreground mt-2">In the meantime: use the <strong>Intel Feed</strong> app for threat sources and the <strong>IOC Helper</strong> to look up IPs and domains.</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function CompliancePlaceholder() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <CheckSquare className="h-6 w-6 text-green-500" />
+          Compliance
+        </h2>
+        <p className="text-muted-foreground">Checklists and mappings for NIST CSF, CIS Controls, and other frameworks. Track control coverage.</p>
+      </div>
+      <Card className="border-green-500/20 bg-muted/30">
+        <CardContent className="pt-6 space-y-3">
+          <p className="text-sm font-medium">What this will do</p>
+          <p className="text-sm text-muted-foreground">Framework checklists (e.g. NIST CSF, CIS Controls) and control mappings so you can track SOC and security posture coverage for audits and reporting.</p>
+          <Badge variant="secondary">Coming Soon</Badge>
+          <p className="text-sm text-muted-foreground mt-2">In the meantime: use <strong>Templates</strong> for incident and review docs, and your org’s GRC tool for formal control tracking.</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function RunbooksContent({ runbooks, appIntros }: { runbooks: { id: string; title: string; category: string; steps: string[]; githubPath?: string | null }[]; appIntros?: Record<string, string> }) {
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+
+  const categories = useMemo(() => ["all", ...Array.from(new Set(runbooks.map((r: any) => r.category)))], [runbooks])
+  const filtered = useMemo(() => runbooks.filter((r: any) => {
+    const matchCat = categoryFilter === "all" || r.category === categoryFilter
+    const q = debouncedSearch.toLowerCase()
+    const matchSearch = !q || r.title.toLowerCase().includes(q)
+    return matchCat && matchSearch
+  }), [runbooks, categoryFilter, debouncedSearch])
+
+  const selected = selectedId ? runbooks.find((r: any) => r.id === selectedId) : null
+
+  if (selected) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-2 -ml-1" onClick={() => setSelectedId(null)}>
+          <ArrowLeft className="h-4 w-4" /> Back to runbooks
+        </Button>
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-base">{selected.title}</CardTitle>
+            <Badge variant="secondary">{selected.category}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              {selected.steps.map((step: string, i: number) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+            {selected.githubPath && (
+              <Button asChild variant="outline" size="sm" className="gap-2">
+                <a href={`${GITHUB_BASE_URL}/blob/main/${selected.githubPath}`} target="_blank" rel="noopener noreferrer">
+                  <BookOpen className="h-3 w-3" /> Open full playbook on GitHub <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <BookOpen className="h-6 w-6 text-indigo-400" />
+          Runbooks
+        </h2>
+        <p className="text-muted-foreground">Step-by-step procedures for triage, escalation, and tools.</p>
+      </div>
+      <AppIntro appId="runbooks" appIntros={appIntros} />
+      <div className="flex flex-wrap gap-2">
+        {categories.map((c) => (
+          <Button key={c} variant={categoryFilter === c ? "default" : "outline"} size="sm" onClick={() => setCategoryFilter(c)}>{c === "all" ? "All" : c}</Button>
+        ))}
+      </div>
+      <Input placeholder="Search by title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="max-w-xs" />
+      <div className="grid gap-3">
+        {filtered.map((r: any) => (
+          <Card key={r.id} className="bg-card border-border cursor-pointer hover:border-indigo-400/50 transition-colors" onClick={() => setSelectedId(r.id)}>
+            <CardContent className="py-3 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">{r.title}</p>
+                <Badge variant="outline" className="text-xs mt-1">{r.category}</Badge>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const ALERTS_STORAGE_KEY = "soc-os-alerts"
+type AlertStatus = "new" | "assigned" | "in-progress" | "resolved"
+
+function AlertsContent({ tickets, onOpenApp, appIntros }: { tickets: any[]; onOpenApp?: (appId: string) => void; appIntros?: Record<string, string> }) {
+  const [alertState, setAlertState] = useState<Record<string, { status: AlertStatus; assignedTo?: string }>>(() => {
+    if (typeof window === "undefined") return {}
+    try {
+      const s = localStorage.getItem(ALERTS_STORAGE_KEY)
+      return s ? JSON.parse(s) : {}
+    } catch { return {} }
+  })
+  const [statusFilter, setStatusFilter] = useState<AlertStatus | "all">("all")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  const saveState = useCallback((next: Record<string, { status: AlertStatus; assignedTo?: string }>) => {
+    setAlertState(next)
+    try { localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(next)) } catch (_) {}
+  }, [])
+
+  const getStatus = (ticketId: string): AlertStatus => alertState[ticketId]?.status ?? "new"
+  const getAssigned = (ticketId: string) => alertState[ticketId]?.assignedTo
+
+  const setStatus = (ticketId: string, status: AlertStatus, assignedTo?: string) => {
+    saveState({ ...alertState, [ticketId]: { ...alertState[ticketId], status, assignedTo: assignedTo ?? alertState[ticketId]?.assignedTo } })
+  }
+
+  const alerts = useMemo(() => {
+    let list = tickets.map((t: any) => ({ ...t, status: getStatus(t.id), assignedTo: getAssigned(t.id) }))
+    if (statusFilter !== "all") list = list.filter((a: any) => a.status === statusFilter)
+    const order: AlertStatus[] = ["new", "assigned", "in-progress", "resolved"]
+    list.sort((a: any, b: any) => order.indexOf(a.status) - order.indexOf(b.status))
+    return list
+  }, [tickets, alertState, statusFilter])
+
+  const selectedTicket = selectedId ? tickets.find((t: any) => t.id === selectedId) : null
+
+  const statusBadge = (status: AlertStatus) => {
+    const m: Record<AlertStatus, string> = { new: "bg-amber-500/10 text-amber-500", assigned: "bg-blue-500/10 text-blue-500", "in-progress": "bg-cyan-500/10 text-cyan-500", resolved: "bg-green-500/10 text-green-500" }
+    return <Badge className={m[status]} variant="outline">{status}</Badge>
+  }
+
+  if (selectedTicket) {
+    const status = getStatus(selectedTicket.id)
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" className="gap-2 -ml-1" onClick={() => setSelectedId(null)}>
+          <ArrowLeft className="h-4 w-4" /> Back to queue
+        </Button>
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <CardTitle className="text-base">{selectedTicket.title}</CardTitle>
+              {statusBadge(status)}
+            </div>
+            <Badge variant="secondary" className="mt-1">{selectedTicket.category}</Badge>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{selectedTicket.description}</p>
+            {selectedTicket.scenario && (
+              <div>
+                <p className="text-xs font-semibold mb-1">Scenario</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{selectedTicket.scenario}</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 pt-2">
+              {status !== "assigned" && status !== "in-progress" && (
+                <Button size="sm" variant="outline" onClick={() => { setStatus(selectedTicket.id, "assigned", "Me"); setSelectedId(null) }}>Assign to me</Button>
+              )}
+              {status !== "in-progress" && status !== "resolved" && (
+                <Button size="sm" variant="outline" onClick={() => setStatus(selectedTicket.id, "in-progress")}>Mark in progress</Button>
+              )}
+              {status !== "resolved" && (
+                <Button size="sm" variant="default" onClick={() => { setStatus(selectedTicket.id, "resolved"); setSelectedId(null) }}>Mark resolved</Button>
+              )}
+              {status === "resolved" && (
+                <Button size="sm" variant="ghost" onClick={() => setStatus(selectedTicket.id, "new")}>Reopen</Button>
+              )}
+              {onOpenApp && (
+                <Button size="sm" variant="secondary" onClick={() => { onOpenApp("tickets"); setSelectedId(null) }}>
+                  Open in Tickets
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <Bell className="h-6 w-6 text-yellow-500" />
+          Alerts
+        </h2>
+        <p className="text-muted-foreground">Triage queue. Assign and track status; open in Tickets for full investigation.</p>
+      </div>
+      <AppIntro appId="alerts" appIntros={appIntros} />
+      <div className="flex flex-wrap gap-2">
+        {(["all", "new", "assigned", "in-progress", "resolved"] as const).map((s) => (
+          <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm" onClick={() => setStatusFilter(s)}>{s === "all" ? "All" : s}</Button>
+        ))}
+      </div>
+      <div className="space-y-2">
+        {alerts.map((alert: any) => (
+          <Card key={alert.id} className="bg-card border-border cursor-pointer hover:border-yellow-500/50 transition-colors" onClick={() => setSelectedId(alert.id)}>
+            <CardContent className="py-3 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="font-medium text-sm">{alert.title}</p>
+                <div className="flex gap-2 mt-1">
+                  <Badge variant="outline" className="text-xs">{alert.category}</Badge>
+                  {statusBadge(alert.status)}
+                  {alert.assignedTo && <span className="text-xs text-muted-foreground">→ {alert.assignedTo}</span>}
+                </div>
+              </div>
+              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                {alert.status === "new" && <Button size="sm" variant="ghost" onClick={() => setStatus(alert.id, "assigned", "Me")}>Assign</Button>}
+                {alert.status !== "resolved" && <Button size="sm" variant="ghost" onClick={() => setStatus(alert.id, "resolved")}>Resolve</Button>}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Placeholder image URLs - replace with your own generated weird pics in /public/weird-pics/
+const WEIRD_PICS = [
+  "/weird-pics/1.jpg",
+  "/weird-pics/2.jpg",
+  "/weird-pics/3.jpg",
+  "/weird-pics/4.jpg",
+  "/weird-pics/5.jpg",
+  "/weird-pics/6.jpg",
+].map((src, i) => ({ src, alt: `Weird pic ${i + 1}`, placeholder: `https://picsum.photos/seed/weird${i}/400/400` }))
+
+function WeirdPicsContent() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <ImageIcon className="h-6 w-6 text-rose-400" />
+          Weird Pics
+        </h2>
+        <p className="text-muted-foreground">A folder of strange images. Add your own to <code className="text-xs bg-muted px-1 rounded">/public/weird-pics/</code> (1.jpg–6.jpg) to replace these placeholders.</p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {WEIRD_PICS.map(({ src, alt, placeholder }, i) => (
+          <div key={i} className="aspect-square rounded-lg border-2 border-border bg-muted overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={alt}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const el = e.target as HTMLImageElement
+                el.src = placeholder
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const FUNNY_DOCS = [
+  { id: "passwords", name: "CEO_PASSWORDS_2026.xlsx", content: "Password1\nPassword2\nPassword123\nhunter2\ncorrecthorsebatterystaple\n(Just kidding. Use a password manager.)", jumpScare: false },
+  { id: "aliens", name: "INCIDENT_REPORT_ALIEN_ABDUCTION.pdf", content: "CLASSIFIED\n\nSubject: Unauthorized access to secure facility\n\nThe perpetrator was described as 'green, many eyes, and definitely not from this planet.'\n\nStatus: Escalated to Men in Black.\n\nDo not distribute.", jumpScare: false },
+  { id: "cursed", name: "DO_NOT_OPEN.txt", content: "You weren't supposed to open this.", jumpScare: true },
+  { id: "secrets", name: "REAL_SECRETS_DO_NOT_OPEN.txt", content: "The real secret is that there are no secrets. Except this one: you're doing great. Keep studying. 🫡", jumpScare: false },
+  { id: "budget", name: "SOC_BUDGET_APPROVAL.docx", content: "REQUEST: $4.2M for 'AI that does the job for us'\n\nSTATUS: Denied.\n\nCOMMENT: 'Try caffeine first.' — Management", jumpScare: false },
+]
+
+function FunnyDocsContent({ onJumpScare }: { onJumpScare: () => void }) {
+  const [openDoc, setOpenDoc] = useState<typeof FUNNY_DOCS[0] | null>(null)
+  const open = (doc: typeof FUNNY_DOCS[0]) => {
+    setOpenDoc(doc)
+    if (doc.jumpScare) setTimeout(onJumpScare, 400)
+  }
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+          <FileText className="h-6 w-6 text-lime-400" />
+          Funny Documents
+        </h2>
+        <p className="text-muted-foreground">Classified. Confidential. Mostly nonsense.</p>
+      </div>
+      {openDoc ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base font-mono">{openDoc.name}</CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => setOpenDoc(null)}>← Back</Button>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-sm whitespace-pre-wrap font-mono bg-muted p-4 rounded-lg">{openDoc.content}</pre>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {FUNNY_DOCS.map((doc) => (
+            <button
+              key={doc.id}
+              onClick={() => open(doc)}
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 text-left transition-colors"
+            >
+              <FileText className="h-5 w-5 text-lime-400 shrink-0" />
+              <span className="font-mono text-sm truncate">{doc.name}</span>
+              {doc.id === "cursed" && <Badge variant="secondary" className="ml-auto text-xs">???</Badge>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MiniGameContent({ miniGames, currentPath, onNavigate, onGoBack }: { miniGames: any[]; currentPath?: string; onNavigate?: (path: string) => void; onGoBack?: () => void }) {
+  const pathGameId = (currentPath || "mini-game").split(":")[1]
+  const selectedGame = pathGameId ? miniGames.find((g: any) => g.id === pathGameId) ?? null : null
   
   // Game selection screen
   if (!selectedGame) {
@@ -2575,7 +3884,7 @@ function MiniGameContent({ miniGames }: { miniGames: any[] }) {
               <Card 
                 key={game.id}
                 className="cursor-pointer hover:border-pink-400/50 transition-all"
-                onClick={() => setSelectedGame(game)}
+                onClick={() => onNavigate?.("mini-game:" + game.id)}
               >
                 <CardHeader>
                   <CardTitle className="text-base">{game.title}</CardTitle>
@@ -2606,7 +3915,27 @@ function MiniGameContent({ miniGames }: { miniGames: any[] }) {
   
   // Port Quiz Game
   if (selectedGame.id === "port-quiz") {
-    return <PortQuizGame onBack={() => setSelectedGame(null)} />
+    return <PortQuizGame onBack={() => onGoBack?.()} />
+  }
+  
+  // Find the Malicious IP
+  if (selectedGame.id === "find-malicious-ip") {
+    return <FindMaliciousIPGame onBack={() => onGoBack?.()} />
+  }
+  
+  // Spot the Phishing
+  if (selectedGame.id === "spot-phishing") {
+    return <SpotPhishingGame onBack={() => onGoBack?.()} />
+  }
+  
+  // Decode the Payload
+  if (selectedGame.id === "decode-payload") {
+    return <DecodePayloadGame onBack={() => onGoBack?.()} />
+  }
+  
+  // MITRE Bingo
+  if (selectedGame.id === "mitre-bingo") {
+    return <MitreBingoGame onBack={() => onGoBack?.()} />
   }
   
   // Game screen (placeholder for others)
@@ -2628,7 +3957,7 @@ function MiniGameContent({ miniGames }: { miniGames: any[] }) {
           <p className="text-sm text-muted-foreground/70 mb-6">
             Game mechanics coming soon! Check back for updates.
           </p>
-          <Button onClick={() => setSelectedGame(null)}>
+          <Button onClick={() => onGoBack?.()}>
             Back to Games
           </Button>
         </CardContent>
@@ -2892,23 +4221,910 @@ function PortQuizGame({ onBack }: { onBack: () => void }) {
   )
 }
 
-function CertPathContent({ certPath }: { certPath: any }) {
+function FindMaliciousIPGame({ onBack }: { onBack: () => void }) {
+  const ROUNDS = 5
+  const IPS_PER_ROUND = 6
+  const CLEAN_IPS = [
+    "10.0.1.50", "192.168.1.105", "10.10.20.33", "172.16.0.12", "192.168.50.100",
+    "10.0.0.99", "172.31.22.11", "192.168.2.1", "10.5.5.5", "192.168.100.10",
+  ]
+  const MALICIOUS_IPS = [
+    "185.243.56.22", "45.142.212.61", "91.92.240.100", "103.253.145.33", "198.235.24.50",
+  ]
+  const [phase, setPhase] = useState<"start" | "playing" | "finished">("start")
+  const [round, setRound] = useState(0)
+  const [score, setScore] = useState(0)
+  const [currentIPs, setCurrentIPs] = useState<{ ip: string; malicious: boolean }[]>([])
+  const [selected, setSelected] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null)
+  const [highScore, setHighScore] = useState(0)
+
+  useEffect(() => {
+    const saved = localStorage.getItem("findMaliciousIPHighScore")
+    if (saved) setHighScore(parseInt(saved, 10))
+  }, [])
+
+  useEffect(() => {
+    if (phase === "finished" && score > highScore && score > 0) {
+      setHighScore(score)
+      try { localStorage.setItem("findMaliciousIPHighScore", score.toString()) } catch { /* ignore */ }
+    }
+  }, [phase, score, highScore])
+
+  const startRound = () => {
+    const maliciousIP = MALICIOUS_IPS[Math.floor(Math.random() * MALICIOUS_IPS.length)]
+    const cleanPool = [...CLEAN_IPS].sort(() => Math.random() - 0.5).slice(0, IPS_PER_ROUND - 1)
+    const combined = [...cleanPool.map((ip) => ({ ip, malicious: false })), { ip: maliciousIP, malicious: true }]
+    setCurrentIPs(combined.sort(() => Math.random() - 0.5))
+    setSelected(null)
+    setFeedback(null)
+  }
+
+  const startGame = () => {
+    setPhase("playing")
+    setRound(0)
+    setScore(0)
+    startRound()
+  }
+
+  const handleClick = (ip: string, malicious: boolean) => {
+    if (feedback !== null) return
+    setSelected(ip)
+    if (malicious) {
+      setScore((s) => s + 10)
+      setFeedback("correct")
+    } else {
+      setFeedback("wrong")
+    }
+  }
+
+  const nextRound = () => {
+    if (round + 1 >= ROUNDS) {
+      setPhase("finished")
+      return
+    }
+    setRound((r) => r + 1)
+    startRound()
+  }
+
+  if (phase === "start") {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold mb-2">Find the Malicious IP</h2>
+          <Badge className="text-lg px-4 py-1">Easy</Badge>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="text-left space-y-4">
+              <p className="text-sm text-muted-foreground">
+                You’ll see a list of IPs from &quot;network traffic.&quot; One is tied to a known-bad C2 server. Click the malicious IP. +10 per correct pick; {ROUNDS} rounds.
+              </p>
+              <p className="text-sm font-medium">High Score: {highScore} pts</p>
+            </CardContent>
+          </Card>
+          <Button size="lg" onClick={startGame}>Start Game</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "finished") {
+    const isNewHigh = score > highScore && score > 0
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold">Game Over</h2>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Final Score: {score} pts</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <p className="text-muted-foreground">Rounds: {ROUNDS}</p>
+              {isNewHigh && (
+                <p className="text-green-500 font-bold">New high score!</p>
+              )}
+              <div className="flex gap-2 justify-center pt-2">
+                <Button onClick={startGame}>Play Again</Button>
+                <Button variant="outline" onClick={onBack}>Back to Games</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  const maliciousIP = currentIPs.find((x) => x.malicious)?.ip
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
-          <Map className="h-6 w-6 text-blue-400" />
-          Certification Roadmap
-        </h2>
-        <p className="text-muted-foreground">My certification journey and planned progression.</p>
+      <div className="flex justify-between items-center">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="flex gap-4">
+          <Badge variant="secondary">Score: {score}</Badge>
+          <Badge variant="outline">Round {round + 1} / {ROUNDS}</Badge>
+        </div>
       </div>
-      
-      {/* Current Certifications */}
-      {certPath.current && certPath.current.length > 0 && (
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Which IP is tied to the C2 server? Click it.</CardTitle>
+          <CardDescription>Traffic from one of these IPs was linked to malicious C2. Pick the malicious one.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            {currentIPs.map(({ ip, malicious }) => (
+              <Button
+                key={ip}
+                variant={selected === ip ? (malicious ? "default" : "destructive") : "outline"}
+                className="font-mono text-sm"
+                onClick={() => handleClick(ip, malicious)}
+                disabled={feedback !== null}
+              >
+                {ip}
+              </Button>
+            ))}
+          </div>
+          {feedback === "correct" && (
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <p className="text-green-500 font-bold">Correct! +10 pts</p>
+              <Button className="mt-2" onClick={nextRound}>Next round</Button>
+            </div>
+          )}
+          {feedback === "wrong" && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-500 font-bold">That IP was clean. Malicious: {maliciousIP}</p>
+              <Button className="mt-2" onClick={nextRound}>Next round</Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+const PHISHING_EMAILS: { subject: string; from: string; body: string; isPhish: boolean; why: string }[] = [
+  { subject: "Urgent: Verify your account", from: "support@amaz0n-security.com", body: "Your account will be locked in 24 hours. Click here to confirm your identity and avoid suspension.", isPhish: true, why: "Spoofed brand (amaz0n with zero), urgency, link to 'confirm' — classic credential harvest." },
+  { subject: "Your receipt #48392", from: "receipts@stripe.com", body: "Thanks for your payment of $29.00. Receipt and invoice are attached. Questions? Reply to this email.", isPhish: false, why: "Legitimate payment receipt; real Stripe domain; no urgency or link to enter credentials." },
+  { subject: "You've won! Claim your prize", from: "noreply@prizes-winner.com", body: "Congratulations! To claim your prize, enter your bank details at the link below. Offer expires in 2 hours.", isPhish: true, why: "Too-good-to-be-true, unknown sender, request for bank details and urgent deadline." },
+  { subject: "Password reset request", from: "security@github.com", body: "We received a request to reset your password. If this wasn't you, ignore this email. No action needed.", isPhish: false, why: "Real GitHub security; clear 'ignore if not you' — standard safe reset flow." },
+  { subject: "Wire transfer needed today", from: "ceo@yourcompany.com", body: "I'm in a meeting. Need you to process an urgent wire to our new vendor. Reply with your cell so I can call you.", isPhish: true, why: "CEO impersonation, urgency, request for wire + personal contact — common BEC pattern." },
+  { subject: "Your delivery is on the way", from: "shipments@fedex.com", body: "Track your package: [link]. Delivery by 6 PM. If you're not home, we'll leave it at the nearest location.", isPhish: false, why: "Normal shipping notice; FedEx domain; no request for credentials or payment." },
+]
+
+function SpotPhishingGame({ onBack }: { onBack: () => void }) {
+  const ROUNDS = 5
+  const [phase, setPhase] = useState<"start" | "playing" | "finished">("start")
+  const [round, setRound] = useState(0)
+  const [score, setScore] = useState(0)
+  const [pool, setPool] = useState<typeof PHISHING_EMAILS>([])
+  const [choice, setChoice] = useState<"legit" | "phish" | null>(null)
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null)
+  const [highScore, setHighScore] = useState(0)
+
+  useEffect(() => {
+    const saved = localStorage.getItem("spotPhishingHighScore")
+    if (saved) setHighScore(parseInt(saved, 10))
+  }, [])
+
+  useEffect(() => {
+    if (phase === "finished" && score > highScore && score > 0) {
+      setHighScore(score)
+      try { localStorage.setItem("spotPhishingHighScore", score.toString()) } catch { /* ignore */ }
+    }
+  }, [phase, score, highScore])
+
+  const startGame = () => {
+    const shuffled = [...PHISHING_EMAILS].sort(() => Math.random() - 0.5).slice(0, ROUNDS)
+    setPool(shuffled)
+    setPhase("playing")
+    setRound(0)
+    setScore(0)
+    setChoice(null)
+    setFeedback(null)
+  }
+
+  const currentEmail = pool[round]
+  const handleGuess = (guess: "legit" | "phish") => {
+    if (feedback !== null || !currentEmail) return
+    setChoice(guess)
+    const correct = (guess === "phish" && currentEmail.isPhish) || (guess === "legit" && !currentEmail.isPhish)
+    setFeedback(correct ? "correct" : "wrong")
+    if (correct) setScore((s) => s + 10)
+  }
+
+  const nextRound = () => {
+    setChoice(null)
+    setFeedback(null)
+    if (round + 1 >= ROUNDS) setPhase("finished")
+    else setRound((r) => r + 1)
+  }
+
+  if (phase === "start") {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold mb-2">Spot the Phishing</h2>
+          <Badge className="text-lg px-4 py-1">Medium</Badge>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="text-left space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Read each email. Is it <strong>Legit</strong> or <strong>Phish</strong>? Click your answer. +10 per correct; {ROUNDS} rounds.
+              </p>
+              <p className="text-sm font-medium">High Score: {highScore} pts</p>
+            </CardContent>
+          </Card>
+          <Button size="lg" onClick={startGame}>Start Game</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "finished") {
+    const isNewHigh = score > highScore && score > 0
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold">Game Over</h2>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Final Score: {score} pts</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {isNewHigh && <p className="text-green-500 font-bold">New high score!</p>}
+              <div className="flex gap-2 justify-center pt-2">
+                <Button onClick={startGame}>Play Again</Button>
+                <Button variant="outline" onClick={onBack}>Back to Games</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentEmail) return null
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="flex gap-4">
+          <Badge variant="secondary">Score: {score}</Badge>
+          <Badge variant="outline">Round {round + 1} / {ROUNDS}</Badge>
+        </div>
+      </div>
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Is this email Legit or Phish?</CardTitle>
+          <CardDescription>Read the headers and snippet, then choose.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg border bg-muted/30 p-4 text-left space-y-2 font-sans text-sm">
+            <p><strong>From:</strong> {currentEmail.from}</p>
+            <p><strong>Subject:</strong> {currentEmail.subject}</p>
+            <p className="text-muted-foreground pt-2">{currentEmail.body}</p>
+          </div>
+          {!feedback ? (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handleGuess("legit")}>Legit</Button>
+              <Button variant="outline" onClick={() => handleGuess("phish")}>Phish</Button>
+            </div>
+          ) : (
+            <>
+              <div className={feedback === "correct" ? "p-4 bg-green-500/10 border border-green-500/20 rounded-lg" : "p-4 bg-red-500/10 border border-red-500/20 rounded-lg"}>
+                <p className={feedback === "correct" ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                  {feedback === "correct" ? "Correct! +10 pts" : `Wrong — it was ${currentEmail.isPhish ? "Phish" : "Legit"}.`}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">{currentEmail.why}</p>
+              </div>
+              <Button onClick={nextRound}>Next round</Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+const DECODE_PAYLOADS: { b64: string; correct: string; wrong: string[] }[] = [
+  { b64: "aHR0cDovL2MyaS5ldmlsLmNvbS9iZWFjb24=", correct: "C2 callback URL", wrong: ["PowerShell one-liner", "Dumped credentials", "Ransom note"] },
+  { b64: "Y21kIC9jIHdob2FtaQ==", correct: "Recon command (whoami)", wrong: ["Malware config", "Encrypted payload", "C2 beacon"] },
+  { b64: "eyJob3N0IjogIjEwLjAuMC4xIiwgInBvcnQiOiA0NDMzfQ==", correct: "C2 config (JSON)", wrong: ["Cookie steal", "Phishing HTML", "Shellcode"] },
+  { b64: "UG93ZXJTaGVsbCAtTm9QIC1DIElybSAoTmV3LU9iamVjdCBOZXQuV2ViQ2xpZW50KS5Eb3dubG9hZFN0cmluZygnaHR0cDovL2V4YW1wbGUuY29tL3AucHMxJyk=", correct: "PowerShell download cradle", wrong: ["SSH key", "DNS tunnel config", "RAT config"] },
+  { b64: "PHNjcmlwdD5hbGVydChkb2N1bWVudC5jb29raWUpPC9zY3JpcHQ+", correct: "Cookie-stealing script snippet", wrong: ["Legitimate JS library", "Encrypted config", "Log file"] },
+]
+
+function DecodePayloadGame({ onBack }: { onBack: () => void }) {
+  const ROUNDS = 5
+  const [phase, setPhase] = useState<"start" | "playing" | "finished">("start")
+  const [round, setRound] = useState(0)
+  const [score, setScore] = useState(0)
+  const [pool, setPool] = useState<typeof DECODE_PAYLOADS>([])
+  const [revealed, setRevealed] = useState(false)
+  const [choice, setChoice] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null)
+  const [highScore, setHighScore] = useState(0)
+
+  useEffect(() => {
+    const saved = localStorage.getItem("decodePayloadHighScore")
+    if (saved) setHighScore(parseInt(saved, 10))
+  }, [])
+
+  useEffect(() => {
+    if (phase === "finished" && score > highScore && score > 0) {
+      setHighScore(score)
+      try { localStorage.setItem("decodePayloadHighScore", score.toString()) } catch { /* ignore */ }
+    }
+  }, [phase, score, highScore])
+
+  const startGame = () => {
+    const shuffled = [...DECODE_PAYLOADS].sort(() => Math.random() - 0.5).slice(0, ROUNDS)
+    setPool(shuffled)
+    setPhase("playing")
+    setRound(0)
+    setScore(0)
+    setRevealed(false)
+    setChoice(null)
+    setFeedback(null)
+  }
+
+  const current = pool[round]
+  const options = current ? [current.correct, ...current.wrong].sort(() => Math.random() - 0.5) : []
+  const decoded = current ? (() => { try { return atob(current.b64) } catch { return "(invalid base64)" } })() : ""
+
+  const handleChoice = (opt: string) => {
+    if (feedback !== null || !current) return
+    setChoice(opt)
+    setFeedback(opt === current.correct ? "correct" : "wrong")
+    if (opt === current.correct) setScore((s) => s + 10)
+  }
+
+  const nextRound = () => {
+    setRevealed(false)
+    setChoice(null)
+    setFeedback(null)
+    if (round + 1 >= ROUNDS) setPhase("finished")
+    else setRound((r) => r + 1)
+  }
+
+  if (phase === "start") {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold mb-2">Decode the Payload</h2>
+          <Badge className="text-lg px-4 py-1">Medium</Badge>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="text-left space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Each round shows a Base64-encoded string. Decode it (or reveal), then pick what it best describes. +10 per correct; {ROUNDS} rounds.
+              </p>
+              <p className="text-sm font-medium">High Score: {highScore} pts</p>
+            </CardContent>
+          </Card>
+          <Button size="lg" onClick={startGame}>Start Game</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "finished") {
+    const isNewHigh = score > highScore && score > 0
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold">Game Over</h2>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Final Score: {score} pts</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {isNewHigh && <p className="text-green-500 font-bold">New high score!</p>}
+              <div className="flex gap-2 justify-center pt-2">
+                <Button onClick={startGame}>Play Again</Button>
+                <Button variant="outline" onClick={onBack}>Back to Games</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!current) return null
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="flex gap-4">
+          <Badge variant="secondary">Score: {score}</Badge>
+          <Badge variant="outline">Round {round + 1} / {ROUNDS}</Badge>
+        </div>
+      </div>
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>What does this Base64 payload describe?</CardTitle>
+          <CardDescription>Decode it (or reveal below), then choose the best answer.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <pre className="rounded-lg border bg-muted/30 p-3 text-xs font-mono break-all">{current.b64}</pre>
+          {!revealed ? (
+            <Button variant="secondary" size="sm" onClick={() => setRevealed(true)}>Reveal decoded</Button>
+          ) : (
+            <div className="rounded-lg border bg-muted/30 p-3 text-xs font-mono break-all text-muted-foreground">{decoded}</div>
+          )}
+          {!feedback ? (
+            <div className="grid grid-cols-1 gap-2">
+              {options.map((opt) => (
+                <Button key={opt} variant="outline" onClick={() => handleChoice(opt)} className="justify-start text-left h-auto py-2">
+                  {opt}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className={feedback === "correct" ? "p-4 bg-green-500/10 border border-green-500/20 rounded-lg" : "p-4 bg-red-500/10 border border-red-500/20 rounded-lg"}>
+                <p className={feedback === "correct" ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                  {feedback === "correct" ? "Correct! +10 pts" : `Wrong. Answer: ${current.correct}`}
+                </p>
+              </div>
+              <Button onClick={nextRound}>Next round</Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+const MITRE_TACTICS_3X3 = [
+  "Initial Access",
+  "Execution",
+  "Persistence",
+  "Privilege Escalation",
+  "Defense Evasion",
+  "Credential Access",
+  "Discovery",
+  "Lateral Movement",
+  "Collection",
+]
+
+const MITRE_SCENARIOS: { scenario: string; correct: string; wrong: string[] }[] = [
+  { scenario: "Attacker sent a phishing link; user clicked and malware ran.", correct: "Initial Access", wrong: ["Execution", "Persistence", "Credential Access"] },
+  { scenario: "Malware runs a script from a scheduled task after reboot.", correct: "Execution", wrong: ["Initial Access", "Discovery", "Collection"] },
+  { scenario: "Backdoor installed to run every time the user logs in.", correct: "Persistence", wrong: ["Execution", "Lateral Movement", "Defense Evasion"] },
+  { scenario: "Attacker exploits a vulnerability to get admin from a normal user.", correct: "Privilege Escalation", wrong: ["Initial Access", "Credential Access", "Collection"] },
+  { scenario: "Malware disables Windows Defender and deletes its logs.", correct: "Defense Evasion", wrong: ["Execution", "Discovery", "Persistence"] },
+  { scenario: "Attacker dumps LSASS to harvest NTLM hashes from memory.", correct: "Credential Access", wrong: ["Lateral Movement", "Collection", "Persistence"] },
+  { scenario: "Malware runs whoami, ipconfig, and net view to map the network.", correct: "Discovery", wrong: ["Execution", "Lateral Movement", "Collection"] },
+  { scenario: "Attacker uses PsExec to run commands on another workstation.", correct: "Lateral Movement", wrong: ["Execution", "Persistence", "Credential Access"] },
+  { scenario: "Ransomware copies files from shared drives before encrypting.", correct: "Collection", wrong: ["Lateral Movement", "Defense Evasion", "Credential Access"] },
+]
+
+function hasBingoLine(marked: Set<string>): boolean {
+  const rows = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ]
+  return rows.some((indices) => indices.every((i) => marked.has(MITRE_TACTICS_3X3[i])))
+}
+
+function MitreBingoGame({ onBack }: { onBack: () => void }) {
+  const ROUNDS = 5
+  const [phase, setPhase] = useState<"start" | "playing" | "finished">("start")
+  const [round, setRound] = useState(0)
+  const [score, setScore] = useState(0)
+  const [marked, setMarked] = useState<Set<string>>(new Set())
+  const [pool, setPool] = useState<typeof MITRE_SCENARIOS>([])
+  const [choice, setChoice] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null)
+  const [bingoAwarded, setBingoAwarded] = useState(false)
+  const [highScore, setHighScore] = useState(0)
+
+  useEffect(() => {
+    const saved = localStorage.getItem("mitreBingoHighScore")
+    if (saved) setHighScore(parseInt(saved, 10))
+  }, [])
+
+  useEffect(() => {
+    if (phase === "finished" && score > highScore && score > 0) {
+      setHighScore(score)
+      try { localStorage.setItem("mitreBingoHighScore", score.toString()) } catch { /* ignore */ }
+    }
+  }, [phase, score, highScore])
+
+  const startGame = () => {
+    const shuffled = [...MITRE_SCENARIOS].sort(() => Math.random() - 0.5).slice(0, ROUNDS)
+    setPool(shuffled)
+    setPhase("playing")
+    setRound(0)
+    setScore(0)
+    setMarked(new Set())
+    setChoice(null)
+    setFeedback(null)
+    setBingoAwarded(false)
+  }
+
+  const current = pool[round]
+  const options = current ? [current.correct, ...current.wrong].sort(() => Math.random() - 0.5) : []
+
+  const handleChoice = (opt: string) => {
+    if (feedback !== null || !current) return
+    setChoice(opt)
+    const correct = opt === current.correct
+    setFeedback(correct ? "correct" : "wrong")
+    if (correct) {
+      setScore((s) => s + 10)
+      setMarked((m) => new Set(m).add(current.correct))
+      if (!bingoAwarded && hasBingoLine(new Set([...marked, current.correct]))) {
+        setBingoAwarded(true)
+        setScore((s) => s + 20)
+      }
+    }
+  }
+
+  const nextRound = () => {
+    setChoice(null)
+    setFeedback(null)
+    if (round + 1 >= ROUNDS) setPhase("finished")
+    else setRound((r) => r + 1)
+  }
+
+  if (phase === "start") {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold mb-2">MITRE Bingo</h2>
+          <Badge className="text-lg px-4 py-1">Medium</Badge>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="text-left space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Match each scenario to the correct MITRE ATT&amp;CK tactic. Correct answers mark the card. +10 per correct, +20 bonus for a bingo (3 in a row). {ROUNDS} rounds.
+              </p>
+              <p className="text-sm font-medium">High Score: {highScore} pts</p>
+            </CardContent>
+          </Card>
+          <Button size="lg" onClick={startGame}>Start Game</Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === "finished") {
+    const isNewHigh = score > highScore && score > 0
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl font-bold">Game Over</h2>
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Final Score: {score} pts</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {bingoAwarded && <p className="text-green-500 font-bold">Bingo! +20 bonus</p>}
+              {isNewHigh && <p className="text-green-500 font-bold">New high score!</p>}
+              <div className="flex gap-2 justify-center pt-2">
+                <Button onClick={startGame}>Play Again</Button>
+                <Button variant="outline" onClick={onBack}>Back to Games</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (!current) return null
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
+          Back to Games
+        </Button>
+        <div className="flex gap-4">
+          <Badge variant="secondary">Score: {score}</Badge>
+          <Badge variant="outline">Round {round + 1} / {ROUNDS}</Badge>
+          {bingoAwarded && <Badge className="bg-green-500/20 text-green-600">Bingo!</Badge>}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 max-w-md">
+        {MITRE_TACTICS_3X3.map((tactic, i) => (
+          <div
+            key={tactic}
+            className={`rounded-lg border p-2 text-center text-xs font-medium ${marked.has(tactic) ? "bg-green-500/20 border-green-500/50" : "bg-muted/30 border-border"}`}
+          >
+            {marked.has(tactic) ? "✓ " : ""}{tactic}
+          </div>
+        ))}
+      </div>
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle>Which tactic does this scenario match?</CardTitle>
+          <CardDescription>{current.scenario}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!feedback ? (
+            <div className="grid grid-cols-1 gap-2">
+              {options.map((opt) => (
+                <Button key={opt} variant="outline" onClick={() => handleChoice(opt)} className="justify-start text-left h-auto py-2">
+                  {opt}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className={feedback === "correct" ? "p-4 bg-green-500/10 border border-green-500/20 rounded-lg" : "p-4 bg-red-500/10 border border-red-500/20 rounded-lg"}>
+                <p className={feedback === "correct" ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
+                  {feedback === "correct" ? `Correct! +10${bingoAwarded ? " (Bingo +20!)" : ""}` : `Wrong. Answer: ${current.correct}`}
+                </p>
+              </div>
+              <Button onClick={nextRound}>Next round</Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+const CERT_PATH_KEY = "soc-os-cert-path"
+const ROADMAP_TEMPLATES: Record<string, { current: any[]; planned: any[] }> = {
+  "SOC Analyst": {
+    current: [{ name: "Security+", provider: "CompTIA", description: "Foundation", started: "2024-01", target: "2024-03", progress: 50 }],
+    planned: [
+      { name: "CySA+", provider: "CompTIA", description: "Cybersecurity Analyst", prerequisite: "Security+", estimatedTime: "3-4 months" },
+      { name: "CEH", provider: "EC-Council", description: "Ethical Hacker", estimatedTime: "2-3 months" }
+    ]
+  },
+  "Pentester": {
+    current: [],
+    planned: [
+      { name: "eJPT", provider: "eLearnSecurity", description: "Junior Penetration Tester", estimatedTime: "1-2 months" },
+      { name: "CEH", provider: "EC-Council", description: "Ethical Hacker", estimatedTime: "2-3 months" },
+      { name: "OSCP", provider: "Offensive Security", description: "Offensive Security Certified Professional", prerequisite: "Strong fundamentals", estimatedTime: "4-6 months" }
+    ]
+  },
+  "GRC": {
+    current: [],
+    planned: [
+      { name: "Security+", provider: "CompTIA", description: "Foundation", estimatedTime: "2-3 months" },
+      { name: "CISM", provider: "ISACA", description: "Certified Information Security Manager", prerequisite: "5 years exp", estimatedTime: "3-4 months" },
+      { name: "CRISC", provider: "ISACA", description: "Risk and Information Systems Control", estimatedTime: "3-4 months" }
+    ]
+  }
+}
+
+const DEFAULT_CERT_PICKER_LIST = [
+  { name: "Security+", provider: "CompTIA", description: "Foundation", estimatedTime: "2-3 months", prerequisite: "" },
+  { name: "CySA+", provider: "CompTIA", description: "Cybersecurity Analyst", estimatedTime: "3-4 months", prerequisite: "Security+" },
+  { name: "CEH", provider: "EC-Council", description: "Ethical Hacker", estimatedTime: "2-3 months", prerequisite: "" },
+  { name: "OSCP", provider: "Offensive Security", description: "Offensive Security Certified Professional", estimatedTime: "4-6 months", prerequisite: "Strong fundamentals" },
+  { name: "CISSP", provider: "(ISC)²", description: "CISSP", estimatedTime: "3-6 months", prerequisite: "" },
+  { name: "CISM", provider: "ISACA", description: "CISM", estimatedTime: "3-4 months", prerequisite: "" },
+  { name: "CRISC", provider: "ISACA", description: "CRISC", estimatedTime: "3-4 months", prerequisite: "" }
+]
+
+function CertPathContent({ certPath, appIntros }: { certPath: any; appIntros?: Record<string, string> }) {
+  const defaultPath = { current: certPath?.current ?? [], completed: certPath?.completed ?? [], planned: certPath?.planned ?? [] }
+  const certPickerList = certPath?.certPickerList ?? DEFAULT_CERT_PICKER_LIST
+  const [roadmap, setRoadmap] = useState<{ current: any[]; completed: any[]; planned: any[] }>(() => {
+    if (typeof window === "undefined") return defaultPath
+    try {
+      const s = localStorage.getItem(CERT_PATH_KEY)
+      if (s) {
+        const parsed = JSON.parse(s)
+        return { current: parsed.current ?? defaultPath.current, completed: parsed.completed ?? defaultPath.completed, planned: parsed.planned ?? defaultPath.planned }
+      }
+    } catch (_) {}
+    return defaultPath
+  })
+
+  const saveRoadmap = useCallback((next: typeof roadmap) => {
+    setRoadmap(next)
+    try { localStorage.setItem(CERT_PATH_KEY, JSON.stringify(next)) } catch (_) {}
+  }, [])
+
+  const applyTemplate = (name: string) => {
+    const t = ROADMAP_TEMPLATES[name]
+    if (!t) return
+    saveRoadmap({ ...roadmap, current: t.current, planned: t.planned })
+  }
+
+  const setProgress = (idx: number, pct: number) => {
+    const next = [...roadmap.current]
+    next[idx] = { ...next[idx], progress: Math.min(100, Math.max(0, pct)) }
+    saveRoadmap({ ...roadmap, current: next })
+  }
+
+  const moveToCompleted = (idx: number) => {
+    const cert = roadmap.current[idx]
+    saveRoadmap({
+      current: roadmap.current.filter((_, i) => i !== idx),
+      completed: [...roadmap.completed, { ...cert, completedDate: new Date().toLocaleDateString("en-US") }],
+      planned: roadmap.planned
+    })
+  }
+
+  const removeFromPlanned = (idx: number) => {
+    saveRoadmap({ ...roadmap, planned: roadmap.planned.filter((_, i) => i !== idx) })
+  }
+
+  const resetToDefault = () => {
+    if (confirm("Reset roadmap to default? Your customizations will be lost.")) saveRoadmap(defaultPath)
+  }
+
+  const addFromPicker = (cert: { name: string; provider: string; description?: string; estimatedTime?: string; prerequisite?: string }, to: "current" | "planned") => {
+    if (to === "current") {
+      saveRoadmap({
+        ...roadmap,
+        current: [...roadmap.current, { ...cert, progress: 0, started: "", target: "" }]
+      })
+    } else {
+      saveRoadmap({
+        ...roadmap,
+        planned: [...roadmap.planned, { name: cert.name, provider: cert.provider, description: cert.description ?? "", prerequisite: cert.prerequisite, estimatedTime: cert.estimatedTime }]
+      })
+    }
+  }
+
+  const [manualForm, setManualForm] = useState({ name: "", provider: "", description: "", prerequisite: "", started: "", target: "", estimatedTime: "" })
+  const [addCertOpen, setAddCertOpen] = useState(false)
+  const addManualCert = (to: "current" | "planned") => {
+    if (!manualForm.name.trim()) return
+    const cert = { name: manualForm.name.trim(), provider: manualForm.provider.trim() || "—", description: manualForm.description.trim() || "", prerequisite: manualForm.prerequisite.trim() || undefined, estimatedTime: manualForm.estimatedTime.trim() || undefined }
+    if (to === "current") {
+      saveRoadmap({
+        ...roadmap,
+        current: [...roadmap.current, { ...cert, progress: 0, started: manualForm.started.trim() || undefined, target: manualForm.target.trim() || undefined }]
+      })
+    } else {
+      saveRoadmap({
+        ...roadmap,
+        planned: [...roadmap.planned, cert]
+      })
+    }
+    setManualForm({ name: "", provider: "", description: "", prerequisite: "", started: "", target: "", estimatedTime: "" })
+    setAddCertOpen(false)
+  }
+
+  const isEmpty = roadmap.current.length === 0 && roadmap.planned.length === 0
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-2xl font-semibold mb-2 flex items-center gap-2">
+            <Map className="h-6 w-6 text-blue-400" />
+            Certification Roadmap
+          </h2>
+          <p className="text-muted-foreground text-sm">Customize your path. Stored in this browser.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-muted-foreground self-center">Template:</span>
+          {Object.keys(ROADMAP_TEMPLATES).map((name) => (
+            <Button key={name} variant="outline" size="sm" onClick={() => applyTemplate(name)}>{name}</Button>
+          ))}
+          <Button variant="ghost" size="sm" onClick={resetToDefault}>Reset</Button>
+        </div>
+      </div>
+      <AppIntro appId="cert-path" appIntros={appIntros} />
+
+      {isEmpty && (
+        <Card className="bg-muted/30 border-border">
+          <CardContent className="py-6">
+            <p className="text-sm text-muted-foreground text-center">
+              No certs yet. Apply a template above or add one from the list / form below.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        <h3 className="font-semibold text-sm text-muted-foreground">Add from list</h3>
+        <div className="flex flex-wrap gap-2">
+          {certPickerList.map((cert: any, i: number) => (
+            <div key={i} className="flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm">
+              <span className="font-medium">{cert.name}</span>
+              <span className="text-muted-foreground">({cert.provider})</span>
+              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => addFromPicker(cert, "planned")}>Planned</Button>
+              <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => addFromPicker(cert, "current")}>Current</Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Collapsible open={addCertOpen} onOpenChange={setAddCertOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Plus className="h-4 w-4" /> Add custom cert
+            <ChevronDown className={`h-4 w-4 transition-transform ${addCertOpen ? "rotate-180" : ""}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Card className="mt-3 bg-card border-border">
+            <CardContent className="pt-4 space-y-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input placeholder="Name" value={manualForm.name} onChange={(e) => setManualForm((f) => ({ ...f, name: e.target.value }))} className="bg-background" />
+                <Input placeholder="Provider" value={manualForm.provider} onChange={(e) => setManualForm((f) => ({ ...f, provider: e.target.value }))} className="bg-background" />
+              </div>
+              <Input placeholder="Description (optional)" value={manualForm.description} onChange={(e) => setManualForm((f) => ({ ...f, description: e.target.value }))} className="bg-background" />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input placeholder="Prerequisite (optional)" value={manualForm.prerequisite} onChange={(e) => setManualForm((f) => ({ ...f, prerequisite: e.target.value }))} className="bg-background" />
+                <Input placeholder="Estimated time (optional)" value={manualForm.estimatedTime} onChange={(e) => setManualForm((f) => ({ ...f, estimatedTime: e.target.value }))} className="bg-background" />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input placeholder="Started (optional)" value={manualForm.started} onChange={(e) => setManualForm((f) => ({ ...f, started: e.target.value }))} className="bg-background" />
+                <Input placeholder="Target (optional)" value={manualForm.target} onChange={(e) => setManualForm((f) => ({ ...f, target: e.target.value }))} className="bg-background" />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={() => addManualCert("planned")} disabled={!manualForm.name.trim()}>Add to Planned</Button>
+                <Button variant="default" size="sm" onClick={() => addManualCert("current")} disabled={!manualForm.name.trim()}>Add to Current</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {roadmap.current.length > 0 && (
         <div>
           <h3 className="font-semibold text-lg mb-3">🎯 Currently Working On</h3>
           <div className="space-y-4">
-            {certPath.current.map((cert: any, idx: number) => (
+            {roadmap.current.map((cert: any, idx: number) => (
               <Card key={idx} className="bg-card border-border border-l-4 border-l-blue-500">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -2916,7 +5132,10 @@ function CertPathContent({ certPath }: { certPath: any }) {
                       <CardTitle className="text-base">{cert.name}</CardTitle>
                       <Badge variant="secondary" className="mt-1">{cert.provider}</Badge>
                     </div>
-                    <Badge className="bg-blue-500/10 text-blue-500">In Progress</Badge>
+                    <div className="flex gap-2">
+                      <Badge className="bg-blue-500/10 text-blue-500">In Progress</Badge>
+                      <Button variant="outline" size="sm" onClick={() => moveToCompleted(idx)}>Mark done</Button>
+                    </div>
                   </div>
                   <CardDescription className="text-xs mt-2">{cert.description}</CardDescription>
                 </CardHeader>
@@ -2926,15 +5145,10 @@ function CertPathContent({ certPath }: { certPath: any }) {
                       <span className="text-muted-foreground">Progress</span>
                       <span className="font-semibold">{cert.progress}%</span>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 transition-all"
-                        style={{ width: `${cert.progress}%` }}
-                      />
-                    </div>
+                    <input type="range" min={0} max={100} value={cert.progress ?? 0} onChange={(e) => setProgress(idx, parseInt(e.target.value, 10))} className="w-full h-2" />
                     <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Started: {cert.started}</span>
-                      <span>Target: {cert.target}</span>
+                      <span>Started: {cert.started ?? "—"}</span>
+                      <span>Target: {cert.target ?? "—"}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -2944,12 +5158,11 @@ function CertPathContent({ certPath }: { certPath: any }) {
         </div>
       )}
       
-      {/* Completed Certifications */}
-      {certPath.completed && certPath.completed.length > 0 && (
+      {roadmap.completed.length > 0 && (
         <div>
           <h3 className="font-semibold text-lg mb-3">✅ Completed</h3>
           <div className="space-y-3">
-            {certPath.completed.map((cert: any, idx: number) => (
+            {roadmap.completed.map((cert: any, idx: number) => (
               <Card key={idx} className="bg-card border-border border-l-4 border-l-green-500">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -2959,9 +5172,7 @@ function CertPathContent({ certPath }: { certPath: any }) {
                     </div>
                     <Badge className="bg-green-500/10 text-green-500">Completed</Badge>
                   </div>
-                  <CardDescription className="text-xs mt-2">
-                    Completed: {cert.completedDate}
-                  </CardDescription>
+                  <CardDescription className="text-xs mt-2">Completed: {cert.completedDate ?? "—"}</CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -2969,12 +5180,11 @@ function CertPathContent({ certPath }: { certPath: any }) {
         </div>
       )}
       
-      {/* Planned Certifications */}
-      {certPath.planned && certPath.planned.length > 0 && (
+      {roadmap.planned.length > 0 && (
         <div>
           <h3 className="font-semibold text-lg mb-3">📋 Planned</h3>
           <div className="space-y-3">
-            {certPath.planned.map((cert: any, idx: number) => (
+            {roadmap.planned.map((cert: any, idx: number) => (
               <Card key={idx} className="bg-card border-border">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -2982,19 +5192,18 @@ function CertPathContent({ certPath }: { certPath: any }) {
                       <CardTitle className="text-base">{cert.name}</CardTitle>
                       <Badge variant="secondary" className="mt-1">{cert.provider}</Badge>
                     </div>
-                    <Badge variant="outline">Planned</Badge>
+                    <div className="flex gap-2">
+                      <Badge variant="outline">Planned</Badge>
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => removeFromPlanned(idx)}>Remove</Button>
+                    </div>
                   </div>
                   <CardDescription className="text-xs mt-2">{cert.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {cert.prerequisite && (
-                    <p className="text-xs text-muted-foreground">
-                      📌 Prerequisite: {cert.prerequisite}
-                    </p>
+                    <p className="text-xs text-muted-foreground">📌 Prerequisite: {cert.prerequisite}</p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    ⏱️ Estimated time: {cert.estimatedTime}
-                  </p>
+                  <p className="text-xs text-muted-foreground">⏱️ Estimated time: {cert.estimatedTime ?? "—"}</p>
                 </CardContent>
               </Card>
             ))}
@@ -3140,13 +5349,13 @@ function SOCJournalContent({ user }: { user: User | null }) {
     )
   }
 
-  // Entry list
-  const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.content.toLowerCase().includes(searchTerm.toLowerCase())
+  const debouncedSearch = useDebouncedValue(searchTerm, 300)
+  const filteredEntries = useMemo(() => entries.filter((entry: any) => {
+    const q = debouncedSearch.toLowerCase()
+    const matchesSearch = !q || entry.title?.toLowerCase().includes(q) || entry.content?.toLowerCase().includes(q)
     const matchesType = filterType === "all" || entry.entry_type === filterType
     return matchesSearch && matchesType
-  })
+  }), [entries, debouncedSearch, filterType])
 
   return (
     <div className="flex flex-col h-full">
@@ -3300,11 +5509,14 @@ function JournalEntryForm({ onSave, onCancel }: { onSave: (entry: any) => void; 
   )
 }
 
-function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }) {
-  const [selectedTicket, setSelectedTicket] = useState<any | null>(null)
-  const [mode, setMode] = useState<'guided' | 'expert'>('guided')
+function TicketsContent({ tickets, user, currentPath, onNavigate, onOpenApp, appIntros }: { tickets: any[]; user: User | null; currentPath: string; onNavigate: (path: string) => void; onOpenApp?: (appId: string) => void; appIntros?: Record<string, string> }) {
   const [showHints, setShowHints] = useState(false)
   const [showSolution, setShowSolution] = useState(false)
+
+  const pathParts = currentPath.split(':')
+  const ticketId = pathParts[1]
+  const modeFromPath = (pathParts[2] === 'guided' || pathParts[2] === 'expert') ? pathParts[2] : null
+  const selectedTicket = ticketId ? tickets.find(t => t.id === ticketId) : null
 
   if (!selectedTicket) {
     return (
@@ -3318,7 +5530,7 @@ function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }
             Practice SOC analyst skills with realistic incident tickets. Investigate, document, and resolve incidents.
           </p>
         </div>
-
+        <AppIntro appId="tickets" appIntros={appIntros} />
         <div className="grid gap-4">
           {tickets.map((ticket) => {
             const getDifficultyColor = (diff: string) => {
@@ -3328,7 +5540,7 @@ function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }
             }
 
             return (
-              <Card key={ticket.id} className="cursor-pointer hover:border-orange-400/50 transition-all" onClick={() => setSelectedTicket(ticket)}>
+              <Card key={ticket.id} className="cursor-pointer hover:border-orange-400/50 transition-all" onClick={() => onNavigate(`tickets:${ticket.id}`)}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
@@ -3363,20 +5575,54 @@ function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }
     )
   }
 
-  // Ticket detail view
+  // Mode selection: choose Guided or Expert (locked for this ticket)
+  if (selectedTicket && !modeFromPath) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-1">Choose investigation mode</h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            {selectedTicket.title} — pick a mode. You can’t switch until you go back to the ticket list.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="cursor-pointer hover:border-orange-400/50 transition-all"
+            onClick={() => onNavigate(`tickets:${ticketId}:guided`)}
+          >
+            <CardHeader>
+              <CardTitle className="text-base">Guided Mode</CardTitle>
+              <CardDescription>
+                Step-by-step checklist, tool links, and investigation steps shown.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="default" size="sm" className="w-full">Start Guided</Button>
+            </CardContent>
+          </Card>
+          <Card
+            className="cursor-pointer hover:border-orange-400/50 transition-all"
+            onClick={() => onNavigate(`tickets:${ticketId}:expert`)}
+          >
+            <CardHeader>
+              <CardTitle className="text-base">Expert Mode</CardTitle>
+              <CardDescription>
+                No steps shown. Use hints and solution only when you need them.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="sm" className="w-full">Start Expert</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Ticket detail view (mode locked from path; use window back/forward for navigation)
+  const mode = modeFromPath ?? 'guided'
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => {
-          setSelectedTicket(null)
-          setShowHints(false)
-          setShowSolution(false)
-        }}>
-          <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
-          Back to Tickets
-        </Button>
-      </div>
-
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -3384,25 +5630,25 @@ function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }
               <CardTitle>Ticket #{selectedTicket.id.toUpperCase()}</CardTitle>
               <CardDescription>{selectedTicket.title}</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={mode === 'guided' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setMode('guided')}
-              >
-                Guided
-              </Button>
-              <Button
-                variant={mode === 'expert' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setMode('expert')}
-              >
-                Expert
-              </Button>
-            </div>
+            <Badge variant="secondary">{mode === 'guided' ? 'Guided' : 'Expert'} mode</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {onOpenApp && (
+            <div>
+              <h3 className="font-semibold mb-2">Investigation tools</h3>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => onOpenApp("util-evidence")} className="gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Evidence Locker
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => onOpenApp("util-timeline")} className="gap-2">
+                  <Map className="h-4 w-4" />
+                  Timeline Builder
+                </Button>
+              </div>
+            </div>
+          )}
           <div>
             <h3 className="font-semibold mb-2">Scenario</h3>
             <div className="text-sm whitespace-pre-wrap">{selectedTicket.scenario}</div>
@@ -3471,26 +5717,20 @@ function TicketsContent({ tickets, user }: { tickets: any[]; user: User | null }
   )
 }
 
-function LabFilesContent({ labFiles }: { labFiles: any[] }) {
+function LabFilesContent({ labFiles, currentPath, onNavigate }: { labFiles: any[]; currentPath: string; onNavigate: (path: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const [selectedFile, setSelectedFile] = useState<any | null>(null)
 
-  const categories = ["all", "pcap", "event-logs", "email"]
+  const pathParts = currentPath.split(':')
+  const fileId = pathParts[1]
+  const selectedFile = useMemo(() => fileId ? labFiles.find((f: any) => f.id === fileId) : null, [fileId, labFiles])
 
-  const filteredFiles = selectedCategory === "all" 
-    ? labFiles 
-    : labFiles.filter(f => f.category === selectedCategory)
+  const categories = ["all", "pcap", "event-logs", "sample-logs", "email"]
+
+  const filteredFiles = useMemo(() => selectedCategory === "all" ? labFiles : labFiles.filter((f: any) => f.category === selectedCategory), [labFiles, selectedCategory])
 
   if (selectedFile) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedFile(null)}>
-            <ArrowRight className="h-4 w-4 rotate-180 mr-2" />
-            Back to Files
-          </Button>
-        </div>
-
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
@@ -3539,10 +5779,17 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
               </div>
             )}
 
-            {selectedFile.available ? (
-              <Button className="w-full">
+            {selectedFile.available && selectedFile.path ? (
+              <Button asChild className="w-full">
+                <a href={selectedFile.path} download>
+                  <FolderDown className="h-4 w-4 mr-2" />
+                  Download Lab File
+                </a>
+              </Button>
+            ) : selectedFile.available ? (
+              <Button className="w-full" disabled>
                 <FolderDown className="h-4 w-4 mr-2" />
-                Download Lab File
+                Download (path not set)
               </Button>
             ) : (
               <Card className="bg-muted/50">
@@ -3596,7 +5843,7 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
 
       <div className="flex-1 overflow-y-auto mt-4">
         <div className="grid gap-3">
-          {filteredFiles.map((file) => {
+        {filteredFiles.map((file) => {
             const getDifficultyColor = (diff: string) => {
               if (diff === "Easy") return "bg-green-500/10 text-green-500 border-green-500/20"
               if (diff === "Medium") return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
@@ -3607,7 +5854,7 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
               <Card
                 key={file.id}
                 className="cursor-pointer hover:border-cyan-400/50 transition-all"
-                onClick={() => setSelectedFile(file)}
+                onClick={() => onNavigate(`lab-files:${file.id}`)}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -3628,13 +5875,12 @@ function LabFilesContent({ labFiles }: { labFiles: any[] }) {
               </Card>
             )
           })}
-        </div>
-
         {filteredFiles.length === 0 && (
           <div className="text-center p-8 text-muted-foreground">
             No files in this category yet.
           </div>
         )}
+        </div>
       </div>
     </div>
   )
@@ -4035,7 +6281,7 @@ Example:
   )
 }
 
-function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }) {
+function TerminalContent({ onNavigate, openWindows = [], onCloseWindow, onMinimizeWindow, glossary = [], tickets = [] }: { onNavigate: (appId: string) => void; openWindows?: { id: string; label: string }[]; onCloseWindow?: (id: string) => void; onMinimizeWindow?: (id: string) => void; glossary?: any[]; tickets?: any[] }) {
   const [history, setHistory] = useState<string[]>([
     "╔══════════════════════════════════════════════════════════╗",
     "║  SOC OS Terminal v1.0 - Command Center                  ║",
@@ -4132,11 +6378,16 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
           "  ticket open <id>  - open specific ticket",
           "",
           "JOURNAL:",
-          "  journal add       - add journal entry",
+          "  journal add [note] - open journal (or add quick note)",
           "  journal search    - search journal",
           "",
+          "WINDOWS:",
+          "  ls                - list open windows",
+          "  close <app>       - close a window",
+          "  minimize <app>    - minimize a window",
+          "",
           "SEARCH:",
-          "  find <query>      - search all content",
+          "  find <query>      - search glossary & tickets",
           "",
           "Type 'help <command>' for detailed information",
           ""
@@ -4183,10 +6434,13 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
           find: [
             "USAGE: find <search-query>",
             "",
-            "Search across glossary, playbooks, and cheat sheets.",
-            "Example: find event id 4625",
+            "Search glossary and ticket titles. Shows matching terms and tickets.",
+            "Example: find 4625",
             ""
-          ]
+          ],
+          ls: ["USAGE: ls", "", "List all open windows. Use with close <id> or minimize <id>.", ""],
+          close: ["USAGE: close <app-id>", "", "Close a window. Use 'ls' to see open windows.", ""],
+          minimize: ["USAGE: minimize <app-id>", "", "Minimize a window to the taskbar.", ""]
         }
 
         if (helpText[helpCmd]) {
@@ -4219,6 +6473,7 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
         "  interview-prep   Interview Prep",
         "  ioc-helper       IOC Helper",
         "  lab-files        Lab Files",
+        "  projects         Projects",
         "",
         "Use 'open <app-name>' to launch",
         ""
@@ -4258,7 +6513,8 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
         secplus: "sec-plus",
         interview: "interview-prep",
         ioc: "ioc-helper",
-        labs: "lab-files"
+        labs: "lab-files",
+        projects: "projects"
       }
 
       const appName = args[0].toLowerCase()
@@ -4313,18 +6569,70 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
       return
     }
 
+    // ls - list open windows
+    if (command === "ls") {
+      if (openWindows.length === 0) {
+        addToHistory(["No windows open.", "Use 'open <app>' to launch an application.", ""])
+      } else {
+        addToHistory(["Open windows:", "", ...openWindows.map(w => `  ${w.id.padEnd(20)} ${w.label}`), ""])
+      }
+      return
+    }
+
+    // close <app> - close window
+    if (command === "close") {
+      if (args.length === 0) {
+        addToHistory(["Usage: close <app-id>", "Use 'ls' to see open windows", ""])
+        return
+      }
+      const q = args.join(" ").toLowerCase().replace(/\s+/g, "-")
+      const win = openWindows.find(w => w.id === q || w.id.replace(/-/g, " ") === args.join(" ").toLowerCase() || w.label.toLowerCase().includes(args.join(" ").toLowerCase()))
+      if (win && onCloseWindow) {
+        onCloseWindow(win.id)
+        addToHistory([`Closed ${win.label}.`, ""])
+      } else {
+        addToHistory([`No open window: ${args.join(" ")}`, "Type 'ls' for open windows", ""])
+      }
+      return
+    }
+
+    // minimize <app>
+    if (command === "minimize") {
+      if (args.length === 0) {
+        addToHistory(["Usage: minimize <app-id>", "Use 'ls' to see open windows", ""])
+        return
+      }
+      const q = args.join(" ").toLowerCase().replace(/\s+/g, "-")
+      const win = openWindows.find(w => w.id === q || w.id.replace(/-/g, " ") === args.join(" ").toLowerCase() || w.label.toLowerCase().includes(args.join(" ").toLowerCase()))
+      if (win && onMinimizeWindow) {
+        onMinimizeWindow(win.id)
+        addToHistory([`Minimized ${win.label}.`, ""])
+      } else {
+        addToHistory([`No open window: ${args.join(" ")}`, ""])
+      }
+      return
+    }
+
     // Ticket commands
     if (command === "ticket") {
       if (args.length === 0 || args[0] === "list") {
-        addToHistory([
-          "Incident Tickets:",
-          "",
-          "  1. Multiple Failed Login Attempts (Easy)",
-          "  2. Suspicious PowerShell Execution (Medium)",
-          "",
-          "Use 'ticket open <number>' to view ticket",
-          ""
-        ])
+        const lines = ["Incident Tickets:", ""]
+        tickets.slice(0, 10).forEach((t: any, i: number) => {
+          lines.push(`  ${i + 1}. ${t.title} (${t.difficulty})`)
+        })
+        lines.push("", "Use 'open tickets' to view, or 'ticket open <number>'", "")
+        addToHistory(lines)
+        return
+      }
+
+      if (args[0] === "open" && args[1]) {
+        const num = parseInt(args[1], 10)
+        if (num >= 1 && num <= tickets.length) {
+          addToHistory(["Opening Tickets...", ""])
+          setTimeout(() => onNavigate("tickets"), 100)
+        } else {
+          addToHistory([`Invalid ticket number: ${args[1]}`, ""])
+        }
         return
       }
 
@@ -4338,30 +6646,44 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
     // Journal commands
     if (command === "journal") {
       if (args.length === 0 || args[0] === "add") {
-        addToHistory(["Opening SOC Journal...", ""])
+        addToHistory(["Opening SOC Journal...", "(Sign in to add entries)", ""])
         setTimeout(() => onNavigate("soc-journal"), 100)
         return
       }
 
       if (args[0] === "search") {
-        addToHistory(["Opening SOC Journal with search...", ""])
+        addToHistory(["Opening SOC Journal...", ""])
         setTimeout(() => onNavigate("soc-journal"), 100)
         return
       }
     }
 
-    // Find/Search command
+    // Find/Search command - search glossary and ticket titles
     if (command === "find") {
       if (args.length === 0) {
-        addToHistory(["Usage: find <search-query>", ""])
+        addToHistory(["Usage: find <search-query>", "Example: find 4625", ""])
         return
       }
-      const query = args.join(" ")
-      addToHistory([
-        `Searching for: "${query}"`,
-        "Try: glossary, playbooks, cli-cheats",
-        ""
-      ])
+      const query = args.join(" ").toLowerCase()
+      const glossaryMatches = glossary.filter((t: any) => (t.term?.toLowerCase().includes(query) || t.definition?.toLowerCase().includes(query))).slice(0, 5)
+      const ticketMatches = tickets.filter((t: any) => (t.title?.toLowerCase().includes(query) || t.description?.toLowerCase().includes(query))).slice(0, 3)
+      const lines = [`Results for "${query}":`, ""]
+      if (glossaryMatches.length > 0) {
+        lines.push("Glossary:")
+        glossaryMatches.forEach((t: any) => lines.push(`  • ${t.term}: ${(t.definition || "").slice(0, 60)}...`))
+        lines.push("")
+      }
+      if (ticketMatches.length > 0) {
+        lines.push("Tickets:")
+        ticketMatches.forEach((t: any) => lines.push(`  • ${t.title}`))
+        lines.push("")
+      }
+      if (glossaryMatches.length === 0 && ticketMatches.length === 0) {
+        lines.push("No matches. Try 'open glossary' or 'open tickets'.", "")
+      } else {
+        lines.push("Use 'open glossary' or 'open tickets' for full content.", "")
+      }
+      addToHistory(lines)
       return
     }
 
@@ -4382,18 +6704,18 @@ function TerminalContent({ onNavigate }: { onNavigate: (appId: string) => void }
 
   return (
     <div className="h-full flex flex-col">
-      <div className="bg-black text-green-400 font-mono text-sm p-4 rounded-lg flex-1 overflow-y-auto">
+      <div className="bg-black text-[#4e7cf6] font-mono text-sm p-4 rounded-lg flex-1 overflow-y-auto">
         {history.map((line, idx) => (
           <div key={idx}>{line}</div>
         ))}
         <div className="flex items-center gap-2">
-          <span>$</span>
+          <span className="text-[#4e7cf6]">$</span>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 bg-transparent outline-none border-none text-green-400"
+            className="flex-1 bg-transparent outline-none border-none text-[#4e7cf6] placeholder:text-[#4e7cf6]/60"
             autoFocus
           />
         </div>
@@ -4488,10 +6810,17 @@ function AboutContent() {
   )
 }
 
-function SettingsContent() {
+function SettingsContent({
+  isLoggedIn,
+  theme,
+  onThemeChange,
+}: {
+  isLoggedIn: boolean
+  theme: DesktopThemeId
+  onThemeChange: (t: DesktopThemeId) => void
+}) {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
 
   return (
     <div className="space-y-6">
@@ -4512,16 +6841,27 @@ function SettingsContent() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Theme</p>
-              <p className="text-sm text-muted-foreground">Choose your preferred theme</p>
+              <p className="text-sm text-muted-foreground">
+                Choose your preferred theme{" "}
+                {!isLoggedIn && (
+                  <span className="inline-flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Sign in to unlock more
+                  </span>
+                )}
+              </p>
             </div>
             <select
               value={theme}
-              onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}
+              onChange={(e) => onThemeChange(e.target.value as DesktopThemeId)}
               className="px-3 py-2 rounded-lg border bg-background"
-              disabled
             >
-              <option value="dark">Dark</option>
-              <option value="light">Light (Coming Soon)</option>
+              {(Object.keys(DESKTOP_THEMES) as DesktopThemeId[]).map((id) => (
+                <option key={id} value={id} disabled={!isLoggedIn && id !== "default"}>
+                  {DESKTOP_THEMES[id].label}
+                  {!isLoggedIn && id !== "default" ? " (Locked)" : ""}
+                </option>
+              ))}
             </select>
           </div>
 

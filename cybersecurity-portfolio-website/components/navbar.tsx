@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { Menu, X, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,11 @@ const navLinks = [
 ]
 
 export function Navbar() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Resources page is desktop mode (splash or VM) — no main site nav
+  if (pathname === "/resources") return null
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">

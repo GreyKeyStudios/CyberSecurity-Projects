@@ -23,6 +23,7 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 
 # Logs (keep directory structure, ignore log files)
 logs/
@@ -89,3 +90,8 @@ REMOVE-INTERNAL-DOCS.md
 check-github-files.md
 check-tracked-files.sh
 remove-sensitive-files.sh
+
+# Scratch / working notes (don't push to production)
+new notes.md
+newnotesforcursor.md
+notes.md
