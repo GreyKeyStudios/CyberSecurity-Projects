@@ -3068,74 +3068,170 @@
       "id": "soc-casefiles",
       "title": "SOC Casefiles",
       "difficulty": "Beginner → Intermediate",
-      "timeEstimate": "3–6 hours (depending on how many casefiles you complete)",
+      "timeEstimate": "3–6 hours (per casefile: 45–120 minutes)",
       "tools": [
-        "Markdown",
-        "IOC enrichment tools (VirusTotal, AbuseIPDB, OTX)",
-        "SOC OS IOC Helper (optional)",
-        "SOC templates"
+        "Markdown editor (VS Code recommended)",
+        "Browser",
+        "VirusTotal (free account optional)",
+        "AbuseIPDB (free account optional)",
+        "AlienVault OTX (free account optional)",
+        "Any.Run (optional)",
+        "Wireshark (optional)",
+        "Splunk (optional)",
+        "PowerShell (optional)",
+        "Linux terminal (optional)"
       ],
       "prereqs": [
-        "Basic understanding of IOCs (IP, domain, URL, file hash)",
-        "Basic understanding of phishing, brute force, malware delivery methods",
-        "Comfort reading Markdown documentation"
+        "Basic understanding of phishing, malware, and suspicious logins",
+        "Comfortable reading technical text",
+        "Basic understanding of IP addresses, domains, and hashes",
+        "Willingness to document your thought process clearly"
       ],
-      "objective": "Recreate real-world SOC documentation workflows by working through multiple incident casefiles and producing ticket-quality investigation notes.",
+      "objective": "Build a reusable SOC-style investigation library using realistic casefile writeups and playbooks. This project is designed to train incident response thinking, documentation, IOC extraction, and analyst communication.",
       "deliverables": [
-        "Completed casefile investigation notes for at least 3 incidents",
-        "IOC list for each casefile",
-        "Verdict (TP/FP) + confidence statement",
-        "Containment + remediation recommendations",
-        "Final ticket writeup using your templates"
+        "At least 3 completed SOC casefiles written in a consistent format",
+        "At least 3 operational playbooks written like SOC runbooks",
+        "Evidence screenshots and IOC lists in each casefile",
+        "A repeatable template process so new casefiles can be added later",
+        "A portfolio-ready SOC documentation folder that demonstrates real analyst workflow"
       ],
       "steps": [
         {
-          "title": "Open and read main README",
-          "body": "Open the SOC-Casefiles folder and read the main README to understand how cases are structured."
+          "title": "Step 1 — Understand what this project is (and why it matters)",
+          "body": "SOC-Casefiles is not a traditional technical lab.\n\nIt is a SOC analyst training project designed to prove you can:\n- read an incident scenario\n- extract key indicators\n- validate indicators using threat intel sources\n- document findings clearly\n- write actionable remediation steps\n- communicate like a real SOC analyst\n\nThis project is extremely valuable for interviews because most beginner portfolios show tools — but not analyst thinking.\n\nValidation:\n- You should be able to explain (out loud) what a casefile is.\n- You should understand that your main deliverable is documentation.\n\nDeliverable:\n- None yet (this is a mindset step).\n\nTroubleshooting:\n- If you feel like \"this isn't real cybersecurity,\" you are wrong. Documentation is a core SOC skill."
         },
         {
-          "title": "Pick Casefile 001",
-          "body": "Pick Casefile 001 first (start simple). Read it once fully without taking notes so you understand the story."
+          "title": "Step 2 — Open the SOC-Casefiles folder and inspect the structure",
+          "body": "Navigate to the project folder in your repo.\n\nIf you are in the repo root:\n\nLinux/macOS:\n```bash\ncd SOC-Casefiles\nls\n```\n\nWindows PowerShell:\n```powershell\ncd SOC-Casefiles\ndir\n```\n\nYou should see subfolders for casefiles and playbooks (folder names may vary depending on your repo).\n\nWhat you're looking for:\n- Casefile markdown documents\n- Playbook markdown documents\n- Any images/screenshots folder\n\nValidation:\n- You can locate existing casefiles and playbooks.\n\nDeliverable:\n- Identify and write down the file paths of:\n  - where casefiles live\n  - where playbooks live\n\nTroubleshooting:\n- If the folder is empty or doesn't match expectations, confirm you're in the correct repo and branch."
         },
         {
-          "title": "Evidence Notes and IOCs",
-          "body": "Re-read the casefile and create an Evidence Notes section. Extract and list all IOCs you see (IPs, domains, URLs, file hashes, sender addresses, usernames)."
+          "title": "Step 3 — Pick a casefile to study like an analyst",
+          "body": "Choose one casefile to review.\n\nStart with the most complete one.\n\nOpen it in VS Code or another Markdown editor.\n\nWhat you should learn from the casefile:\n- how the incident was introduced\n- what evidence was available\n- what indicators were extracted\n- how the analysis was performed\n- what remediation was recommended\n\nYour goal is to identify the \"structure\" so you can reuse it.\n\nValidation:\n- You can summarize the casefile in 2 sentences.\n\nDeliverable:\n- Create a note (in your own scratchpad) listing the sections the casefile uses (ex: Summary, IOCs, Timeline, Findings, Recommendations).\n\nTroubleshooting:\n- If the casefile feels confusing, skip analysis details and focus on headings/sections first."
         },
         {
-          "title": "Enrich IOCs",
-          "body": "For each IOC, perform enrichment using at least two intel sources (VirusTotal + AbuseIPDB, or OTX + VirusTotal). Record results and timestamps."
+          "title": "Step 4 — Extract IOCs (Indicators of Compromise) from the casefile",
+          "body": "In every casefile, identify all IOCs.\n\nCommon IOC types:\n- IP addresses\n- domains\n- URLs\n- file hashes (MD5/SHA1/SHA256)\n- suspicious email sender addresses\n- file names\n- registry keys\n- user accounts\n\nMake a list of all IOCs.\n\nPro tip: Always defang URLs when documenting them publicly.\n\nDefanging examples:\n- http://example.com → hxxp://example[.]com\n- bad.domain.com → bad[.]domain[.]com\n\nValidation:\n- You have a clean IOC list.\n\nDeliverable:\n- Create an IOC section inside the casefile if one does not exist.\n\nTroubleshooting:\n- If you don't see IOCs, treat names, file paths, and user accounts as indicators.\n- Even \"suspicious process name\" counts as an IOC in many investigations."
         },
         {
-          "title": "Build a timeline",
-          "body": "Build a mini timeline of the incident (timestamps, events, actions). Even 5–10 bullet points is enough."
+          "title": "Step 5 — Validate IOCs using threat intelligence sources",
+          "body": "Every SOC casefile should show that you validated indicators.\n\nUse at least 2–3 sources per IOC type.\n\nRecommended sources:\n- VirusTotal (hashes/domains/URLs/IPs)\n- AbuseIPDB (IPs)\n- AlienVault OTX (IPs/domains)\n- urlscan.io (URLs/domains)\n- Hybrid Analysis (hashes)\n- ANY.RUN (dynamic analysis)\n\nExample workflow:\n1. Check suspicious IP in AbuseIPDB\n2. Check same IP in VirusTotal\n3. Search domain on urlscan.io\n\nRecord:\n- reputation score\n- tags (phishing, malware, botnet)\n- detection counts\n- first seen / last seen dates\n\nValidation:\n- You can answer: \"Is this IOC known bad?\"\n\nDeliverable:\n- Add a \"Threat Intel Findings\" section with bullet notes.\n\nTroubleshooting:\n- If VirusTotal says 0 detections, it does NOT mean safe. Note that it is \"unknown\" or \"low confidence.\""
         },
         {
-          "title": "Follow the playbook",
-          "body": "Open the matching playbook in the _Playbooks folder and follow it like a checklist: triage → containment → eradication → recovery → lessons learned."
+          "title": "Step 6 — Write the investigation timeline like a real SOC ticket",
+          "body": "A strong casefile includes a timeline.\n\nEven if the incident is fictional, write it like an investigation log.\n\nTimeline format example:\n- 09:12 AM — User reports suspicious email\n- 09:20 AM — URL extracted and checked in VirusTotal\n- 09:35 AM — IOC confirmed malicious, blocked domain\n- 10:05 AM — User password reset initiated\n\nInclude:\n- timestamps (even approximate)\n- action taken\n- result\n\nValidation:\n- Timeline reads like a sequence of SOC actions.\n\nDeliverable:\n- Add a \"Timeline\" section to the casefile.\n\nTroubleshooting:\n- If you don't know exact times, use \"T+0, T+15 min, T+45 min\" style instead."
         },
         {
-          "title": "Write final summary",
-          "body": "Write the final investigation summary using your Templates folder format (Incident Summary, Evidence, IOCs, Findings, Recommended Actions, Verdict)."
+          "title": "Step 7 — Document the technical analysis (how you reached conclusions)",
+          "body": "This is the section that makes your portfolio impressive.\n\nWrite what you actually did:\n- what you checked\n- what evidence you found\n- why you concluded it was malicious or suspicious\n\nExample analysis language:\n\"The sender domain was newly registered and had no reputation history. URLScan results showed multiple redirects to a credential harvesting page. VirusTotal flagged the final URL as phishing. Based on the combined evidence, the email was classified as credential phishing.\"\n\nUse SOC-style confidence labels:\n- High confidence malicious\n- Medium confidence suspicious\n- Low confidence / informational\n\nValidation:\n- Someone reading the casefile understands your reasoning.\n\nDeliverable:\n- Add a \"Findings\" section that contains:\n  - What happened\n  - Evidence collected\n  - IOC validation\n  - Conclusion\n\nTroubleshooting:\n- If you feel like you're repeating yourself, that's normal. SOC documentation is repetitive by design."
         },
         {
-          "title": "Repeat for 002 and 003",
-          "body": "Repeat the process for Casefile 002 and Casefile 003. Each time, try to write faster while staying structured."
+          "title": "Step 8 — Add remediation and response recommendations",
+          "body": "A SOC analyst must propose remediation.\n\nInclude:\n- immediate containment steps\n- short-term remediation\n- long-term preventive improvements\n\nExamples:\nImmediate:\n- block domain in DNS filtering\n- reset password for affected account\n- isolate host from network\n\nPreventive:\n- enforce MFA\n- add mail rule for spoofed sender\n- improve phishing training\n\nValidation:\n- Your remediation steps are actionable.\n\nDeliverable:\n- Add a \"Recommended Actions\" section.\n\nTroubleshooting:\n- If you don't know what to recommend, use NIST incident response lifecycle as a guide (Containment, Eradication, Recovery)."
         },
         {
-          "title": "Review and compare",
-          "body": "Once you have at least 3 casefiles completed, review them and compare your reasoning. Identify patterns in how you investigate and document."
+          "title": "Step 9 — Add screenshots and evidence artifacts (portfolio proof)",
+          "body": "A strong casefile should contain proof.\n\nAdd screenshots such as:\n- VirusTotal detection page\n- AbuseIPDB reputation score\n- urlscan.io results\n- email headers\n- Splunk search output (if applicable)\n- Wireshark packet view (if applicable)\n\nStore screenshots inside the SOC-Casefiles folder.\n\nRecommended structure:\nSOC-Casefiles/\n  Casefiles/\n    Casefile-001.md\n  Evidence/\n    casefile-001/\n      vt_result.png\n      abuseipdb.png\n\nIn Markdown, reference images like:\n```md\n![VirusTotal Results](../Evidence/casefile-001/vt_result.png)\n```\n\nValidation:\n- Images render correctly in GitHub preview.\n\nDeliverable:\n- Add at least 2 screenshots per casefile.\n\nTroubleshooting:\n- If images don't render on GitHub, check relative paths and case sensitivity."
         },
         {
-          "title": "Optional: Ticket Simulator",
-          "body": "Optional: convert each casefile into a SOC OS Ticket Simulator entry (Guided + Expert version) so the site becomes interactive training."
+          "title": "Step 10 — Review playbooks and connect them to casefiles",
+          "body": "Playbooks are operational guides.\n\nCasefiles show investigations.\n\nA strong SOC portfolio links them together.\n\nFor example:\n- A phishing casefile should link to the Phishing Triage playbook.\n- A malware casefile should link to a Malware Triage playbook.\n\nIn the casefile, add a line like:\n\"Relevant playbook: Playbooks/Phishing-Triage.md\"\n\nValidation:\n- Casefile references the correct playbook.\n\nDeliverable:\n- Add at least one playbook reference per casefile.\n\nTroubleshooting:\n- If playbooks are incomplete, create a minimal version with 6–10 steps. Better minimal than missing."
+        },
+        {
+          "title": "Step 11 — Create a new casefile using the same template (repeatability)",
+          "body": "Now create your own new casefile.\n\nPick a scenario:\n- credential phishing\n- suspicious login from foreign IP\n- ransomware detection\n- suspicious PowerShell activity\n- malicious attachment\n\nRecommended casefile structure:\n1. Executive Summary\n2. Incident Description\n3. Indicators of Compromise\n4. Evidence Collected\n5. Timeline\n6. Findings / Analysis\n7. Response Actions\n8. Recommendations\n9. Lessons Learned\n\nWrite it like you are documenting a real ticket.\n\nValidation:\n- Casefile has all sections.\n- Casefile includes IOCs.\n- Casefile includes threat intel checks.\n\nDeliverable:\n- Add at least one original casefile.\n\nTroubleshooting:\n- If you don't know what incident to use, use one of your Tickets app scenarios as the source story."
+        },
+        {
+          "title": "Step 12 — Final polish: make it interview-ready",
+          "body": "This is the final step that turns \"notes\" into a portfolio.\n\nChecklist:\n- spelling and formatting cleaned up\n- consistent headings across casefiles\n- IOCs defanged\n- screenshots included\n- timeline included\n- clear conclusion (malicious/suspicious/benign)\n- remediation included\n- playbook referenced\n\nAdd a \"Lessons Learned\" section to show maturity.\n\nValidation:\n- A recruiter could open any casefile and understand it.\n\nDeliverable:\n- Final review pass on all casefiles.\n\nTroubleshooting:\n- If the writing feels too long, tighten your Executive Summary. Keep technical detail in Findings."
         }
       ],
       "successCriteria": [
-        "You can clearly explain what happened in each casefile and why you believe it is TP/FP",
-        "Each casefile has an IOC list with enrichment evidence",
-        "Each casefile has a timeline section (even short)",
-        "Each casefile includes a containment/remediation recommendation",
-        "Your final writeup looks like something you could paste into ServiceNow/Salesforce"
+        "At least 3 casefiles exist with consistent formatting and clear conclusions",
+        "Each casefile includes an IOC list with threat intel validation",
+        "Each casefile includes at least 2 evidence screenshots",
+        "Each casefile includes remediation recommendations",
+        "Playbooks exist and are referenced from relevant casefiles",
+        "A new casefile can be created from scratch using the same workflow"
+      ],
+      "troubleshooting": [
+        {
+          "issue": "I don't know what to write in the Findings section.",
+          "fix": "Write exactly what you checked and what the result was. Example: \"Checked IP in AbuseIPDB. Score was 95/100. Multiple reports tagged as brute force. Classified as malicious.\""
+        },
+        {
+          "issue": "The casefile feels fake because I don't have real logs.",
+          "fix": "Casefiles can be based on simulated tickets, public incident reports, or sandbox results. SOC documentation skill is still valid and valuable."
+        },
+        {
+          "issue": "My casefile has no IOCs.",
+          "fix": "Extract anything measurable: domains, file names, user accounts, email headers, suspicious process names, or command line arguments."
+        },
+        {
+          "issue": "My screenshots don't show enough proof.",
+          "fix": "Add screenshots of your threat intel results and highlight the key lines (detections, tags, reputation scores)."
+        },
+        {
+          "issue": "My writing is too long.",
+          "fix": "Keep the Executive Summary short. Move details into Findings and Timeline. SOC reports are structured so readers can skim."
+        }
+      ],
+      "references": [
+        {
+          "title": "NIST SP 800-61r2 — Computer Security Incident Handling Guide",
+          "url": "https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final"
+        },
+        {
+          "title": "MITRE ATT&CK Framework",
+          "url": "https://attack.mitre.org/"
+        },
+        {
+          "title": "VirusTotal",
+          "url": "https://www.virustotal.com/"
+        },
+        {
+          "title": "AbuseIPDB",
+          "url": "https://www.abuseipdb.com/"
+        },
+        {
+          "title": "urlscan.io",
+          "url": "https://urlscan.io/"
+        },
+        {
+          "title": "AlienVault OTX",
+          "url": "https://otx.alienvault.com/"
+        }
+      ],
+      "cliCheatSheet": [
+        {
+          "command": "whois example.com",
+          "syntax": "whois <domain>",
+          "purpose": "Check domain registration details to identify suspicious newly registered domains."
+        },
+        {
+          "command": "nslookup example.com",
+          "syntax": "nslookup <domain>",
+          "purpose": "Resolve a domain to IP addresses and validate DNS behavior."
+        },
+        {
+          "command": "dig example.com",
+          "syntax": "dig <domain>",
+          "purpose": "Perform DNS lookups and inspect record types (A, MX, TXT)."
+        },
+        {
+          "command": "curl -I https://example.com",
+          "syntax": "curl -I <url>",
+          "purpose": "Fetch HTTP headers to identify redirects, suspicious servers, or phishing infrastructure."
+        },
+        {
+          "command": "traceroute example.com",
+          "syntax": "traceroute <domain>",
+          "purpose": "Identify routing path and network hops to suspicious infrastructure."
+        },
+        {
+          "command": "ping -c 4 example.com",
+          "syntax": "ping -c <count> <domain>",
+          "purpose": "Test basic reachability and confirm if a host responds."
+        }
       ]
     },
     "ids-setup": {
