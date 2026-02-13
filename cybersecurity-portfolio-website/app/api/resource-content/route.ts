@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server"
 import { fetchResourceContent } from "@/lib/resource-content"
 
+export const runtime = "edge"
+
 /** GET /api/resource-content?path=SOC-Notes/Common-Ports-CheatSheet.md
  * Fetches markdown from GitHub server-side so Quick Reference and other in-app content loads without CORS issues.
  */

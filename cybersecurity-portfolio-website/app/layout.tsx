@@ -12,6 +12,9 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mon
 
 const siteUrl = "https://soc.greykeystudios.dev"
 
+/** Required for Cloudflare Pages (@cloudflare/next-on-pages): all routes must run on Edge. */
+export const runtime = "edge"
+
 export const metadata: Metadata = {
   title: {
     default: "Michael Walton - Cybersecurity Portfolio",
