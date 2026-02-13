@@ -249,8 +249,9 @@ export default function ResourcesPage() {
     return () => ro.disconnect()
   }, [isVMActive])
 
-  // VM session: guest exit = lose work; logged-in = save/restore like a real VM
+  // VM session: logged-in = localStorage (persists across tabs/restart); guest = sessionStorage (survives refresh, cleared on exit or new tab)
   const VM_SESSION_KEY = "soc-os-vm-session"
+  const VM_GUEST_SESSION_KEY = "soc-os-vm-session-guest"
   const getSessionKey = () => (user?.id ? `${VM_SESSION_KEY}-${user.id}` : null)
 
   // Theme gating: guests always use Default. Signed-in users can choose and persist.
@@ -296,15 +297,55 @@ export default function ResourcesPage() {
     } catch (_) {}
   }, [isVMActive, user?.id])
 
-  // Guest entry: always start with a clean desktop (no open apps from a previous session)
+  // Guest entry: restore from sessionStorage if available (e.g. after refresh), else clean desktop
   const prevVMActiveRef = useRef(false)
   useEffect(() => {
-    if (isVMActive && !prevVMActiveRef.current && !user) {
+    const justEnteredVMAsGuest = isVMActive && !prevVMActiveRef.current && !user
+    if (!justEnteredVMAsGuest) {
+      prevVMActiveRef.current = isVMActive
+      return
+    }
+    try {
+      const raw = sessionStorage.getItem(VM_GUEST_SESSION_KEY)
+      if (raw) {
+        const data = JSON.parse(raw) as { openIds?: string[]; maximizedId?: string | null }
+        const openIds = data.openIds ?? []
+        const maximizedId = data.maximizedId ?? null
+        if (openIds.length > 0) {
+          setWindows(prev => {
+            const existingIds = new Set(prev.map(w => w.id))
+            const next = prev.map(w => ({ ...w, isOpen: openIds.includes(w.id), isMinimized: !openIds.includes(w.id) }))
+            openIds.forEach(id => {
+              if (!existingIds.has(id)) next.push({ id, isOpen: true, isMinimized: false, zIndex: 10, navigationStack: [id], currentNavIndex: 0 })
+            })
+            return next
+          })
+          setMaximizedWindowId(maximizedId)
+        } else {
+          setWindows(initialWindowsState)
+          setMaximizedWindowId(null)
+        }
+      } else {
+        setWindows(initialWindowsState)
+        setMaximizedWindowId(null)
+      }
+    } catch (_) {
       setWindows(initialWindowsState)
       setMaximizedWindowId(null)
     }
     prevVMActiveRef.current = isVMActive
   }, [isVMActive, user])
+
+  // Persist guest VM state to sessionStorage so refresh keeps their open apps (same tab only)
+  useEffect(() => {
+    if (!isVMActive || user?.id) return
+    try {
+      sessionStorage.setItem(VM_GUEST_SESSION_KEY, JSON.stringify({
+        openIds: windows.filter(w => w.isOpen).map(w => w.id),
+        maximizedId: maximizedWindowId,
+      }))
+    } catch (_) {}
+  }, [isVMActive, user?.id, windows, maximizedWindowId])
 
   const openWindow = (id: string) => {
     setWindows(prev => {
@@ -723,9 +764,13 @@ export default function ResourcesPage() {
                             } catch (_) {}
                             await supabase.auth.signOut()
                             setUser(null)
+                            setWindows(initialWindowsState)
+                            setMaximizedWindowId(null)
+                            try { sessionStorage.removeItem(VM_GUEST_SESSION_KEY) } catch (_) {}
                           } else {
                             setWindows(initialWindowsState)
                             setMaximizedWindowId(null)
+                            try { sessionStorage.removeItem(VM_GUEST_SESSION_KEY) } catch (_) {}
                           }
                           setIsVMActive(false)
                           setIsStartMenuOpen(false)
@@ -892,7 +937,7 @@ export default function ResourcesPage() {
                 {window.id === "games" && <GamesContent onOpenApp={openWindow} />}
                 {window.id === "mini-game" && <MiniGameContent miniGames={miniGames} currentPath={currentPath} onNavigate={(path) => navigateInWindow(window.id, path)} onGoBack={() => goBack(window.id)} />}
                 {window.id === "cert-path" && <CertPathContent certPath={certPath} appIntros={appIntros} />}
-                {window.id === "soc-journal" && <SOCJournalContent user={user} />}
+                {window.id === "soc-journal" && <SOCJournalContent user={user} onSignIn={() => setIsAuthDialogOpen(true)} />}
                 {window.id === "tickets" && (
                   <TicketsContent
                     tickets={tickets}
@@ -901,6 +946,7 @@ export default function ResourcesPage() {
                     onNavigate={(path) => navigateInWindow(window.id, path)}
                     onOpenApp={openWindow}
                     appIntros={appIntros}
+                    onSignIn={() => setIsAuthDialogOpen(true)}
                   />
                 )}
                 {window.id === "lab-files" && (
@@ -5216,7 +5262,7 @@ function CertPathContent({ certPath, appIntros }: { certPath: any; appIntros?: R
 
 // Phase 3 Components - SOC Journal, Tickets, Lab Files
 
-function SOCJournalContent({ user }: { user: User | null }) {
+function SOCJournalContent({ user, onSignIn }: { user: User | null; onSignIn?: () => void }) {
   const [entries, setEntries] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -5233,6 +5279,19 @@ function SOCJournalContent({ user }: { user: User | null }) {
       setIsLoading(false)
     }
   }, [user])
+
+  // Debounce search term (inline so hook order is always the same)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm)
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 300)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+  const filteredEntries = useMemo(() => entries.filter((entry: any) => {
+    const q = debouncedSearch.toLowerCase()
+    const matchesSearch = !q || entry.title?.toLowerCase().includes(q) || entry.content?.toLowerCase().includes(q)
+    const matchesType = filterType === "all" || entry.entry_type === filterType
+    return matchesSearch && matchesType
+  }), [entries, debouncedSearch, filterType])
 
   const loadEntries = async () => {
     setIsLoading(true)
@@ -5297,7 +5356,7 @@ function SOCJournalContent({ user }: { user: User | null }) {
           Track your learning journey, document labs, and build your personal knowledge base.
           Sign in to start journaling.
         </p>
-        <Button variant="default">Sign In to Start</Button>
+        <Button variant="default" onClick={() => onSignIn?.()}>Sign In to Start</Button>
       </div>
     )
   }
@@ -5348,14 +5407,6 @@ function SOCJournalContent({ user }: { user: User | null }) {
       </div>
     )
   }
-
-  const debouncedSearch = useDebouncedValue(searchTerm, 300)
-  const filteredEntries = useMemo(() => entries.filter((entry: any) => {
-    const q = debouncedSearch.toLowerCase()
-    const matchesSearch = !q || entry.title?.toLowerCase().includes(q) || entry.content?.toLowerCase().includes(q)
-    const matchesType = filterType === "all" || entry.entry_type === filterType
-    return matchesSearch && matchesType
-  }), [entries, debouncedSearch, filterType])
 
   return (
     <div className="flex flex-col h-full">
@@ -5509,7 +5560,7 @@ function JournalEntryForm({ onSave, onCancel }: { onSave: (entry: any) => void; 
   )
 }
 
-function TicketsContent({ tickets, user, currentPath, onNavigate, onOpenApp, appIntros }: { tickets: any[]; user: User | null; currentPath: string; onNavigate: (path: string) => void; onOpenApp?: (appId: string) => void; appIntros?: Record<string, string> }) {
+function TicketsContent({ tickets, user, currentPath, onNavigate, onOpenApp, appIntros, onSignIn }: { tickets: any[]; user: User | null; currentPath: string; onNavigate: (path: string) => void; onOpenApp?: (appId: string) => void; appIntros?: Record<string, string>; onSignIn?: () => void }) {
   const [showHints, setShowHints] = useState(false)
   const [showSolution, setShowSolution] = useState(false)
 
@@ -5566,8 +5617,9 @@ function TicketsContent({ tickets, user, currentPath, onNavigate, onOpenApp, app
             <CardHeader>
               <CardTitle className="text-sm">💡 Sign in to save progress</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Create an account to track completed tickets, save notes, and monitor your progress over time.
+            <CardContent className="text-sm text-muted-foreground space-y-3">
+              <p>Create an account to track completed tickets, save notes, and monitor your progress over time.</p>
+              <Button variant="default" size="sm" onClick={() => onSignIn?.()}>Sign In</Button>
             </CardContent>
           </Card>
         )}

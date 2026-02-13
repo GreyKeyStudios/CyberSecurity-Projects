@@ -19,8 +19,8 @@ export function Footer() {
               <span className="text-xs text-muted-foreground">Grey Key Security Lab (SOC Portfolio)</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Information Technology Professional with 9+ years experience (10 years in March 2026). 
-              SOC / Cybersecurity Analyst focused on threat detection, incident response, and security operations.
+              Information Technology Professional. SOC / Cybersecurity Analyst focused on threat detection,
+              incident response, and security operations.
             </p>
           </div>
 

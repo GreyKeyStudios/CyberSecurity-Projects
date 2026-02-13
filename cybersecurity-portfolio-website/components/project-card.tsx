@@ -3,6 +3,7 @@ import { ExternalLink, Github } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ProjectBadge, type BadgeType } from "@/components/project-badge"
+import { GITHUB_REPO, getGitHubTreeUrl } from "@/lib/utils"
 
 export interface ProjectCardProps {
   id: string
@@ -16,8 +17,6 @@ export interface ProjectCardProps {
   featured?: boolean
 }
 
-const GITHUB_BASE_URL = "https://github.com/GreyKeyStudios/CyberSecurity-Projects"
-
 export function ProjectCard({
   id,
   title,
@@ -29,7 +28,7 @@ export function ProjectCard({
   githubPath,
   featured = false,
 }: ProjectCardProps) {
-  const githubUrl = githubPath ? `${GITHUB_BASE_URL}/tree/main/${githubPath}` : GITHUB_BASE_URL
+  const githubUrl = githubPath ? getGitHubTreeUrl(githubPath) : GITHUB_REPO
 
   return (
     <Card

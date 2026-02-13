@@ -2,10 +2,11 @@ import Link from "next/link"
 import { Github, Linkedin, Mail, MapPin, Award, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { getExperienceYears } from "@/lib/utils"
 
 export const metadata = {
   title: "About - Michael Walton",
-  description: "SOC Analyst portfolio by Michael Walton showcasing cybersecurity skills, certifications, and professional background. 9+ years IT support experience, Security+ and CCST Cybersecurity certified.",
+  description: "SOC Analyst portfolio by Michael Walton showcasing cybersecurity skills, certifications, and professional background. Security+ and CCST Cybersecurity certified.",
 }
 
 const skills = {
@@ -65,7 +66,7 @@ export default function AboutPage() {
         <div className="space-y-6 mb-12">
           <div className="flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary" />
-            <span className="text-sm">Minneapolis, Minnesota, 55411</span>
+            <span className="text-sm">Minneapolis, Minnesota</span>
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
             About Me
@@ -74,12 +75,12 @@ export default function AboutPage() {
             SOC / Cybersecurity Analyst
           </p>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Information Technology Professional with 9+ years of experience (10 years in March 2026) in 
-            high-visibility customer service and a strong foundation in security principles, network defense, 
-            and threat analysis. Certified in CompTIA Security+ and Cisco CCST Cybersecurity with hands-on 
-            experience in IT troubleshooting, incident response, and system administration. Currently serving 
-            as Store Support Specialist at Amplifon. This portfolio demonstrates hands-on experience with 
-            real-world security scenarios, including Splunk log analysis, threat intelligence automation, 
+            Information Technology Professional with {getExperienceYears()}+ years of experience in
+            high-visibility customer service and a strong foundation in security principles, network defense,
+            and threat analysis. Certified in CompTIA Security+ and Cisco CCST Cybersecurity with hands-on
+            experience in IT troubleshooting, incident response, and system administration. Currently serving
+            as Store Support Specialist at Amplifon. This portfolio demonstrates hands-on experience with
+            real-world security scenarios, including Splunk log analysis, threat intelligence automation,
             and comprehensive incident documentation.
           </p>
         </div>

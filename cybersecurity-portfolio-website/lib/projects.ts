@@ -1,5 +1,6 @@
 import projectsData from "@/data/projects.json"
 import type { BadgeType } from "@/components/project-badge"
+import { getGitHubTreeUrl } from "@/lib/utils"
 
 export interface Project {
   id: string
@@ -63,9 +64,5 @@ export function getProjectsByBadge(badge: BadgeType): Project[] {
   return projects.filter((p) => p.badge === badge)
 }
 
-// GitHub URL helper
-export const GITHUB_BASE_URL = "https://github.com/GreyKeyStudios/CyberSecurity-Projects"
-
-export function getGitHubUrl(githubPath: string): string {
-  return `${GITHUB_BASE_URL}/tree/main/${githubPath}`
-}
+// Re-export for backward compatibility
+export { getGitHubTreeUrl as getGitHubUrl } from "@/lib/utils"

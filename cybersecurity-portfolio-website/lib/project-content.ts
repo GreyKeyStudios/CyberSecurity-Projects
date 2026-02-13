@@ -1,7 +1,4 @@
-// Project content cache - README content for each project
-// This can be fetched from GitHub or stored here for static generation
-
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/GreyKeyStudios/CyberSecurity-Projects/main"
+import { GITHUB_RAW_BASE } from "@/lib/utils"
 
 export interface ProjectScreenshots {
   [projectId: string]: string[]

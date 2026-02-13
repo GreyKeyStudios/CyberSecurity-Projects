@@ -1,7 +1,13 @@
+import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Download, ExternalLink, Cloud } from "lucide-react"
 import Link from "next/link"
+
+export const metadata: Metadata = {
+  title: "Resume",
+  description: "Download Michael Walton's resume or view the interactive cloud version hosted on Azure.",
+}
 
 export default function ResumePage() {
   return (

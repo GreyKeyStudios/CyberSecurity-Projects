@@ -1,8 +1,15 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLeft, FileText, BookOpen, AlertTriangle, AlertCircle, Info, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { getGitHubBlobUrl } from "@/lib/utils"
+
+export const metadata: Metadata = {
+  title: "SOC Casefiles",
+  description: "Real-world incident investigation workflows demonstrating alert triage, IOC extraction, and ticket documentation skills.",
+}
 
 const casefiles = [
   {
@@ -74,8 +81,6 @@ const playbooks = [
   },
 ]
 
-const GITHUB_BASE = "https://github.com/GreyKeyStudios/CyberSecurity-Projects/blob/main"
-
 function SeverityBadge({ severity }: { severity: string }) {
   const config = {
     critical: { color: "bg-red-500/20 text-red-400 border-red-500/30", icon: AlertTriangle },
@@ -144,7 +149,7 @@ export default function CasefilesPage() {
                     </div>
                     <Button asChild variant="outline" size="sm" className="gap-2 bg-transparent">
                       <a
-                        href={`${GITHUB_BASE}/${casefile.githubPath}`}
+                        href={getGitHubBlobUrl(casefile.githubPath)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -175,7 +180,7 @@ export default function CasefilesPage() {
                 <CardContent>
                   <Button asChild variant="outline" size="sm" className="gap-2 bg-transparent">
                     <a
-                      href={`${GITHUB_BASE}/${playbook.githubPath}`}
+                      href={getGitHubBlobUrl(playbook.githubPath)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

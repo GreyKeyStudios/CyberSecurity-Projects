@@ -5,6 +5,18 @@ import { Badge } from "@/components/ui/badge"
 import { ProjectCard } from "@/components/project-card"
 import { Stats } from "@/components/stats"
 import { featuredProjects, stats } from "@/lib/projects"
+import { getExperienceYears } from "@/lib/utils"
+
+const skillsOverview = [
+  { name: "Splunk / SIEM", level: "Advanced" },
+  { name: "Threat Intelligence", level: "Advanced" },
+  { name: "Incident Response", level: "Intermediate" },
+  { name: "Python Automation", level: "Intermediate" },
+  { name: "Network Analysis", level: "Intermediate" },
+  { name: "Log Analysis", level: "Advanced" },
+  { name: "Firewall Config", level: "Intermediate" },
+  { name: "Documentation", level: "Advanced" },
+]
 
 export default function Home() {
   return (
@@ -22,7 +34,7 @@ export default function Home() {
                   Information Technology Professional | SOC / Cybersecurity Analyst
                 </p>
                 <p className="text-sm text-muted-foreground/70">
-                  9+ years IT support experience (10 years in March 2026) | Security+ & CCST Cybersecurity Certified
+                  {getExperienceYears()}+ years IT support experience | Security+ &amp; CCST Cybersecurity Certified
                 </p>
                 <p className="text-lg text-muted-foreground leading-relaxed max-w-lg pt-2">
                   Portfolio showcasing hands-on security analysis skills including Splunk log analysis, 
@@ -150,16 +162,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { name: "Splunk / SIEM", level: "Advanced" },
-              { name: "Threat Intelligence", level: "Advanced" },
-              { name: "Incident Response", level: "Intermediate" },
-              { name: "Python Automation", level: "Intermediate" },
-              { name: "Network Analysis", level: "Intermediate" },
-              { name: "Log Analysis", level: "Advanced" },
-              { name: "Firewall Config", level: "Intermediate" },
-              { name: "Documentation", level: "Advanced" },
-            ].map((skill) => (
+            {skillsOverview.map((skill) => (
               <div
                 key={skill.name}
                 className="rounded-lg border border-border bg-card p-4 text-center hover:border-primary/50 transition-colors"
@@ -180,7 +183,7 @@ export default function Home() {
               Ready to work together?
             </h2>
             <p className="text-muted-foreground">
-              {"I'm"} actively seeking SOC Analyst opportunities. {"Let's"} connect and discuss how I can contribute to your security team.
+              I&apos;m actively seeking SOC Analyst opportunities. Let&apos;s connect and discuss how I can contribute to your security team.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button asChild className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">

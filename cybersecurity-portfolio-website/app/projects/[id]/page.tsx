@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import type { Metadata } from "next"
 import { ArrowLeft, Github, ExternalLink, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProjectBadge } from "@/components/project-badge"
@@ -16,6 +17,21 @@ export async function generateStaticParams() {
   return projects.map((project) => ({
     id: project.id,
   }))
+}
+
+export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
+  const { id } = await params
+  const project = projects.find((p) => p.id === id)
+  if (!project) return { title: "Project Not Found" }
+
+  return {
+    title: project.title,
+    description: project.description,
+    openGraph: {
+      title: `${project.title} | Michael Walton`,
+      description: project.description,
+    },
+  }
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {

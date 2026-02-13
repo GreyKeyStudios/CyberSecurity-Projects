@@ -1,17 +1,17 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { GITHUB_RAW_BASE } from "@/lib/utils"
 
 interface ScreenshotGalleryProps {
   screenshots: string[]
   githubPath: string
   projectTitle: string
 }
-
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/GreyKeyStudios/CyberSecurity-Projects/main"
 
 export function ScreenshotGallery({ screenshots, githubPath, projectTitle }: ScreenshotGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -57,10 +57,12 @@ export function ScreenshotGallery({ screenshots, githubPath, projectTitle }: Scr
             className="group relative aspect-video rounded-lg border border-border bg-card overflow-hidden cursor-pointer hover:border-primary/50 transition-all"
             onClick={() => openLightbox(index)}
           >
-            <img
+            <Image
               src={getImageUrl(screenshot)}
               alt={`${projectTitle} screenshot ${index + 1}`}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              width={640}
+              height={360}
               loading="lazy"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
@@ -96,10 +98,13 @@ export function ScreenshotGallery({ screenshots, githubPath, projectTitle }: Scr
               )}
 
               {/* Image */}
-              <img
+              <Image
                 src={getImageUrl(screenshots[selectedIndex])}
                 alt={`${projectTitle} screenshot ${selectedIndex + 1}`}
                 className="max-w-full max-h-full object-contain"
+                width={1920}
+                height={1080}
+                unoptimized
               />
 
               {/* Next Button */}
