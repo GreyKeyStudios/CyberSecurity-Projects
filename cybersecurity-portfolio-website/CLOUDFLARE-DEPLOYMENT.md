@@ -38,22 +38,23 @@ This site is built as a **fully static export** (`output: 'export'`). Content is
 - **Framework preset:** `None` or **Other**, then set the fields below manually, or  
 - If you use **Next.js** preset, **override** the build command and output directory so Cloudflare does **not** run `npx @cloudflare/next-on-pages`.
 
+**Root directory (set this first):**
+```
+cybersecurity-portfolio-website
+```
+Cloudflare will run **install** and **build** from inside this folder. Do **not** put `cd cybersecurity-portfolio-website` in your build command—you are already there.
+
 **Build command:**
 ```bash
 pnpm build
 ```
-(Run from the project root below. This runs `prebuild` → copy content into `public/content/`, then `next build` → static export to `out/`.)
+(Only this. No `cd`. This runs `prebuild` → copy content into `public/content/`, then `next build` → static export to `out/`.)
 
 **Build output directory:**
 ```
 out
 ```
 (Must be `out` for static export. Do not use `.next` or the next-on-pages output.)
-
-**Root directory (IMPORTANT!):**
-```
-cybersecurity-portfolio-website
-```
 
 **Environment variables:** (None needed for now, unless you add API keys later)
 
@@ -63,10 +64,7 @@ Click **"Show advanced settings"** and set:
 
 **Node version:** `20` or `22` (latest LTS)
 
-**Install command:**
-```bash
-cd cybersecurity-portfolio-website && pnpm install
-```
+**Install command:** Leave default (e.g. `pnpm install`) or set to `pnpm install`. No `cd` needed—install runs from the Root directory.
 
 ### Step 5: Deploy!
 
