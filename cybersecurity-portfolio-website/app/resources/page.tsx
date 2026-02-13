@@ -16,6 +16,7 @@ import { MarkdownContent } from "@/components/markdown-content"
 import { AuthDialog } from "@/components/auth/auth-dialog"
 import { UserMenu } from "@/components/auth/user-menu"
 import { createClient } from "@/lib/supabase/client"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { User } from "@supabase/supabase-js"
 import resourcesData from "@/data/resources.json"
 import projectsData from "@/data/projects.json"
@@ -94,6 +95,7 @@ function JumpScareOverlay({ onClose }: { onClose: () => void }) {
 
 export default function ResourcesPage() {
   const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, cliSyntaxGuide, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets, logSamples = [], behavioralBank = [], technicalTrivia = [], appIntros = {}, projectsWalkthrough, projectWalkthroughs = {}, runbooks = [] } = resourcesData
+  const isMobile = useIsMobile()
   const [isVMActive, setIsVMActive] = useState(false)
   const [showLoginScreen, setShowLoginScreen] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
@@ -444,16 +446,16 @@ export default function ResourcesPage() {
         <div className="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
           <Link
             href="/"
-            className="absolute top-6 left-6 z-10 flex items-center gap-2 rounded-lg border border-border bg-background/90 px-4 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm"
+            className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-auto z-10 flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-border bg-background/90 px-4 py-3 sm:py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm touch-manipulation"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 shrink-0" />
             Back to site
           </Link>
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 min-h-0">
-            <div className="text-center mb-10 flex-shrink-0">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Shield className="h-12 w-12 text-primary" />
-                <h1 className="text-4xl md:text-5xl font-bold">My SOC Operating System</h1>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 min-h-0 overflow-auto">
+            <div className="text-center mb-6 sm:mb-10 flex-shrink-0">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-primary shrink-0" />
+                <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold">My SOC Operating System</h1>
               </div>
               <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-2">
                 A living toolkit for blue team workflows: investigation templates, IOC tools, Splunk queries, cheat sheets, labs, tickets, and interview prep — all in a desktop OS you can use while studying.
@@ -462,18 +464,18 @@ export default function ResourcesPage() {
                 Built with AI-assisted development and refined through testing. Goal: consistency.
               </p>
             </div>
-            <div className="flex justify-center mb-10 flex-shrink-0">
+            <div className="flex justify-center mb-6 sm:mb-10 flex-shrink-0">
               <Button
                 onClick={() => setShowLoginScreen(true)}
                 size="lg"
-                className="gap-2 px-8 py-6 text-lg bg-primary hover:bg-primary/90 shadow-xl"
+                className="gap-2 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg bg-primary hover:bg-primary/90 shadow-xl touch-manipulation min-h-[48px]"
               >
-                <Monitor className="h-6 w-6" />
+                <Monitor className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 Launch SOC Operating System
-                <ArrowRight className="h-6 w-6" />
+                <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full flex-1 min-h-0 overflow-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl w-full flex-1 min-h-0 overflow-auto">
               <Card className="border-border bg-card/50 overflow-auto">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2">
@@ -519,23 +521,23 @@ export default function ResourcesPage() {
 
       {/* Login Screen */}
       {showLoginScreen && !isVMActive && (
-        <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-          <div className="max-w-md w-full mx-4">
+        <div className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="max-w-md w-full mx-auto my-auto">
             <Card className="bg-slate-900/90 backdrop-blur-xl border-white/20 shadow-2xl">
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
-                  <Monitor className="h-16 w-16 text-primary" />
+                  <Monitor className="h-14 w-14 sm:h-16 sm:w-16 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">Welcome to SOC OS</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Welcome to SOC OS</CardTitle>
                 <CardDescription>Choose how you want to continue</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 <Button
                   onClick={() => setIsAuthDialogOpen(true)}
-                  className="w-full py-6 text-lg"
+                  className="w-full py-5 sm:py-6 text-base sm:text-lg min-h-[48px] touch-manipulation"
                   size="lg"
                 >
-                  <LogIn className="mr-2 h-5 w-5" />
+                  <LogIn className="mr-2 h-5 w-5 shrink-0" />
                   Sign In
                 </Button>
                 <Button
@@ -544,10 +546,10 @@ export default function ResourcesPage() {
                     setIsVMActive(true)
                   }}
                   variant="outline"
-                  className="w-full py-6 text-lg"
+                  className="w-full py-5 sm:py-6 text-base sm:text-lg min-h-[48px] touch-manipulation"
                   size="lg"
                 >
-                  <Power className="mr-2 h-5 w-5" />
+                  <Power className="mr-2 h-5 w-5 shrink-0" />
                   Continue as Guest
                 </Button>
 
@@ -604,6 +606,8 @@ export default function ResourcesPage() {
 
           {/* Desktop Content Area */}
             <div className="relative h-full flex flex-col">
+            {!isMobile ? (
+              <>
             {/* Desktop - fixed dimensions, no scroll; scale to fit; icons reorderable and resizable */}
             <div
               ref={desktopRef}
@@ -699,9 +703,51 @@ export default function ResourcesPage() {
                 </div>
               </div>
             </div>
+              </>
+            ) : (
+              /* Mobile: scrollable app grid, no scaled desktop */
+              <>
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+                  <div
+                    className="min-h-full p-4 pb-28"
+                    style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px) + 56px)" }}
+                  >
+                    <div className="grid grid-cols-2 gap-4">
+                      {desktopIconOrder.map((id) => {
+                        const icon = desktopIcons.find((i) => i.id === id)
+                        if (!icon) return null
+                        const Icon = icon.icon
+                        const window = windows.find((w) => w.id === icon.id)
+                        const isActive = window?.isOpen && !window?.isMinimized
+                        return (
+                          <button
+                            key={icon.id}
+                            type="button"
+                            onClick={() => openWindow(icon.id)}
+                            className={`flex flex-col items-center justify-center gap-2 rounded-xl p-4 min-h-[88px] touch-manipulation active:scale-[0.98] transition-transform border border-transparent ${
+                              isActive ? "ring-2 ring-primary/50 bg-white/10" : "bg-white/5 hover:bg-white/10"
+                            }`}
+                          >
+                            <div className={`rounded-xl ${icon.bgColor} flex items-center justify-center shrink-0 h-12 w-12 ring-1 ring-black/20 shadow-lg`}>
+                              <Icon className={`${icon.color} !size-7`} />
+                            </div>
+                            <span className="text-sm font-medium text-white drop-shadow-md text-center line-clamp-2 leading-tight">
+                              {icon.label}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
-            {/* Taskbar - Inside the Monitor */}
-            <div className="h-14 bg-black/40 backdrop-blur-xl border-t border-white/10 flex items-center px-2 gap-2 relative">
+            {/* Taskbar - Inside the Monitor (desktop + mobile) */}
+            <div
+              className="h-14 bg-black/40 backdrop-blur-xl border-t border-white/10 flex items-center px-2 gap-2 relative shrink-0"
+              style={{ paddingBottom: isMobile ? "env(safe-area-inset-bottom)" : undefined }}
+            >
               {/* Start Menu Button */}
               <button
                 onClick={() => setIsStartMenuOpen(!isStartMenuOpen)}
@@ -933,6 +979,7 @@ export default function ResourcesPage() {
                 canGoForward={canGoForward}
                 onGoBack={() => goBack(window.id)}
                 onGoForward={() => goForward(window.id)}
+                fullScreenMobile={isMobile}
               >
                 {window.id === "start-here" && <StartHereContent onNavigate={(appId) => openWindow(appId)} />}
                 {window.id === "missions" && <MissionsContent onNavigate={(appId) => openWindow(appId)} />}

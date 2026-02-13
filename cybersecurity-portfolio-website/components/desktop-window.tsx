@@ -20,6 +20,8 @@ interface DesktopWindowProps {
   canGoForward?: boolean
   onGoBack?: () => void
   onGoForward?: () => void
+  /** When true, window is fixed full-screen (for mobile); no drag, single close. */
+  fullScreenMobile?: boolean
 }
 
 export function DesktopWindow({
@@ -37,7 +39,8 @@ export function DesktopWindow({
   canGoBack = false,
   canGoForward = false,
   onGoBack,
-  onGoForward
+  onGoForward,
+  fullScreenMobile = false,
 }: DesktopWindowProps) {
   const [position, setPosition] = useState({
     x: Math.random() * 200 + 100,
@@ -112,6 +115,56 @@ export function DesktopWindow({
   }, [onMaximizeChange])
 
   if (isMinimized) return null
+
+  // Mobile full-screen: fixed overlay, no drag, single close, safe area
+  if (fullScreenMobile) {
+    return (
+      <div
+        ref={windowRef}
+        className="fixed inset-0 z-[99998] flex flex-col bg-card border-0 rounded-none overflow-hidden"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        onClick={onFocus}
+      >
+        {/* Title bar: back/close + title */}
+        <div className={`flex items-center gap-3 px-4 py-3 bg-gradient-to-r ${iconColor} border-b border-border shrink-0`}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="flex items-center justify-center w-10 h-10 -ml-1 rounded-lg hover:bg-black/20 transition-colors touch-manipulation"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <Icon className="h-5 w-5 shrink-0" />
+          <span className="text-sm font-semibold truncate flex-1 min-w-0">{title}</span>
+        </div>
+        {/* Nav bar if needed */}
+        {(onGoBack || onGoForward) && (
+          <div className="flex items-center gap-1 px-2 py-2 bg-muted/30 border-b border-border shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onGoBack?.(); }}
+              disabled={!canGoBack}
+              className={`p-2 rounded-md touch-manipulation ${canGoBack ? 'hover:bg-accent' : 'opacity-30'}`}
+              aria-label="Go back"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onGoForward?.(); }}
+              disabled={!canGoForward}
+              className={`p-2 rounded-md touch-manipulation ${canGoForward ? 'hover:bg-accent' : 'opacity-30'}`}
+              aria-label="Go forward"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
+        {/* Content: scrollable, flex-1 */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-8 bg-card/50">
+          {children}
+        </div>
+      </div>
+    )
+  }
 
   const windowEl = (
     <div
