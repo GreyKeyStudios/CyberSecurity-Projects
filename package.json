@@ -1,0 +1,11 @@
+{
+  "name": "cybersecurity-projects",
+  "private": true,
+  "description": "SOC portfolio and lab projects — run the website from cybersecurity-portfolio-website/",
+  "scripts": {
+    "dev": "npm run dev --prefix cybersecurity-portfolio-website",
+    "build": "npm run build --prefix cybersecurity-portfolio-website",
+    "start": "npm run start --prefix cybersecurity-portfolio-website",
+    "lint": "npm run lint --prefix cybersecurity-portfolio-website"
+  }
+}

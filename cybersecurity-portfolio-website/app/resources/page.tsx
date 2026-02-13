@@ -646,7 +646,7 @@ export default function ResourcesPage() {
                       lg: "p-4 gap-3 text-sm",
                     }
                     const iconBoxSize = { sm: "h-9 w-9 min-h-9 min-w-9", md: "h-12 w-12 min-h-12 min-w-12", lg: "h-14 w-14 min-h-14 min-w-14" }[desktopIconSize]
-                    const iconFillClass = "h-full w-full shrink-0"
+                    const iconPixelSize = { sm: "!size-5", md: "!size-8", lg: "!size-10" }[desktopIconSize]
                     return (
                       <button
                         key={icon.id}
@@ -679,7 +679,7 @@ export default function ResourcesPage() {
                         }`}
                       >
                         <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20 flex items-center justify-center shrink-0 ${iconBoxSize}`}>
-                          <Icon className={`${icon.color} ${iconFillClass}`} />
+                          <Icon className={`${icon.color} ${iconPixelSize} shrink-0`} />
                         </div>
                         <span className="font-medium text-center leading-tight text-white drop-shadow-md">
                           {icon.label}
