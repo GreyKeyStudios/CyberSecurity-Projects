@@ -1234,9 +1234,9 @@ function TemplatesContent({ templates, currentPath, onNavigate }: { templates: a
   
   // Fetch content when viewing a specific template
   useEffect(() => {
-    if (template) {
+    if (template?.githubPath) {
       setLoading(true)
-      fetch(`/api/resource-content?path=${encodeURIComponent(template.githubPath)}`)
+      fetch(`/content/${template.githubPath}`)
         .then(res => res.ok ? res.text() : null)
         .then(text => {
           setContent(text && text.length > 50 ? text : null)
@@ -1379,17 +1379,23 @@ function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatShe
   const [view, itemId] = currentPath.split(':')
   const sheet = itemId ? cheatSheets.find(s => s.id === itemId) : null
   
-  // Fetch content when viewing a specific cheat sheet (via API so server fetches from GitHub; avoids CORS)
+  // Fetch content when viewing a specific cheat sheet (from static /content/)
   useEffect(() => {
     if (!sheet) {
       setContent(null)
       setFetchError(null)
       return
     }
+    if (!sheet.githubPath) {
+      setContent(null)
+      setFetchError(null)
+      setLoading(false)
+      return
+    }
     setContent(null)
     setFetchError(null)
     setLoading(true)
-    const url = `/api/resource-content?path=${encodeURIComponent(sheet.githubPath)}`
+    const url = `/content/${sheet.githubPath}`
     fetch(url)
       .then(res => {
         if (!res.ok) {
@@ -1853,10 +1859,10 @@ function CodeExamplesContent({ codeExamples, currentPath, onNavigate }: { codeEx
   
   // Fetch content when viewing a specific example
   useEffect(() => {
-    if (example) {
+    if (example?.githubPath) {
       setLoading(true)
       setError(null)
-      fetch(`/api/resource-content?path=${encodeURIComponent(example.githubPath)}`)
+      fetch(`/content/${example.githubPath}`)
         .then(res => {
           if (!res.ok) {
             throw new Error(`GitHub returned ${res.status}`)
@@ -1987,10 +1993,10 @@ function InterviewPrepContent({ interviewPrep, behavioralBank, technicalTrivia, 
   
   // Fetch content when viewing a specific resource
   useEffect(() => {
-    if (resource) {
+    if (resource?.githubPath) {
       setLoading(true)
       setError(null)
-      fetch(`/api/resource-content?path=${encodeURIComponent(resource.githubPath)}`)
+      fetch(`/content/${resource.githubPath}`)
         .then(res => {
           if (!res.ok) {
             throw new Error(`GitHub returned ${res.status}`)
@@ -2691,19 +2697,22 @@ function CaseFilesContent({ caseFiles, currentPath, onNavigate, appIntros }: { c
   const caseFile = itemId ? caseFiles.find(c => c.id === itemId) : null
   
   useEffect(() => {
-    if (caseFile) {
-      setLoading(true)
-      fetch(`/api/resource-content?path=${encodeURIComponent(caseFile.githubPath)}`)
-        .then(res => res.ok ? res.text() : null)
-        .then(text => {
-          setContent(text && text.length > 50 ? text : null)
-          setLoading(false)
-        })
-        .catch(() => {
-          setContent(null)
-          setLoading(false)
-        })
+    if (!caseFile?.githubPath) {
+      if (caseFile) setLoading(false)
+      setContent(null)
+      return
     }
+    setLoading(true)
+    fetch(`/content/${caseFile.githubPath}`)
+      .then(res => res.ok ? res.text() : null)
+      .then(text => {
+        setContent(text && text.length > 50 ? text : null)
+        setLoading(false)
+      })
+      .catch(() => {
+        setContent(null)
+        setLoading(false)
+      })
   }, [caseFile])
   
   // Viewing specific case file
@@ -2818,19 +2827,22 @@ function PlaybooksContent({ playbooks, currentPath, onNavigate, appIntros }: { p
   const playbook = itemId ? playbooks.find(p => p.id === itemId) : null
   
   useEffect(() => {
-    if (playbook) {
-      setLoading(true)
-      fetch(`/api/resource-content?path=${encodeURIComponent(playbook.githubPath)}`)
-        .then(res => res.ok ? res.text() : null)
-        .then(text => {
-          setContent(text && text.length > 50 ? text : null)
-          setLoading(false)
-        })
-        .catch(() => {
-          setContent(null)
-          setLoading(false)
-        })
+    if (!playbook?.githubPath) {
+      if (playbook) setLoading(false)
+      setContent(null)
+      return
     }
+    setLoading(true)
+    fetch(`/content/${playbook.githubPath}`)
+      .then(res => res.ok ? res.text() : null)
+      .then(text => {
+        setContent(text && text.length > 50 ? text : null)
+        setLoading(false)
+      })
+      .catch(() => {
+        setContent(null)
+        setLoading(false)
+      })
   }, [playbook])
   
   // Viewing specific playbook

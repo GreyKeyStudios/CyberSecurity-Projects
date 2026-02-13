@@ -1,9 +1,11 @@
 # Cloudflare Pages Deployment Guide
 
-## Important: Use Cloudflare Pages, Not Workers
+## Static Export (No Workers)
 
-- **Cloudflare Pages** = For static sites and Next.js (what you need)
-- **Cloudflare Workers** = For serverless functions (not what you need)
+This site is built as a **fully static export** (`output: 'export'`). Content is copied into `public/content/` at build time; there are **no API routes** and **no Cloudflare Workers**. This avoids Worker bundle size limits and keeps deployment simple.
+
+- **Cloudflare Pages** = Serves the static `out/` folder (what you use)
+- **Cloudflare Workers** = Not used; no serverless functions
 
 ---
 
@@ -37,11 +39,13 @@
 ```bash
 cd cybersecurity-portfolio-website && pnpm build
 ```
+(This runs `prebuild` first, which copies repo content into `public/content/`, then `next build` produces a static export.)
 
 **Build output directory:**
 ```
-cybersecurity-portfolio-website/.next
+out
 ```
+(The app uses Next.js static export; the output is in the `out` folder, not `.next`.)
 
 **Root directory (IMPORTANT!):**
 ```
@@ -90,6 +94,30 @@ Build output directory: cybersecurity-portfolio-website/.next
 Node version: 20
 Install command: cd cybersecurity-portfolio-website && pnpm install
 ```
+
+---
+
+## Worker size limit (if using @cloudflare/next-on-pages)
+
+If your Cloudflare Pages build uses **`npx @cloudflare/next-on-pages@1`**, the app is compiled into a **single Cloudflare Worker**. The free plan limits that Worker to **3 MiB**; the paid plan allows **10 MiB**. This Next.js app is large (resources page, many routes), so the bundle can exceed both limits and deployment fails with:
+
+```text
+Error: Failed to publish your Function. Got error: Your Worker exceeded the size limit of 3 MiB.
+```
+
+**Options:**
+
+1. **Deploy to Vercel or Netlify (simplest)**  
+   Use standard Next.js deployment (no Worker bundle). Connect the same repo, set root to `cybersecurity-portfolio-website`, build command `pnpm run build` (or `npm run build`). No size limit for the app bundle.
+
+2. **Switch to OpenNext for Cloudflare**  
+   Use [@opennextjs/cloudflare](https://opennext.js.org/cloudflare) instead of `@cloudflare/next-on-pages`. It’s the current recommended adapter, can produce smaller/split bundles, and uses the Node-compat runtime (no Edge-only). You would:
+   - Remove `export const runtime = 'edge'` from `app/layout.tsx`, `app/api/resource-content/route.ts`, and `app/not-found.tsx`.
+   - Follow [OpenNext Cloudflare Get Started](https://opennext.js.org/cloudflare/get-started) (install `@opennextjs/cloudflare`, wrangler, wrangler config, update build/deploy scripts).
+   - If the single-Worker bundle is still over 10 MiB on paid, use [Multi-Worker](https://opennext.js.org/cloudflare/howtos/multi-worker) to split the app across Workers.
+
+3. **Upgrade to Cloudflare Workers Paid**  
+   Only helps if the **compressed** bundle is under 10 MiB. This app may still exceed that; check the build output for the reported Worker size after switching to OpenNext.
 
 ---
 

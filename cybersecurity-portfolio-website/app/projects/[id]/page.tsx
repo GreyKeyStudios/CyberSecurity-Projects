@@ -7,7 +7,7 @@ import { ProjectBadge } from "@/components/project-badge"
 import { projects, getGitHubUrl } from "@/lib/projects"
 import { MarkdownContent } from "@/components/markdown-content"
 import { ScreenshotGallery } from "@/components/screenshot-gallery"
-import { fetchReadme, projectScreenshots } from "@/lib/project-content"
+import { readReadmeFromBuild, projectScreenshots } from "@/lib/project-content"
 
 interface ProjectPageProps {
   params: Promise<{ id: string }>
@@ -43,7 +43,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   const githubUrl = getGitHubUrl(project.githubPath)
-  const readmeContent = await fetchReadme(project.githubPath)
+  const readmeContent = await readReadmeFromBuild(project.githubPath)
   const screenshots = projectScreenshots[id] || []
 
   return (

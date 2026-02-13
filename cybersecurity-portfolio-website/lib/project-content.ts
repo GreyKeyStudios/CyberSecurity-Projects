@@ -1,3 +1,5 @@
+import { readFile } from "fs/promises"
+import { join } from "path"
 import { GITHUB_RAW_BASE } from "@/lib/utils"
 
 export interface ProjectScreenshots {
@@ -31,16 +33,13 @@ export function getReadmeUrl(githubPath: string): string {
   return `${GITHUB_RAW_BASE}/${githubPath}README.md`
 }
 
-export async function fetchReadme(githubPath: string): Promise<string | null> {
+/** Read README from public/content at build time (static export). */
+export async function readReadmeFromBuild(githubPath: string): Promise<string | null> {
   try {
-    const url = getReadmeUrl(githubPath)
-    const response = await fetch(url, { next: { revalidate: 3600 } }) // Cache for 1 hour
-    if (!response.ok) {
-      return null
-    }
-    return await response.text()
-  } catch (error) {
-    console.error(`Failed to fetch README for ${githubPath}:`, error)
+    const segment = githubPath.replace(/\/?$/, "") + "/README.md"
+    const path = join(process.cwd(), "public", "content", segment)
+    return await readFile(path, "utf-8")
+  } catch {
     return null
   }
 }

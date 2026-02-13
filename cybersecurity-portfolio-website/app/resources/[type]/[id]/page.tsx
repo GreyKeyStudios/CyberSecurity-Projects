@@ -4,10 +4,8 @@ import { ArrowLeft, Github, FileText, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MarkdownContent } from "@/components/markdown-content"
-import { fetchResourceContent, getResourceGitHubUrl } from "@/lib/resource-content"
+import { readResourceContentFromBuild, getResourceGitHubUrl } from "@/lib/resource-content"
 import resourcesData from "@/data/resources.json"
-
-const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/GreyKeyStudios/CyberSecurity-Projects/main"
 
 interface ResourcePageProps {
   params: Promise<{ type: string; id: string }>
@@ -45,7 +43,7 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
     notFound()
   }
   
-  const content = await fetchResourceContent(resource.githubPath)
+  const content = await readResourceContentFromBuild(resource.githubPath)
   const githubUrl = getResourceGitHubUrl(resource.githubPath)
   
   const isTemplate = type === "templates"
@@ -101,10 +99,10 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
         ) : (
           <div className="rounded-lg border border-border bg-card p-8 text-center">
             <p className="text-muted-foreground mb-2">
-              Content could not be loaded from GitHub.
+              Content could not be loaded.
             </p>
             <p className="text-sm text-muted-foreground/70 mb-4">
-              This might be because the repository is private or the file path is incorrect.
+              The file may be missing or the path may be incorrect.
             </p>
             <Button asChild variant="outline" className="gap-2">
               <Link href={githubUrl} target="_blank" rel="noopener noreferrer">
@@ -114,10 +112,7 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
             </Button>
             <div className="mt-6 p-4 bg-muted rounded-lg text-left">
               <p className="text-xs text-muted-foreground font-mono break-all">
-                Attempted to fetch: {resource.githubPath}
-              </p>
-              <p className="text-xs text-muted-foreground font-mono break-all mt-2">
-                Full URL: {GITHUB_RAW_BASE}/{resource.githubPath}
+                Path: {resource.githubPath}
               </p>
             </div>
           </div>
