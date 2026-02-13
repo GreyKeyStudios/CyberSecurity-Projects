@@ -39,6 +39,13 @@ const DESKTOP_ICON_ORDER_KEY = "soc-os-desktop-icon-order"
 const DESKTOP_ICON_SIZE_KEY = "soc-os-desktop-icon-size"
 const DESKTOP_THEME_KEY = "soc-os-desktop-theme"
 
+/** History state for back-button stack: splash → login → os-grid → os-app (per open app) */
+type ResourcesHistoryStep = "splash" | "login" | "os-grid" | "os-app"
+interface ResourcesHistoryState {
+  step: ResourcesHistoryStep
+  appId?: string
+}
+
 type DesktopThemeId = "default" | "emerald" | "synth" | "mono"
 const DESKTOP_THEMES: Record<DesktopThemeId, { label: string; wallpaper: string; overlayClass: string }> = {
   default: { label: "Default (Midnight)", wallpaper: "/mockdesktopbackground.png", overlayClass: "bg-black/30" },
@@ -292,81 +299,67 @@ export default function ResourcesPage() {
     } catch (_) {}
   }, [desktopTheme, user?.id])
 
-  // Restore session when entering VM as logged-in user
-  useEffect(() => {
-    if (!isVMActive || !user?.id) return
-    try {
-      const key = getSessionKey()
-      if (!key) return
-      const raw = localStorage.getItem(key)
-      if (!raw) return
-      const data = JSON.parse(raw) as { openIds?: string[]; maximizedId?: string | null }
-      const openIds = data.openIds ?? []
-      const maximizedId = data.maximizedId ?? null
-      if (openIds.length === 0) return
-      setWindows(prev => {
-        const existingIds = new Set(prev.map(w => w.id))
-        const next = prev.map(w => ({ ...w, isOpen: openIds.includes(w.id), isMinimized: !openIds.includes(w.id) }))
-        openIds.forEach(id => {
-          if (!existingIds.has(id)) next.push({ id, isOpen: true, isMinimized: false, zIndex: 10, navigationStack: [id], currentNavIndex: 0 })
-        })
-        return next
-      })
-      setMaximizedWindowId(maximizedId)
-    } catch (_) {}
-  }, [isVMActive, user?.id])
-
-  // Guest entry: restore from sessionStorage if available (e.g. after refresh), else clean desktop
+  // Always start with a clean desktop: no restore of open windows for anyone.
+  // Logged-in user data (journal, etc.) still persists via Supabase; only window state is cleared.
   const prevVMActiveRef = useRef(false)
   useEffect(() => {
-    const justEnteredVMAsGuest = isVMActive && !prevVMActiveRef.current && !user
-    if (!justEnteredVMAsGuest) {
+    const justEnteredVM = isVMActive && !prevVMActiveRef.current
+    if (!justEnteredVM) {
       prevVMActiveRef.current = isVMActive
       return
     }
+    setWindows(initialWindowsState)
+    setMaximizedWindowId(null)
     try {
-      const raw = sessionStorage.getItem(VM_GUEST_SESSION_KEY)
-      if (raw) {
-        const data = JSON.parse(raw) as { openIds?: string[]; maximizedId?: string | null }
-        const openIds = data.openIds ?? []
-        const maximizedId = data.maximizedId ?? null
-        if (openIds.length > 0) {
-          setWindows(prev => {
-            const existingIds = new Set(prev.map(w => w.id))
-            const next = prev.map(w => ({ ...w, isOpen: openIds.includes(w.id), isMinimized: !openIds.includes(w.id) }))
-            openIds.forEach(id => {
-              if (!existingIds.has(id)) next.push({ id, isOpen: true, isMinimized: false, zIndex: 10, navigationStack: [id], currentNavIndex: 0 })
-            })
-            return next
-          })
-          setMaximizedWindowId(maximizedId)
-        } else {
-          setWindows(initialWindowsState)
-          setMaximizedWindowId(null)
+      sessionStorage.removeItem(VM_GUEST_SESSION_KEY)
+    } catch (_) {}
+    prevVMActiveRef.current = isVMActive
+  }, [isVMActive])
+
+  // Back button / history: splash → login → os-grid → os-app(s). Back closes app or exits OS, then main site.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const path = window.location.pathname
+    const state: ResourcesHistoryState | null = window.history.state as ResourcesHistoryState | null
+    const isOurState = state && ["splash", "login", "os-grid", "os-app"].includes(state.step)
+    if (!isVMActive && !showLoginScreen && !isOurState) {
+      window.history.replaceState({ step: "splash" } satisfies ResourcesHistoryState, "", path)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const handlePopState = (e: PopStateEvent) => {
+      const state = e.state as ResourcesHistoryState | null | undefined
+      const step = state?.step
+      if (step === "os-grid" || step === "os-app") {
+        const open = windows.filter((w) => w.isOpen)
+        if (open.length > 0) {
+          const topmost = open.sort((a, b) => b.zIndex - a.zIndex)[0]
+          setMaximizedWindowId((prev) => (prev === topmost.id ? null : prev))
+          setWindows((prev) => prev.map((w) => (w.id === topmost.id ? { ...w, isOpen: false } : w)))
         }
-      } else {
+      } else if (step === "login") {
+        setIsVMActive(false)
+        setShowLoginScreen(true)
+      } else if (step === "splash" || (state == null && isVMActive)) {
+        setIsVMActive(false)
+        setShowLoginScreen(false)
         setWindows(initialWindowsState)
         setMaximizedWindowId(null)
+        if (state == null && typeof window !== "undefined") {
+          window.history.replaceState({ step: "splash" } satisfies ResourcesHistoryState, "", window.location.pathname)
+        }
       }
-    } catch (_) {
-      setWindows(initialWindowsState)
-      setMaximizedWindowId(null)
     }
-    prevVMActiveRef.current = isVMActive
-  }, [isVMActive, user])
-
-  // Persist guest VM state to sessionStorage so refresh keeps their open apps (same tab only)
-  useEffect(() => {
-    if (!isVMActive || user?.id) return
-    try {
-      sessionStorage.setItem(VM_GUEST_SESSION_KEY, JSON.stringify({
-        openIds: windows.filter(w => w.isOpen).map(w => w.id),
-        maximizedId: maximizedWindowId,
-      }))
-    } catch (_) {}
-  }, [isVMActive, user?.id, windows, maximizedWindowId])
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [windows, isVMActive])
 
   const openWindow = (id: string) => {
+    if (typeof window !== "undefined" && isMobile && isVMActive) {
+      window.history.pushState({ step: "os-app", appId: id } satisfies ResourcesHistoryState, "", window.location.pathname)
+    }
     setWindows(prev => {
       const existing = prev.find(w => w.id === id)
       if (existing) {
@@ -389,6 +382,10 @@ export default function ResourcesPage() {
   }
 
   const closeWindow = (id: string) => {
+    if (typeof window !== "undefined" && isMobile && isVMActive) {
+      window.history.back()
+      return
+    }
     setMaximizedWindowId(prev => prev === id ? null : prev)
     setWindows(prev => prev.map(w => w.id === id ? { ...w, isOpen: false } : w))
   }
@@ -466,7 +463,12 @@ export default function ResourcesPage() {
             </div>
             <div className="flex justify-center mb-6 sm:mb-10 flex-shrink-0">
               <Button
-                onClick={() => setShowLoginScreen(true)}
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.history.pushState({ step: "login" } satisfies ResourcesHistoryState, "", window.location.pathname)
+                  }
+                  setShowLoginScreen(true)
+                }}
                 size="lg"
                 className="gap-2 px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-lg bg-primary hover:bg-primary/90 shadow-xl touch-manipulation min-h-[48px]"
               >
@@ -542,6 +544,9 @@ export default function ResourcesPage() {
                 </Button>
                 <Button
                   onClick={() => {
+                    if (typeof window !== "undefined") {
+                      window.history.pushState({ step: "os-grid" } satisfies ResourcesHistoryState, "", window.location.pathname)
+                    }
                     setIsGuestMode(true)
                     setIsVMActive(true)
                   }}
@@ -576,6 +581,9 @@ export default function ResourcesPage() {
             open={isAuthDialogOpen} 
             onOpenChange={setIsAuthDialogOpen}
             onSuccess={() => {
+              if (typeof window !== "undefined") {
+                window.history.pushState({ step: "os-grid" } satisfies ResourcesHistoryState, "", window.location.pathname)
+              }
               setIsVMActive(true)
               setShowLoginScreen(false)
             }}
@@ -826,15 +834,13 @@ export default function ResourcesPage() {
                       
                       <button
                         onClick={async () => {
+                          if (typeof window !== "undefined") {
+                            window.history.replaceState({ step: "splash" } satisfies ResourcesHistoryState, "", window.location.pathname)
+                          }
                           if (user) {
                             try {
                               const key = getSessionKey()
-                              if (key) {
-                                localStorage.setItem(key, JSON.stringify({
-                                  openIds: windows.filter(w => w.isOpen).map(w => w.id),
-                                  maximizedId: maximizedWindowId
-                                }))
-                              }
+                              if (key) localStorage.removeItem(key)
                             } catch (_) {}
                             await supabase.auth.signOut()
                             setUser(null)
