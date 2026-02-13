@@ -13,6 +13,27 @@ const nextConfig = {
   // Security Headers
   async headers() {
     return [
+      // Allow IOC Helper to be embedded in same-origin iframe (desktop VM window)
+      {
+        source: '/resources/ioc-helper',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://raw.githubusercontent.com https://*.supabase.co wss://*.supabase.co https://*.supabase.com wss://*.supabase.com https://supabase.com https://www.abuseipdb.com https://www.virustotal.com https://*.cloudflareinsights.com",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+        ],
+      },
       {
         source: '/:path*',
         headers: [
@@ -48,7 +69,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.com wss://*.supabase.com https://supabase.com https://www.abuseipdb.com https://www.virustotal.com https://*.cloudflareinsights.com",
+              "connect-src 'self' https://raw.githubusercontent.com https://*.supabase.co wss://*.supabase.co https://*.supabase.com wss://*.supabase.com https://supabase.com https://www.abuseipdb.com https://www.virustotal.com https://*.cloudflareinsights.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

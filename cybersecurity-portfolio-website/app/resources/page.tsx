@@ -103,6 +103,7 @@ function JumpScareOverlay({ onClose }: { onClose: () => void }) {
 export default function ResourcesPage() {
   const { quickStart, templates, cheatSheets, tools, labs, codeExamples, interviewPrep, caseFiles, playbooks, secPlusVault, threatFeed, cliCommands, cliSyntaxGuide, toolbox, glossary, skillDrills, certPath, miniGames, labFiles, tickets, logSamples = [], behavioralBank = [], technicalTrivia = [], appIntros = {}, projectsWalkthrough, projectWalkthroughs = {}, runbooks = [] } = resourcesData
   const isMobile = useIsMobile()
+  const [isOsSubdomain, setIsOsSubdomain] = useState(false)
   const [isVMActive, setIsVMActive] = useState(false)
   const [showLoginScreen, setShowLoginScreen] = useState(false)
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false)
@@ -111,6 +112,12 @@ export default function ResourcesPage() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [desktopTheme, setDesktopTheme] = useState<DesktopThemeId>("default")
   const supabase = createClient()
+
+  // Detect OS subdomain (e.g. os.greykeystudios.dev) for splash link and copy
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    setIsOsSubdomain(window.location.hostname.startsWith("os."))
+  }, [])
 
   // Prevent body scroll when VM is active
   useEffect(() => {
@@ -441,13 +448,24 @@ export default function ResourcesPage() {
       {/* Splash Page - Desktop mode entry: back to site or launch OS; no main nav on resources */}
       {!isVMActive && (
         <div className="fixed inset-0 w-full h-full flex flex-col bg-gradient-to-b from-background to-muted/20">
-          <Link
-            href="/"
-            className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-auto z-10 flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-border bg-background/90 px-4 py-3 sm:py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm touch-manipulation"
-          >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
-            Back to site
-          </Link>
+          {isOsSubdomain ? (
+            <a
+              href="https://soc.greykeystudios.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10 flex items-center gap-2 rounded-lg border border-border bg-background/90 px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm touch-manipulation"
+            >
+              Portfolio
+            </a>
+          ) : (
+            <Link
+              href="/"
+              className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-auto z-10 flex items-center justify-center sm:justify-start gap-2 rounded-lg border border-border bg-background/90 px-4 py-3 sm:py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm touch-manipulation"
+            >
+              <ArrowLeft className="h-4 w-4 shrink-0" />
+              Back to site
+            </Link>
+          )}
           <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12 min-h-0 overflow-auto">
             <div className="text-center mb-6 sm:mb-10 flex-shrink-0">
               <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -1218,7 +1236,7 @@ function TemplatesContent({ templates, currentPath, onNavigate }: { templates: a
   useEffect(() => {
     if (template) {
       setLoading(true)
-      fetch(`${GITHUB_RAW_BASE}/${template.githubPath}`)
+      fetch(`/api/resource-content?path=${encodeURIComponent(template.githubPath)}`)
         .then(res => res.ok ? res.text() : null)
         .then(text => {
           setContent(text && text.length > 50 ? text : null)
@@ -1361,7 +1379,7 @@ function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatShe
   const [view, itemId] = currentPath.split(':')
   const sheet = itemId ? cheatSheets.find(s => s.id === itemId) : null
   
-  // Fetch content when viewing a specific cheat sheet
+  // Fetch content when viewing a specific cheat sheet (via API so server fetches from GitHub; avoids CORS)
   useEffect(() => {
     if (!sheet) {
       setContent(null)
@@ -1371,7 +1389,7 @@ function CheatSheetsContent({ cheatSheets, currentPath, onNavigate }: { cheatShe
     setContent(null)
     setFetchError(null)
     setLoading(true)
-    const url = `${GITHUB_RAW_BASE}/${sheet.githubPath}`
+    const url = `/api/resource-content?path=${encodeURIComponent(sheet.githubPath)}`
     fetch(url)
       .then(res => {
         if (!res.ok) {
@@ -1838,7 +1856,7 @@ function CodeExamplesContent({ codeExamples, currentPath, onNavigate }: { codeEx
     if (example) {
       setLoading(true)
       setError(null)
-      fetch(`${GITHUB_RAW_BASE}/${example.githubPath}`)
+      fetch(`/api/resource-content?path=${encodeURIComponent(example.githubPath)}`)
         .then(res => {
           if (!res.ok) {
             throw new Error(`GitHub returned ${res.status}`)
@@ -1972,7 +1990,7 @@ function InterviewPrepContent({ interviewPrep, behavioralBank, technicalTrivia, 
     if (resource) {
       setLoading(true)
       setError(null)
-      fetch(`${GITHUB_RAW_BASE}/${resource.githubPath}`)
+      fetch(`/api/resource-content?path=${encodeURIComponent(resource.githubPath)}`)
         .then(res => {
           if (!res.ok) {
             throw new Error(`GitHub returned ${res.status}`)
@@ -2675,7 +2693,7 @@ function CaseFilesContent({ caseFiles, currentPath, onNavigate, appIntros }: { c
   useEffect(() => {
     if (caseFile) {
       setLoading(true)
-      fetch(`${GITHUB_RAW_BASE}/${caseFile.githubPath}`)
+      fetch(`/api/resource-content?path=${encodeURIComponent(caseFile.githubPath)}`)
         .then(res => res.ok ? res.text() : null)
         .then(text => {
           setContent(text && text.length > 50 ? text : null)
@@ -2802,7 +2820,7 @@ function PlaybooksContent({ playbooks, currentPath, onNavigate, appIntros }: { p
   useEffect(() => {
     if (playbook) {
       setLoading(true)
-      fetch(`${GITHUB_RAW_BASE}/${playbook.githubPath}`)
+      fetch(`/api/resource-content?path=${encodeURIComponent(playbook.githubPath)}`)
         .then(res => res.ok ? res.text() : null)
         .then(text => {
           setContent(text && text.length > 50 ? text : null)

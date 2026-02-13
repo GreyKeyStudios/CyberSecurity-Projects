@@ -1,6 +1,7 @@
 import React from "react"
 import type { Metadata } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
+import { headers } from "next/headers"
 
 import "./globals.css"
 import { Navbar } from "@/components/navbar"
@@ -37,17 +38,21 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const headersList = await headers()
+  const host = headersList.get("host") ?? ""
+  const isOsSubdomain = host.startsWith("os.")
+
   return (
     <html lang="en">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-foreground min-h-screen flex flex-col`}>
-        <Navbar />
+        {!isOsSubdomain && <Navbar />}
         <main className="flex-1">{children}</main>
-        <Footer />
+        {!isOsSubdomain && <Footer />}
       </body>
     </html>
   )
