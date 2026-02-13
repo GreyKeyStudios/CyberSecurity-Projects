@@ -33,19 +33,22 @@ This site is built as a **fully static export** (`output: 'export'`). Content is
 
 **Build settings:**
 
-**Framework preset:** `Next.js` (Cloudflare should auto-detect this)
+**Important:** Do **not** use the preset that runs `@cloudflare/next-on-pages` (that’s for Workers). This project is a **static export**. Use one of:
+
+- **Framework preset:** `None` or **Other**, then set the fields below manually, or  
+- If you use **Next.js** preset, **override** the build command and output directory so Cloudflare does **not** run `npx @cloudflare/next-on-pages`.
 
 **Build command:**
 ```bash
-cd cybersecurity-portfolio-website && pnpm build
+pnpm build
 ```
-(This runs `prebuild` first, which copies repo content into `public/content/`, then `next build` produces a static export.)
+(Run from the project root below. This runs `prebuild` → copy content into `public/content/`, then `next build` → static export to `out/`.)
 
 **Build output directory:**
 ```
 out
 ```
-(The app uses Next.js static export; the output is in the `out` folder, not `.next`.)
+(Must be `out` for static export. Do not use `.next` or the next-on-pages output.)
 
 **Root directory (IMPORTANT!):**
 ```
@@ -87,12 +90,12 @@ After deployment:
 ## Build Configuration Summary
 
 ```
-Framework preset: Next.js
+Framework preset: None (or override Next.js so it does NOT run next-on-pages)
 Root directory: cybersecurity-portfolio-website
-Build command: cd cybersecurity-portfolio-website && pnpm build
-Build output directory: cybersecurity-portfolio-website/.next
+Build command: pnpm build
+Build output directory: out
 Node version: 20
-Install command: cd cybersecurity-portfolio-website && pnpm install
+Install command: pnpm install
 ```
 
 ---
