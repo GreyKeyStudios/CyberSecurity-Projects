@@ -4,6 +4,7 @@ import { projects } from "@/lib/projects"
 const BASE_URL = "https://soc.greykeystudios.dev"
 
 export const dynamic = "force-static"
+export const revalidate = 86400
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [
