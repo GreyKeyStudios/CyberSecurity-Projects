@@ -641,11 +641,12 @@ export default function ResourcesPage() {
                     const window = windows.find((w) => w.id === icon.id)
                     const isActive = window?.isOpen && !window?.isMinimized
                     const sizeClasses = {
-                      sm: "p-2 gap-1 [&>div]:p-2 text-[10px]",
-                      md: "p-3 gap-2 [&>div]:p-3 text-xs",
-                      lg: "p-4 gap-3 [&>div]:p-4 text-sm",
+                      sm: "p-2 gap-1 text-[10px]",
+                      md: "p-3 gap-2 text-xs",
+                      lg: "p-4 gap-3 text-sm",
                     }
-                    const iconSizeClass = { sm: "h-5 w-5", md: "h-8 w-8", lg: "h-10 w-10" }[desktopIconSize]
+                    const iconBoxSize = { sm: "h-9 w-9 min-h-9 min-w-9", md: "h-12 w-12 min-h-12 min-w-12", lg: "h-14 w-14 min-h-14 min-w-14" }[desktopIconSize]
+                    const iconFillClass = "h-full w-full shrink-0"
                     return (
                       <button
                         key={icon.id}
@@ -677,8 +678,8 @@ export default function ResourcesPage() {
                           isActive ? "bg-white/15 border-primary/40 ring-1 ring-primary/30" : "hover:scale-105"
                         }`}
                       >
-                        <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20 flex items-center justify-center shrink-0`}>
-                          <Icon className={`${icon.color} ${iconSizeClass} shrink-0`} />
+                        <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20 flex items-center justify-center shrink-0 ${iconBoxSize}`}>
+                          <Icon className={`${icon.color} ${iconFillClass}`} />
                         </div>
                         <span className="font-medium text-center leading-tight text-white drop-shadow-md">
                           {icon.label}
