@@ -252,7 +252,24 @@ export default function ResourcesPage() {
   // VM session: logged-in = localStorage (persists across tabs/restart); guest = sessionStorage (survives refresh, cleared on exit or new tab)
   const VM_SESSION_KEY = "soc-os-vm-session"
   const VM_GUEST_SESSION_KEY = "soc-os-vm-session-guest"
+  const VM_OPEN_KEY = "soc-os-vm-open" // so refresh keeps you in the OS
   const getSessionKey = () => (user?.id ? `${VM_SESSION_KEY}-${user.id}` : null)
+
+  // Restore "in VM" state on refresh so user stays in the OS
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return
+      if (sessionStorage.getItem(VM_OPEN_KEY) === "1") setIsVMActive(true)
+    } catch (_) {}
+  }, [])
+
+  // Persist "VM is open" so refresh keeps you in the OS; clear when exiting
+  useEffect(() => {
+    try {
+      if (isVMActive) sessionStorage.setItem(VM_OPEN_KEY, "1")
+      else sessionStorage.removeItem(VM_OPEN_KEY)
+    } catch (_) {}
+  }, [isVMActive])
 
   // Theme gating: guests always use Default. Signed-in users can choose and persist.
   useEffect(() => {
@@ -624,10 +641,11 @@ export default function ResourcesPage() {
                     const window = windows.find((w) => w.id === icon.id)
                     const isActive = window?.isOpen && !window?.isMinimized
                     const sizeClasses = {
-                      sm: "p-2 gap-1 [&>div]:p-2 [&>div>svg]:h-5 [&>div>svg]:w-5 text-[10px]",
-                      md: "p-3 gap-2 [&>div]:p-3 [&>div>svg]:h-8 [&>div>svg]:w-8 text-xs",
-                      lg: "p-4 gap-3 [&>div]:p-4 [&>div>svg]:h-10 [&>div>svg]:w-10 text-sm",
+                      sm: "p-2 gap-1 [&>div]:p-2 text-[10px]",
+                      md: "p-3 gap-2 [&>div]:p-3 text-xs",
+                      lg: "p-4 gap-3 [&>div]:p-4 text-sm",
                     }
+                    const iconSizeClass = { sm: "h-5 w-5", md: "h-8 w-8", lg: "h-10 w-10" }[desktopIconSize]
                     return (
                       <button
                         key={icon.id}
@@ -659,8 +677,8 @@ export default function ResourcesPage() {
                           isActive ? "bg-white/15 border-primary/40 ring-1 ring-primary/30" : "hover:scale-105"
                         }`}
                       >
-                        <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20`}>
-                          <Icon className={icon.color} />
+                        <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20 flex items-center justify-center shrink-0`}>
+                          <Icon className={`${icon.color} ${iconSizeClass} shrink-0`} />
                         </div>
                         <span className="font-medium text-center leading-tight text-white drop-shadow-md">
                           {icon.label}
