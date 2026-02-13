@@ -641,12 +641,21 @@ export default function ResourcesPage() {
                     const window = windows.find((w) => w.id === icon.id)
                     const isActive = window?.isOpen && !window?.isMinimized
                     const sizeClasses = {
-                      sm: "p-2 gap-1 text-[10px]",
-                      md: "p-3 gap-2 text-xs",
-                      lg: "p-4 gap-3 text-sm",
+                      sm: "p-1.5 gap-1 text-[11px]",
+                      md: "p-3 gap-2 text-sm",
+                      lg: "p-4 gap-3 text-base",
                     }
-                    const iconBoxSize = { sm: "h-9 w-9 min-h-9 min-w-9", md: "h-12 w-12 min-h-12 min-w-12", lg: "h-14 w-14 min-h-14 min-w-14" }[desktopIconSize]
-                    const iconPixelSize = { sm: "!size-5", md: "!size-8", lg: "!size-10" }[desktopIconSize]
+                    const tileSizeClasses = {
+                      sm: "w-[80px] min-w-[80px] h-[72px] min-h-[72px]",
+                      md: "w-[108px] min-w-[108px] h-[104px] min-h-[104px]",
+                      lg: "w-[132px] min-w-[132px] h-[128px] min-h-[128px]",
+                    }
+                    const iconBoxSize = {
+                      sm: "h-9 w-9 min-h-9 min-w-9",
+                      md: "h-12 w-12 min-h-12 min-w-12",
+                      lg: "h-[4.5rem] w-[4.5rem] min-h-[4.5rem] min-w-[4.5rem]",
+                    }[desktopIconSize]
+                    const iconPixelSize = { sm: "!size-5", md: "!size-8", lg: "!size-14" }[desktopIconSize]
                     return (
                       <button
                         key={icon.id}
@@ -674,14 +683,14 @@ export default function ResourcesPage() {
                           })
                         }}
                         onDoubleClick={() => openWindow(icon.id)}
-                        className={`group flex flex-col items-center rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 ${sizeClasses[desktopIconSize]} ${
-                          isActive ? "bg-white/15 border-primary/40 ring-1 ring-primary/30" : "hover:scale-105"
+                        className={`group flex flex-col items-center justify-start rounded-xl transition-all duration-200 cursor-grab active:cursor-grabbing border border-transparent bg-transparent hover:bg-transparent ${sizeClasses[desktopIconSize]} ${tileSizeClasses[desktopIconSize]} ${
+                          isActive ? "ring-1 ring-primary/40 ring-inset" : "hover:scale-105"
                         }`}
                       >
                         <div className={`rounded-lg ${icon.bgColor} transition-transform group-hover:scale-110 shadow-lg ring-1 ring-black/20 flex items-center justify-center shrink-0 ${iconBoxSize}`}>
                           <Icon className={`${icon.color} ${iconPixelSize} shrink-0`} />
                         </div>
-                        <span className="font-medium text-center leading-tight text-white drop-shadow-md">
+                        <span className="font-medium text-center leading-tight text-white drop-shadow-md w-full min-w-0 min-h-[1.2em] px-0.5 line-clamp-2 flex-shrink-0">
                           {icon.label}
                         </span>
                       </button>
