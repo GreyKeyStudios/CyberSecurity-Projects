@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { getAuthConfirmUrl } from "@/lib/auth-redirect"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,6 +38,9 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: getAuthConfirmUrl(),
+        },
       })
 
       if (error) throw error
@@ -94,7 +98,7 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/resources`,
+        redirectTo: getAuthConfirmUrl(),
       })
 
       if (error) throw error
