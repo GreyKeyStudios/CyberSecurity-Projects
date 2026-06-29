@@ -1,0 +1,22 @@
+These 4 walkthroughs were updated to "v3" in resources.json (via a merge script / copy-paste from notes). Please verify the implementation is complete and nothing was missed.
+
+What to check:
+
+1. soc-casefiles
+   - 12-step "rebuildable" version (Understand the goal, template, IOC workflow).
+   - Version B merge applied: title "SOC Casefiles (Incident Documentation Pack)", extra successCriteria lines, NIST SP 800-61 in references, nslookup and curl -I in cliCheatSheet, Step 8 body text about Decision/Reason.
+   - No duplicate or truncated steps; all steps have title + body.
+
+2. ids-setup
+   - Full v3 (15-step) IDS Setup (Suricata / Snort Detection Lab).
+   - All steps, successCriteria, references, cliCheatSheet present and coherent.
+
+3. malware-analysis
+   - Full v3 (14-step) Malware Analysis (Triage Lab: Static + Dynamic).
+   - Same: steps, successCriteria, references, cliCheatSheet complete.
+
+4. home-security-lab
+   - Full v3 (12-step) Home Security Lab (SOC Monitoring at Home).
+   - Same: steps, successCriteria, references, cliCheatSheet complete.
+
+Report: anything missing, truncated, or inconsistent with the above (e.g. wrong step count, missing Version B items for soc-casefiles, duplicate keys, or obviously incomplete copy-paste).

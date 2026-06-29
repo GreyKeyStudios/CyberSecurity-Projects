@@ -1,0 +1,139 @@
+{
+  "id": "soc-casefiles",
+  "title": "SOC Casefiles",
+  "difficulty": "Beginner → Intermediate",
+  "timeEstimate": "3–6 hours (depending on how deep you document)",
+  "tools": [
+    "Text editor (VS Code recommended)",
+    "Git + GitHub (or any Git host)",
+    "Optional: Wireshark (pcaps), Splunk/ELK (logs), CyberChef",
+    "Optional: VirusTotal / AbuseIPDB / OTX (free tiers)"
+  ],
+  "prereqs": [
+    "Basic understanding of: IPs, domains, URLs, hashes, ports",
+    "Comfortable reading logs and copying output",
+    "Basic Markdown (headings, bullet lists, code blocks)"
+  ],
+  "objective": "Create a repeatable SOC-style incident writeup workflow using casefiles and playbooks. The goal is to demonstrate how you triage an alert, extract IOCs, validate suspicion, document decisions, and produce clean portfolio-ready artifacts.",
+  "deliverables": [
+    "A consistent casefile folder structure",
+    "At least 3–5 completed casefiles with evidence + conclusions",
+    "IOC extraction notes (IPs/domains/hashes) for each case",
+    "At least 2–4 operational playbooks/runbooks that match your casefile style",
+    "Optional: redacted screenshots (Wireshark, SIEM, headers) and sample logs/pcaps referenced from each case"
+  ],
+  "steps": [
+    {
+      "title": "Step 1 — Understand the goal + pick your casefile set",
+      "body": "What you're building here is *not* a single lab — it's a reusable workflow.\n\nSuccess looks like:\n- A visitor can open SOC-Casefiles and immediately understand the structure\n- Each case reads like a real analyst ticket: what happened, what evidence you checked, what you concluded, what you recommend next\n\nPick one approach (either is fine):\nA) **Realistic simulated cases** (recommended): you use provided logs/pcaps/samples to \"investigate\" a scenario.\nB) **Knowledge-casefiles**: you write cases based on public incident reports and document how you would have responded.\n\nValidation:\n- You can describe the difference between a \"casefile\" (incident story + evidence) and a \"playbook\" (repeatable steps).\n\nTroubleshooting:\n- If you feel stuck: start with one easy case (phishing email header analysis) and build the template from that."
+    },
+    {
+      "title": "Step 2 — Create a standard casefile template (Markdown)",
+      "body": "In `SOC-Casefiles/`, create a reusable template file (example name):\n- `TEMPLATE-CASEFILE.md`\n\nUse a consistent structure like this (copy/paste skeleton):\n\n# Case: <short title>\n\n## Summary\n- **Date:** YYYY-MM-DD\n- **Severity:** Low/Med/High\n- **Category:** Phishing / Malware / Suspicious Login / Data Exfil / Recon / etc.\n- **Data sources:** (pcap, syslog, EDR, email headers, SIEM)\n- **Initial alert:** (what triggered this investigation)\n\n## Key Findings\n- Finding 1\n- Finding 2\n\n## Indicators of Compromise (IOCs)\n- **IPs:**\n- **Domains:**\n- **URLs:**\n- **Hashes:** (MD5/SHA256)\n- **Email artifacts:** (from, reply-to, return-path)\n\n## Investigation Timeline\n| Time | Action | Evidence |\n|------|--------|----------|\n\n## Evidence\n### Logs / Queries\n```text\n(paste log snippets or query results)\n```\n\n### Screenshots (optional)\n- `images/<file>`\n\n## Analysis\nExplain why this is suspicious (or benign). Call out assumptions.\n\n## Conclusion\n- **Verdict:** True Positive / False Positive / Needs More Info\n- **Confidence:** Low/Med/High\n\n## Recommendations / Next Steps\n- Block/allow\n- Reset creds\n- Improve detection\n\n## Appendix\n- References\n- Tools used\n\nValidation:\n- Your template includes Summary, IOCs, Timeline, Evidence, Analysis, Conclusion, Next Steps.\n\nTroubleshooting:\n- If Markdown tables are annoying, keep the timeline as bullets — consistency matters more than formatting."
+    },
+    {
+      "title": "Step 3 — Create a repeatable IOC extraction workflow",
+      "body": "Your casefiles should show that you *always* extract and normalize IOCs.\n\nCreate a helper file:\n- `IOC-NORMALIZATION.md`\n\nInclude:\n- Preferred formats (one IOC per line)\n- How you record them (with source + context)\n\nRecommended snippet format:\n\n**IOC:** 203.0.113.10\n- Type: IP\n- Source: pcap frame 421 / proxy log line 88\n- Why it matters: suspicious outbound connection to rare ASN\n\nCLI helpers (optional but great for portfolio):\n- Extract IPs from a text file:\n```bash\ngrep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence.txt | sort -u\n```\n- Extract domains (rough but useful):\n```bash\ngrep -Eo '([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}' evidence.txt | sort -u\n```\n\nValidation:\n- You can point to exactly where each IOC came from (log line, screenshot, email header field).\n\nTroubleshooting:\n- If grep extraction pulls junk, that's ok — show you filtered false matches. That’s analyst work."
+    },
+    {
+      "title": "Step 4 — Add a playbook template + write 2–4 playbooks",
+      "body": "Playbooks are your repeatable procedures. They prove you can standardize response.\n\nCreate:\n- `TEMPLATE-PLAYBOOK.md`\n\nSuggested structure:\n\n# Playbook: <name>\n\n## When to Use\n- Trigger conditions\n\n## Inputs\n- Logs/pcap/email/EDR alert\n\n## Triage Steps\n1. Confirm alert details\n2. Identify affected user/host\n3. Pull key evidence\n\n## Investigation Steps\n1. IOC extraction\n2. Enrichment\n3. Scope assessment\n\n## Containment\n- Block indicators\n- Disable account\n- Isolate host\n\n## Eradication & Recovery\n- Reset creds\n- Patch\n\n## Communication\n- Who to notify\n\n## Closure Criteria\n- What \"done\" looks like\n\nNow write at least 2 of these playbooks:\n- Phishing triage\n- Suspicious login / impossible travel\nAnd optionally:\n- Malware quick triage\n- Data exfil suspicion\n\nValidation:\n- Each playbook reads like something a SOC analyst could follow at 2am.\n\nTroubleshooting:\n- If you don’t know containment steps yet, keep them \"recommended\" rather than definitive (and cite vendor docs later)."
+    },
+    {
+      "title": "Step 5 — Create casefile folders + naming conventions",
+      "body": "Create a predictable structure so your repo feels like a real SOC knowledge base.\n\nRecommended folder layout inside `SOC-Casefiles/`:\n- `casefiles/`\n  - `2026-02-12-phishing-o365-link/`\n  - `2026-02-13-suspicious-login-vpn/`\n- `playbooks/`\n- `templates/`\n- `assets/` (optional)\n  - `images/`\n  - `samples/` (redacted logs, email headers, tiny text samples)\n\nNaming rules:\n- Date prefix helps sorting\n- Short descriptive slug\n\nValidation:\n- A stranger can browse your repo and immediately understand where to find casefiles vs playbooks.\n\nTroubleshooting:\n- If you already have a structure, don’t rewrite history — align new casefiles to the standard going forward."
+    },
+    {
+      "title": "Step 6 — Build Casefile #1 (Phishing/email header triage)",
+      "body": "This is the easiest \"complete\" casefile to start.\n\nWhat to include:\n- Email header artifacts (or a simulated header)\n- Suspicious URL and domain checks\n- Recommended actions (block sender, user education, reset creds if clicked)\n\nWhere to get data:\n- Use any real phishing example you have access to (redact addresses)\n- Or use public samples (don’t paste sensitive info)\n\nUseful checks (no code execution required):\n- Identify SPF/DKIM/DMARC results from headers\n- Compare From vs Return-Path vs Reply-To\n- Extract URLs and domains\n\nCLI helpers if you have an `.eml` or header text file:\n```bash\n# List URLs in a header/body text dump\ngrep -Eo 'https?://[^ ]+' email.txt | sort -u\n\n# Quick view of authentication results\ngrep -iE 'spf=|dkim=|dmarc=' email.txt\n```\n\nValidation:\n- Your casefile ends with Verdict + Confidence + Next Steps.\n\nTroubleshooting:\n- If you can’t use real customer data, write it as a \"simulated\" case and focus on process + fields you checked."
+    },
+    {
+      "title": "Step 7 — Build Casefile #2 (Suspicious login / account anomaly)",
+      "body": "This casefile should show you can reason through authentication signals.\n\nSignals you can document even without a real SIEM:\n- Multiple failed logins then success\n- New device/browser user-agent\n- New geo or \"impossible travel\" (even simulated)\n- MFA fatigue attempt\n\nEvidence ideas:\n- A small fake CSV log (timestamp, user, source_ip, result, user_agent)\n- Or logs from a lab environment\n\nExample query ideas (generic):\n- Count failed logins by user\n- Identify first-seen IP/user-agent\n\nIf you have a CSV:\n```bash\n# Show unique source IPs for a user (replace user@example.com)\nawk -F',' '$2==\"user@example.com\" {print $3}' auth.csv | sort -u\n```\n\nValidation:\n- You answer: \"Was it likely legit? If not, what action would you take?\"\n\nTroubleshooting:\n- If you don’t have real logs yet, create a mini dataset and treat it as a training incident. Be explicit that it’s simulated."
+    },
+    {
+      "title": "Step 8 — Build Casefile #3 (Network artifact / pcap-based investigation)",
+      "body": "This casefile proves you can pivot from network evidence.\n\nInputs:\n- A pcap from your Wireshark project OR any small training pcap\n\nWhat to include:\n- What host is suspected\n- What external IP/domain it contacted\n- Protocol summary (DNS/HTTP/TLS)\n- Any extracted files or suspicious URIs (if applicable)\n\nWireshark workflow notes (high-level but reproducible):\n- Statistics → Protocol Hierarchy\n- Statistics → Conversations\n- Filter for DNS queries: `dns`\n- Filter for HTTP: `http`\n- Filter for TLS SNI (if present): `tls.handshake.extensions_server_name`\n\nValidation:\n- You identify at least 1–3 IOCs from the pcap and explain why they’re relevant.\n\nTroubleshooting:\n- If the pcap is \"boring,\" use it anyway and label the verdict False Positive — it’s still a valid investigation."
+    },
+    {
+      "title": "Step 9 — Add enrichment evidence (VirusTotal / AbuseIPDB / OTX)",
+      "body": "Your casefiles become much stronger when you show enrichment.\n\nFor each IOC (IP/domain/hash), record:\n- Tool used\n- What you observed\n- How that influenced your confidence\n\nExample writeup snippet:\n- **AbuseIPDB:** 92% confidence, recent reports for scanning\n- **VirusTotal:** domain has X detections, first seen date, related URLs\n\nIf you have your Threat-Intelligence Python tool, you can reference it:\n- \"Enriched using Threat-Intelligence tool (see /Threat-Intelligence/)\"\n\nValidation:\n- Enrichment results appear in Evidence section with a short conclusion.\n\nTroubleshooting:\n- If APIs are rate-limited, include the manual lookup approach and note limitations."
+    },
+    {
+      "title": "Step 10 — Document escalation + containment decision-making",
+      "body": "SOC work isn’t just finding IOCs — it’s deciding what to do next.\n\nAdd a section in each casefile:\n- **Escalation criteria** (what would make you page IR?)\n- **Containment action** (block IP/domain, reset creds, isolate host)\n- **Risk of false positive** (what could go wrong if you block)\n\nExample language:\n- \"If this user confirms they clicked the link, escalate to IR and force password reset + token revoke.\"\n\nValidation:\n- A reader can see that you considered business impact and false positives.\n\nTroubleshooting:\n- If you’re unsure, write \"recommended\" actions and cite a reference in Appendix."
+    },
+    {
+      "title": "Step 11 — Create an index + make it portfolio-readable",
+      "body": "Create an index file that lists your cases and playbooks:\n- `SOC-Casefiles/README.md`\n\nInclude:\n- What this folder is\n- Links to each casefile\n- Links to each playbook\n- A short \"skills demonstrated\" list\n\nExample structure:\n- ## Casefiles\n  - [2026-02-12 Phishing O365 Link](casefiles/...) \n- ## Playbooks\n  - [Phishing Triage](playbooks/...)\n\nValidation:\n- Your README acts like a landing page.\n\nTroubleshooting:\n- If GitHub relative links are annoying, test by clicking them in GitHub UI."
+    },
+    {
+      "title": "Step 12 — Quality pass: consistency, redaction, and final checks",
+      "body": "Final pass checklist:\n- Consistent headings across all casefiles\n- IOCs listed in a clean format\n- Timeline present (table or bullets)\n- Verdict + Confidence included\n- Redact emails, real names, internal domains/IPs if needed\n\nRecommended redaction approach:\n- Replace sensitive domains with `corp.example`\n- Replace real IPs with RFC 5737 examples: `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`\n\nGit sanity (optional):\n```bash\ngit status\n```\n\nValidation:\n- A new reader can open any casefile and immediately understand the story.\n\nTroubleshooting:\n- If you’re worried you included sensitive info, remove it and rewrite the evidence section as a description of what you observed."
+    }
+  ],
+  "successCriteria": [
+    "At least 3 completed casefiles using a consistent template",
+    "At least 2 playbooks with clear triage/investigation/containment steps",
+    "Each casefile includes IOCs + evidence + verdict + confidence",
+    "Repo README links to casefiles and playbooks cleanly",
+    "Content is safe to publish (redacted where needed) while still demonstrating analyst thinking"
+  ],
+  "troubleshooting": [
+    {
+      "issue": "I don't have real incident data to write casefiles from.",
+      "fix": "Use simulated datasets: small CSV auth logs, public phishing header samples, or a training pcap. Be explicit in the casefile that it’s simulated and focus on the workflow."
+    },
+    {
+      "issue": "My casefiles feel too shallow (\"I checked X\" without proof).",
+      "fix": "Add an Evidence section for each major claim: paste a log snippet, a Wireshark screenshot reference, header fields, or enrichment summary. Tie each finding to a concrete artifact."
+    },
+    {
+      "issue": "I'm worried about leaking sensitive data.",
+      "fix": "Redact: replace domains with example domains, use RFC 5737 IP ranges, remove real names/emails. If needed, describe evidence instead of pasting it verbatim."
+    },
+    {
+      "issue": "I don’t know what containment actions are appropriate.",
+      "fix": "Write containment as recommendations with conditions (\"If confirmed compromised...\"). Add a reference link to Microsoft/Google/Okta guidance in Appendix."
+    }
+  ],
+  "cliCheatSheet": [
+    {
+      "command": "grep -Eo 'https?://[^ ]+' email.txt | sort -u",
+      "syntax": "Extract URLs from a text file by matching http/https patterns, then sort uniquely.",
+      "purpose": "Quickly pull suspicious URLs out of email/header/body text dumps for IOC listing."
+    },
+    {
+      "command": "grep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence.txt | sort -u",
+      "syntax": "Regex-match IPv4-like patterns in a file, then sort uniquely.",
+      "purpose": "Extract candidate IP indicators from evidence text (logs, notes, exports)."
+    },
+    {
+      "command": "awk -F',' '$2==\"user@example.com\" {print $3}' auth.csv | sort -u",
+      "syntax": "Split CSV by commas, filter rows where column 2 matches a user, print column 3, then unique-sort.",
+      "purpose": "Quickly list source IPs for a given user from a simple authentication log CSV."
+    }
+  ],
+  "references": [
+    {
+      "title": "RFC 5737 — Documentation IPv4 Address Blocks (safe example IPs)",
+      "url": "https://www.rfc-editor.org/rfc/rfc5737"
+    },
+    {
+      "title": "GitHub Docs — Mastering Markdown",
+      "url": "https://guides.github.com/features/mastering-markdown/"
+    },
+    {
+      "title": "AbuseIPDB — IP reputation lookup",
+      "url": "https://www.abuseipdb.com/"
+    },
+    {
+      "title": "VirusTotal — File/URL/Domain analysis",
+      "url": "https://www.virustotal.com/"
+    },
+    {
+      "title": "AlienVault OTX — Open threat intelligence",
+      "url": "https://otx.alienvault.com/"
+    }
+  ]
+}

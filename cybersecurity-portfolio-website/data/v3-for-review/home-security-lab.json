@@ -1,0 +1,181 @@
+{
+  "id": "home-security-lab",
+  "title": "Home Security Lab (SOC Monitoring at Home)",
+  "difficulty": "Intermediate",
+  "timeEstimate": "6–14 hours",
+  "tools": [
+    "A spare PC or laptop (recommended) OR a VM host",
+    "Ubuntu Server (or Debian) for log collection",
+    "Windows machine (or Windows VM) as an endpoint",
+    "Router access (basic admin access)",
+    "UFW firewall (Linux)",
+    "Wireshark (optional but recommended)",
+    "rsyslog (log forwarding)",
+    "Splunk Free OR Elastic Stack (optional SIEM)",
+    "nmap",
+    "journalctl",
+    "fail2ban (optional hardening)",
+    "Sysmon (Windows, optional but highly recommended)"
+  ],
+  "prereqs": [
+    "Basic understanding of TCP/IP and ports",
+    "Comfort using Linux CLI",
+    "Basic familiarity with log files and event logs",
+    "Ability to create VMs or use spare hardware"
+  ],
+  "objective": "Build a realistic home SOC lab: establish a baseline of normal network activity, configure log forwarding from endpoints, detect suspicious activity using log review and simple alerts, and document a repeatable monitoring workflow.",
+  "deliverables": [
+    "A documented home lab topology diagram (network layout)",
+    "A configured Linux log collector (rsyslog server)",
+    "Forwarded logs from at least one endpoint (Linux and/or Windows)",
+    "Baseline capture (ports/services + normal log patterns)",
+    "Detection test results (simulated brute force / scan / suspicious behavior)",
+    "Evidence artifacts (screenshots, logs, pcaps)",
+    "A SOC-style Home Monitoring Report (Markdown)"
+  ],
+  "steps": [
+    {
+      "title": "Step 1 — Plan your home SOC topology (simple but realistic)",
+      "body": "You are building a mini SOC environment, not just \"installing tools.\"\n\nRecommended minimum lab layout:\n- 1 Linux Server (Log Collector)\n- 1 Windows endpoint (Victim/Client)\n- 1 Linux endpoint (optional)\n- Your router (existing home network)\n\nTwo recommended setups:\n\nOption A (Best / easiest): Virtual lab (VMs)\n- Ubuntu Server VM = log collector\n- Windows 10/11 VM = endpoint\n\nOption B (More realistic): Spare laptop/PC as log collector\n- Ubuntu Server installed on spare machine\n- Windows PC is your real workstation\n\nDeliverable:\n- Create `Home-Security-Lab/evidence/notes/topology.md`\n- Write a short topology description + IP ranges.\n\nValidation:\n- You can clearly explain which machine collects logs and which machine generates logs."
+    },
+    {
+      "title": "Step 2 — Create the evidence folder structure in the repo",
+      "body": "In the CyberSecurity-Projects repo:\n\nCommands:\n- `cd ~/CyberSecurity-Projects/Home-Security-Lab`\n- `mkdir -p evidence/screenshots evidence/logs evidence/pcaps evidence/notes evidence/iocs evidence/reports`\n\nCreate these files:\n- `baseline.md`\n- `detection-tests.md`\n- `home-soc-report.md`\n\nValidation:\n- `ls -R evidence` shows your folder structure.\n\nDeliverable:\n- Screenshot of folder tree."
+    },
+    {
+      "title": "Step 3 — Install and secure your Linux log collector server",
+      "body": "Install Ubuntu Server (recommended).\n\nUpdate the system:\n- `sudo apt update && sudo apt upgrade -y`\n\nInstall core tools:\n- `sudo apt install -y ufw rsyslog net-tools curl wget unzip fail2ban`\n\nEnable SSH (if not installed):\n- `sudo apt install -y openssh-server`\n\nCheck SSH:\n- `sudo systemctl status ssh`\n\nValidation:\n- SSH service is active.\n- Server has a stable IP address.\n\nDeliverables:\n- Screenshot of `ip a` output\n- Screenshot of `systemctl status ssh`\n\nTroubleshooting:\n- If you cannot SSH in, confirm firewall is not blocking port 22 and the VM network is correct."
+    },
+    {
+      "title": "Step 4 — Configure a static IP or DHCP reservation for the log collector",
+      "body": "Your collector must be reachable.\n\nRecommended approach:\n- Set DHCP reservation in your router for the Ubuntu server.\n\nAlternative:\n- Configure static IP in Ubuntu netplan.\n\nCheck current IP:\n- `ip a`\n\nWrite down:\n- Server IP\n- Gateway IP\n- DNS\n\nDeliverable:\n- Add IP info to `evidence/notes/topology.md`\n\nValidation:\n- Collector keeps the same IP after reboot.\n\nTroubleshooting:\n- If IP changes, fix DHCP reservation or configure static IP."
+    },
+    {
+      "title": "Step 5 — Configure UFW firewall rules on the collector",
+      "body": "Lock down the collector.\n\nEnable UFW:\n- `sudo ufw default deny incoming`\n- `sudo ufw default allow outgoing`\n\nAllow SSH:\n- `sudo ufw allow 22/tcp`\n\nAllow syslog (UDP 514 is common):\n- `sudo ufw allow 514/udp`\n\nEnable firewall:\n- `sudo ufw enable`\n\nVerify:\n- `sudo ufw status verbose`\n\nValidation:\n- UFW is active.\n- SSH still works.\n\nDeliverable:\n- Screenshot of `ufw status verbose`\n\nTroubleshooting:\n- If SSH breaks, use the VM console to re-allow port 22."
+    },
+    {
+      "title": "Step 6 — Configure rsyslog to receive remote logs",
+      "body": "rsyslog is installed by default on Ubuntu, but remote receiving is usually disabled.\n\nEdit rsyslog config:\n- `sudo nano /etc/rsyslog.conf`\n\nUncomment or add these lines:\n```\nmodule(load=\"imudp\")\ninput(type=\"imudp\" port=\"514\")\n\nmodule(load=\"imtcp\")\ninput(type=\"imtcp\" port=\"514\")\n```\n\nRestart rsyslog:\n- `sudo systemctl restart rsyslog`\n\nCheck status:\n- `sudo systemctl status rsyslog`\n\nValidation:\n- rsyslog service is active.\n- Port is listening:\n  - `sudo ss -tulnp | grep 514`\n\nDeliverables:\n- Screenshot of `ss -tulnp | grep 514`\n\nTroubleshooting:\n- If port 514 is not listening, confirm the lines are not commented and restart the service."
+    },
+    {
+      "title": "Step 7 — Configure Linux logging structure for incoming logs",
+      "body": "By default, incoming logs may mix with system logs. Create a clean folder.\n\nCreate a directory:\n- `sudo mkdir -p /var/log/remote`\n- `sudo chmod 755 /var/log/remote`\n\nCreate an rsyslog rule:\n- `sudo nano /etc/rsyslog.d/10-remote.conf`\n\nAdd:\n```\n$template RemoteLogs,\"/var/log/remote/%HOSTNAME%/%PROGRAMNAME%.log\"\n*.* ?RemoteLogs\n& stop\n```\n\nRestart rsyslog:\n- `sudo systemctl restart rsyslog`\n\nValidation:\n- Directory exists.\n- rsyslog restarted successfully.\n\nDeliverables:\n- Screenshot of `/var/log/remote` existing\n\nTroubleshooting:\n- If logs do not appear later, check permissions and confirm rsyslog is writing."
+    },
+    {
+      "title": "Step 8 — Forward logs from a Linux endpoint (test client)",
+      "body": "You need at least one endpoint sending logs.\n\nOn your Linux endpoint machine (or a second VM):\n\nEdit rsyslog config:\n- `sudo nano /etc/rsyslog.conf`\n\nAdd at bottom:\n```\n*.* @<COLLECTOR_IP>:514\n```\n\nUse @@ for TCP:\n```\n*.* @@<COLLECTOR_IP>:514\n```\n\nRestart:\n- `sudo systemctl restart rsyslog`\n\nGenerate a test log entry:\n- `logger \"HOME SOC TEST: Linux endpoint connected\"`\n\nOn collector:\n- `sudo ls -R /var/log/remote`\n\nValidation:\n- You see logs arriving in `/var/log/remote/<hostname>/...`\n\nDeliverables:\n- Screenshot showing the test log on the collector.\n\nTroubleshooting:\n- If logs do not arrive:\n  - ping the collector\n  - check UFW allows 514\n  - check rsyslog listening on collector (`ss -tulnp | grep 514`)\n  - check client config syntax"
+    },
+    {
+      "title": "Step 9 — Forward logs from Windows (Sysmon recommended)",
+      "body": "Windows is where this lab becomes real.\n\nTwo options:\n\nOption A (Basic): Windows Event Logs only\n- Use Windows Event Forwarding or an agent (harder)\n\nOption B (Recommended): Install Sysmon + forward logs using an agent (Splunk Forwarder or Winlogbeat)\n\nSysmon:\n- Download Sysmon from Microsoft Sysinternals\n- Install with a config (SwiftOnSecurity config is commonly used)\n\nExample install command (Admin PowerShell):\n- `sysmon64.exe -accepteula -i sysmonconfig.xml`\n\nIf using Splunk Forwarder (recommended if you're already using Splunk in your other project):\n- Install Universal Forwarder\n- Configure to forward Windows Event Logs to Splunk\n\nValidation:\n- Sysmon service running\n- Event logs show process creation events\n\nDeliverables:\n- Screenshot of Sysmon installed\n- Screenshot of a Sysmon Event ID 1 (process creation)\n\nTroubleshooting:\n- If Sysmon doesn't log: confirm the service is running and config file is valid."
+    },
+    {
+      "title": "Step 10 — Establish a baseline: ports, services, and normal log behavior",
+      "body": "Baseline means: \"What does normal look like?\"\n\nOn your collector:\n- `sudo ss -tulnp`\n- `sudo journalctl -n 50`\n\nFrom your attacker machine (or Kali VM), scan your Windows endpoint:\n- `nmap -sV <WINDOWS_IP>`\n\nRecord:\n- Normal open ports\n- Normal DNS behavior\n- Normal authentication events\n\nSave baseline output:\n- `nmap -sV <WINDOWS_IP> | tee evidence/logs/nmap-baseline.txt`\n\nValidation:\n- You can identify which ports are expected and why.\n\nDeliverables:\n- `evidence/logs/nmap-baseline.txt`\n- `baseline.md` updated with notes\n\nTroubleshooting:\n- If nmap fails, check firewall settings or VM network mode."
+    },
+    {
+      "title": "Step 11 — Run detection test #1: brute-force simulation (safe)",
+      "body": "Simulate a brute-force style pattern safely.\n\nLinux endpoint brute force simulation:\n- Try repeated invalid SSH logins from another machine.\n\nExample:\n- `ssh fakeuser@<LINUX_ENDPOINT_IP>`\n- Enter wrong password multiple times.\n\nOn collector:\n- Inspect logs:\n  - `sudo grep -i \"failed\" -R /var/log/remote | tail -n 50`\n\nValidation:\n- You can see repeated failed auth attempts.\n\nDeliverables:\n- Screenshot of log entries\n- Notes in `detection-tests.md`\n\nTroubleshooting:\n- If logs don’t show, confirm forwarding works and that your log rule is writing correctly."
+    },
+    {
+      "title": "Step 12 — Run detection test #2: port scan simulation",
+      "body": "Port scanning is a realistic SOC detection scenario.\n\nFrom Kali or another machine:\n- `nmap -sS -T4 <WINDOWS_IP>`\n- `nmap -sS -T4 <LINUX_IP>`\n\nOn the endpoints:\n- Look for firewall or system logs.\n\nOn collector:\n- Search for scan patterns:\n  - `sudo grep -R \"nmap\" /var/log/remote | tail -n 50`\n\nOptional Wireshark capture:\n- Start capture during scan and save to `evidence/pcaps/portscan-test.pcapng`\n\nValidation:\n- You captured evidence of the scan in logs and/or pcap.\n\nDeliverables:\n- `evidence/pcaps/portscan-test.pcapng`\n- screenshot of scan output\n\nTroubleshooting:\n- If nothing logs, that's a learning moment: document that your current setup lacks IDS capability."
+    },
+    {
+      "title": "Step 13 — Optional hardening: install fail2ban and confirm bans work",
+      "body": "fail2ban simulates real SOC defensive automation.\n\nInstall:\n- `sudo apt install -y fail2ban`\n\nEnable:\n- `sudo systemctl enable --now fail2ban`\n\nCheck status:\n- `sudo fail2ban-client status`\n\nValidation:\n- fail2ban is running.\n\nDeliverables:\n- Screenshot of fail2ban status\n\nTroubleshooting:\n- If no jails appear, configure a jail for sshd in `/etc/fail2ban/jail.local`."
+    },
+    {
+      "title": "Step 14 — Optional SIEM: ingest logs into Splunk (recommended)",
+      "body": "If you already have Splunk from your Log-Analysis project, this is the best upgrade.\n\nOption A: Install Splunk on the collector\nOption B: Forward rsyslog logs into Splunk\n\nTypical approach:\n- Configure Splunk to monitor `/var/log/remote/**`\n\nExample (Splunk inputs.conf concept):\n- Monitor directory\n- Assign sourcetype = syslog\n\nValidation:\n- You can search logs in Splunk:\n  - `index=* host=<endpoint>`\n\nDeliverables:\n- Screenshot of Splunk search results\n- Screenshot of a simple dashboard panel\n\nTroubleshooting:\n- If logs don’t ingest, confirm file permissions and Splunk monitoring path."
+    },
+    {
+      "title": "Step 15 — Build a simple detection checklist (SOC workflow)",
+      "body": "Create a repeatable daily SOC workflow.\n\nCreate `evidence/notes/monitoring-checklist.md` with:\n- Daily authentication failures review\n- Daily new IP/domain review\n- Weekly port scan / service inventory\n- System update review\n- New device discovery\n\nExample log search commands:\n- `sudo grep -R \"Failed password\" /var/log/remote | tail -n 50`\n- `sudo grep -R \"Accepted password\" /var/log/remote | tail -n 50`\n\nValidation:\n- You can run the checklist and explain what each item detects.\n\nDeliverable:\n- Completed monitoring checklist file."
+    },
+    {
+      "title": "Step 16 — Write the Home SOC Report (portfolio-ready)",
+      "body": "Write your final report in:\n- `home-soc-report.md`\n\nRecommended structure:\n1) Executive Summary\n2) Lab Topology\n3) Log Collection Setup (rsyslog + forwarding)\n4) Baseline Findings\n5) Detection Tests (brute force, scan)\n6) Observed Indicators\n7) Gaps Identified (no IDS, no EDR, etc.)\n8) Improvements Roadmap\n\nValidation:\n- A reader can replicate your lab.\n\nDeliverables:\n- Final report + evidence paths.\n\nTroubleshooting:\n- If your lab feels \"too simple,\" that's fine. The report should clearly identify the next upgrades (IDS project comes next)."
+    }
+  ],
+  "successCriteria": [
+    "You configured a Linux log collector with rsyslog listening on port 514",
+    "You forwarded logs from at least one Linux endpoint into /var/log/remote/",
+    "You documented a baseline (nmap scan + normal logs) for your environment",
+    "You successfully generated and detected at least one suspicious activity pattern (failed logins or port scan)",
+    "You produced a topology diagram/description and a SOC-style report",
+    "You saved all artifacts into the repo under Home-Security-Lab/evidence/"
+  ],
+  "troubleshooting": [
+    {
+      "issue": "Logs are not arriving at the collector",
+      "fix": "Confirm ping works, confirm UFW allows 514/udp, confirm rsyslog is listening (`ss -tulnp | grep 514`), and confirm endpoint rsyslog config uses correct IP and syntax."
+    },
+    {
+      "issue": "Port 514 is listening but logs still don’t write into /var/log/remote",
+      "fix": "Check your rsyslog rule in `/etc/rsyslog.d/10-remote.conf` and confirm the directory permissions allow writing. Restart rsyslog."
+    },
+    {
+      "issue": "Windows logs are hard to forward",
+      "fix": "Use Sysmon + Splunk Forwarder or Winlogbeat. Windows Event Forwarding works but is more complex. Document whichever approach you used."
+    },
+    {
+      "issue": "Nmap scans don’t show anything suspicious in logs",
+      "fix": "That is expected without an IDS. Capture the traffic in Wireshark and document that IDS functionality is a future upgrade."
+    },
+    {
+      "issue": "SSH brute-force test doesn’t show up",
+      "fix": "Confirm the endpoint is logging auth attempts (check `/var/log/auth.log`) and confirm those logs are forwarded."
+    }
+  ],
+  "references": [
+    {
+      "title": "rsyslog Documentation",
+      "url": "https://www.rsyslog.com/doc/"
+    },
+    {
+      "title": "UFW Documentation (Ubuntu)",
+      "url": "https://help.ubuntu.com/community/UFW"
+    },
+    {
+      "title": "Sysmon (Microsoft Sysinternals)",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "title": "Splunk Free (Splunk Enterprise Trial)",
+      "url": "https://www.splunk.com/en_us/download/splunk-enterprise.html"
+    },
+    {
+      "title": "Wireshark Display Filters Reference",
+      "url": "https://www.wireshark.org/docs/dfref/"
+    }
+  ],
+  "cliCheatSheet": [
+    {
+      "command": "sudo ss -tulnp | grep 514",
+      "syntax": "ss -tulnp | grep <port>",
+      "purpose": "Confirms rsyslog is listening on the syslog port."
+    },
+    {
+      "command": "logger \"HOME SOC TEST: Linux endpoint connected\"",
+      "syntax": "logger \"<message>\"",
+      "purpose": "Generates a test syslog entry to verify forwarding."
+    },
+    {
+      "command": "sudo ufw status verbose",
+      "syntax": "ufw status verbose",
+      "purpose": "Verifies firewall rules and whether syslog traffic is allowed."
+    },
+    {
+      "command": "nmap -sV <TARGET_IP>",
+      "syntax": "nmap -sV <target>",
+      "purpose": "Service/version scan to build baseline exposure of endpoints."
+    },
+    {
+      "command": "sudo journalctl -n 50",
+      "syntax": "journalctl -n <lines>",
+      "purpose": "Quickly checks recent system logs on the collector."
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "id": "ids-setup",
+  "title": "IDS Setup (Suricata / Snort Detection Lab)",
+  "difficulty": "Intermediate",
+  "timeEstimate": "3–6 hours",
+  "tools": [
+    "Linux VM (Ubuntu Server recommended)",
+    "Suricata (preferred IDS)",
+    "Optional: Snort",
+    "tcpdump",
+    "Wireshark (optional)",
+    "curl",
+    "nmap",
+    "Python 3 (optional)",
+    "sudo privileges"
+  ],
+  "prereqs": [
+    "Basic Linux administration (systemctl, apt, editing config files)",
+    "Understanding of TCP/IP, ports, and protocols",
+    "Basic familiarity with packet capture concepts",
+    "Comfort reading logs"
+  ],
+  "objective": "Deploy an Intrusion Detection System (IDS) on a Linux host using Suricata (or Snort), configure it to monitor traffic, generate alerts from test attacks, and validate detection by analyzing alert logs and rule hits like a SOC analyst.",
+  "deliverables": [
+    "Suricata installed and running as a service",
+    "Configured Suricata interface monitoring (eth0 or correct NIC)",
+    "Alerts generated from simulated attacks (nmap scan, HTTP requests, etc.)",
+    "Saved evidence: suricata logs (`fast.log`, `eve.json`)",
+    "Screenshots of alert output and service status",
+    "README documentation showing setup, validation, and troubleshooting steps",
+    "Optional: custom IDS rule written and tested"
+  ],
+  "steps": [
+    {
+      "title": "Step 1 — Create your IDS VM and confirm network connectivity",
+      "body": "Spin up a Linux VM (Ubuntu Server recommended). The IDS works best when the VM has real network access.\n\nRecommended VM setup:\n- 2 CPU cores\n- 4GB RAM\n- 20GB storage\n- Bridged adapter if possible (so it sees real LAN traffic)\n\nCommands:\n- `ip a`\n- `ping -c 4 8.8.8.8`\n- `ping -c 4 google.com`\n\nValidation:\n- You can ping external IPs and resolve DNS.\n\nDeliverable:\n- Screenshot showing IP address + successful ping.\n\nTroubleshooting:\n- If ping fails, check VM network mode (NAT vs bridged).\n- If DNS fails, verify `/etc/resolv.conf`."
+    },
+    {
+      "title": "Step 2 — Navigate into the IDS project folder",
+      "body": "Open the project directory in your CyberSecurity-Projects repo.\n\nCommands:\n- `cd ~/CyberSecurity-Projects/IDS_Setup`\n- `ls -la`\n\nValidation:\n- You should see a README and/or supporting files.\n\nDeliverable:\n- Screenshot of folder contents.\n\nSOC Note:\n- This lab folder is where your screenshots, exported logs, and rule files will live."
+    },
+    {
+      "title": "Step 3 — Update system packages and install dependencies",
+      "body": "Before installing Suricata, update packages and install utilities.\n\nCommands:\n- `sudo apt update && sudo apt upgrade -y`\n- `sudo apt install -y curl wget jq tcpdump net-tools unzip`\n\nOptional:\n- Install Wireshark CLI tools:\n  - `sudo apt install -y tshark`\n\nValidation:\n- `tcpdump --version` returns output.\n- `jq --version` returns output.\n\nDeliverable:\n- Screenshot showing successful installs.\n\nTroubleshooting:\n- If apt fails, rerun `sudo apt update` and check network connectivity."
+    },
+    {
+      "title": "Step 4 — Install Suricata",
+      "body": "Install Suricata from Ubuntu repositories.\n\nCommands:\n- `sudo apt install -y suricata`\n\nConfirm install:\n- `suricata --build-info`\n\nValidation:\n- Suricata version output appears.\n\nDeliverable:\n- Screenshot of `suricata --build-info`.\n\nSOC Note:\n- Suricata is a modern IDS/IPS engine that outputs JSON logs (eve.json), making it SIEM-friendly."
+    },
+    {
+      "title": "Step 5 — Identify the correct network interface to monitor",
+      "body": "Suricata must listen on the correct NIC.\n\nCommands:\n- `ip link show`\n- `ip a`\n\nCommon interface names:\n- `eth0`\n- `ens33`\n- `enp0s3`\n\nValidation:\n- Identify which interface has your real IP.\n\nDeliverable:\n- Write down your interface name (example: `ens33`).\n\nTroubleshooting:\n- If you see multiple interfaces, pick the one with your assigned IP (not lo/loopback)."
+    },
+    {
+      "title": "Step 6 — Configure Suricata to monitor your interface",
+      "body": "Suricata configuration file:\n- `/etc/suricata/suricata.yaml`\n\nFirst, back it up:\n- `sudo cp /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml.bak`\n\nEdit the file:\n- `sudo nano /etc/suricata/suricata.yaml`\n\nLook for the `af-packet:` section and ensure your interface is listed.\nExample:\n```\naf-packet:\n  - interface: ens33\n```\n\nSome installs use `pcap:` mode instead.\n\nValidation:\n- Configuration includes your correct interface.\n\nDeliverable:\n- Screenshot of the relevant config section.\n\nTroubleshooting:\n- If Suricata fails to start later, restore backup:\n  - `sudo cp /etc/suricata/suricata.yaml.bak /etc/suricata/suricata.yaml`"
+    },
+    {
+      "title": "Step 7 — Download and update Suricata rules",
+      "body": "Suricata needs rules to detect malicious patterns.\n\nUpdate rules using suricata-update:\n- `sudo suricata-update`\n\nConfirm rules exist:\n- `ls -la /var/lib/suricata/rules/`\n\nThe main rule file is usually:\n- `/var/lib/suricata/rules/suricata.rules`\n\nValidation:\n- suricata-update finishes without errors.\n- Rule files exist in `/var/lib/suricata/rules/`.\n\nDeliverable:\n- Screenshot showing rules downloaded.\n\nTroubleshooting:\n- If update fails, check DNS/internet connectivity.\n- If rules directory is empty, rerun `sudo suricata-update`."
+    },
+    {
+      "title": "Step 8 — Run Suricata in test mode (validate configuration)",
+      "body": "Before enabling Suricata as a service, validate the config.\n\nCommand:\n- `sudo suricata -T -c /etc/suricata/suricata.yaml -v`\n\nValidation:\n- Output should include: `Configuration provided was successfully loaded.`\n\nDeliverable:\n- Screenshot of successful test output.\n\nTroubleshooting:\n- If you see YAML parsing errors, re-check indentation.\n- Restore from backup if needed."
+    },
+    {
+      "title": "Step 9 — Start and enable Suricata service",
+      "body": "Now start Suricata as a service.\n\nCommands:\n- `sudo systemctl start suricata`\n- `sudo systemctl enable suricata`\n\nCheck status:\n- `sudo systemctl status suricata --no-pager`\n\nValidation:\n- Service shows `active (running)`.\n\nDeliverable:\n- Screenshot showing active service.\n\nTroubleshooting:\n- If it fails, check logs:\n  - `sudo journalctl -u suricata -n 50 --no-pager`"
+    },
+    {
+      "title": "Step 10 — Locate Suricata output logs (fast.log and eve.json)",
+      "body": "Suricata logs are usually stored here:\n- `/var/log/suricata/`\n\nCheck files:\n- `ls -la /var/log/suricata/`\n\nCommon files:\n- `fast.log` (human readable alerts)\n- `eve.json` (structured JSON event output)\n- `stats.log`\n\nView alerts:\n- `sudo tail -n 50 /var/log/suricata/fast.log`\n\nView JSON events:\n- `sudo tail -n 5 /var/log/suricata/eve.json | jq .`\n\nValidation:\n- Logs exist and are updating.\n\nDeliverable:\n- Screenshot showing files in /var/log/suricata.\n\nTroubleshooting:\n- If logs are empty, generate traffic and ensure Suricata is running."
+    },
+    {
+      "title": "Step 11 — Generate test traffic (safe recon simulation)",
+      "body": "To trigger alerts, generate network activity.\n\nFrom another machine (Kali/Windows):\n- `nmap -sS -Pn <IDS-IP>`\n\nFrom IDS machine itself:\n- `curl http://example.com`\n- `ping -c 5 1.1.1.1`\n\nOptional: aggressive scan (still safe):\n- `nmap -A -T4 -Pn <IDS-IP>`\n\nValidation:\n- Alerts appear in fast.log.\n\nCheck:\n- `sudo tail -n 100 /var/log/suricata/fast.log`\n\nDeliverable:\n- Screenshot showing scan output + Suricata alerts.\n\nSOC Note:\n- Recon scans are one of the most common \"first indicators\" of intrusion attempts."
+    },
+    {
+      "title": "Step 12 — Analyze Suricata alerts like a SOC analyst",
+      "body": "Your job is not just to \"see alerts\" but to interpret them.\n\nCheck recent alerts:\n- `sudo tail -n 50 /var/log/suricata/fast.log`\n\nExtract alert events from eve.json:\n- `sudo cat /var/log/suricata/eve.json | jq 'select(.event_type==\"alert\")' | head -n 20`\n\nLook for:\n- signature name\n- severity\n- source/destination IP\n- ports\n\nValidation:\n- You can identify at least 2 alerts and explain what triggered them.\n\nDeliverable:\n- Write 2–3 bullet analysis notes into README or a notes file (example: `IDS_Setup/alert-analysis.md`)."
+    },
+    {
+      "title": "Step 13 — Create and test a custom Suricata rule",
+      "body": "Writing a rule is the most valuable skill-building part of this lab.\n\nCreate a custom rule file:\n- `sudo nano /etc/suricata/rules/local.rules`\n\nExample rule (detect a test keyword):\n```\nalert http any any -> any any (msg:\"SOC OS TEST RULE - suspicious keyword\"; content:\"eviltest\"; http_uri; sid:9999999; rev:1;)\n```\n\nNow ensure local.rules is referenced in suricata.yaml.\nLook for:\n- `rule-files:`\n\nAdd or confirm:\n- `- local.rules`\n\nTest config:\n- `sudo suricata -T -c /etc/suricata/suricata.yaml -v`\n\nRestart Suricata:\n- `sudo systemctl restart suricata`\n\nTrigger the rule:\n- `curl \"http://<IDS-IP>/eviltest\"`\n\nValidation:\n- Your custom alert appears in fast.log.\n\nDeliverable:\n- Screenshot of your local.rules file + alert output.\n\nTroubleshooting:\n- If no alert triggers, ensure rule is loaded and Suricata restarted."
+    },
+    {
+      "title": "Step 14 — Export logs and evidence into the repo folder",
+      "body": "Copy Suricata evidence into your project folder so the lab is portable.\n\nRecommended folder structure:\n- `IDS_Setup/evidence/`\n- `IDS_Setup/screenshots/`\n\nCommands:\n- `mkdir -p ~/CyberSecurity-Projects/IDS_Setup/evidence`\n- `sudo cp /var/log/suricata/fast.log ~/CyberSecurity-Projects/IDS_Setup/evidence/fast.log`\n- `sudo cp /var/log/suricata/eve.json ~/CyberSecurity-Projects/IDS_Setup/evidence/eve.json`\n\nFix permissions:\n- `sudo chown -R $USER:$USER ~/CyberSecurity-Projects/IDS_Setup/evidence`\n\nValidation:\n- Evidence files exist in repo folder.\n\nDeliverable:\n- `IDS_Setup/evidence/fast.log`\n- `IDS_Setup/evidence/eve.json`"
+    },
+    {
+      "title": "Step 15 — Document the lab with validation and SOC-style findings",
+      "body": "Update README.md with:\n\nRecommended sections:\n- What is an IDS?\n- Why Suricata matters\n- Setup steps (install + config)\n- How rules were updated\n- Test attack results (nmap scans)\n- Custom rule test\n- Evidence folder contents\n- Lessons learned\n\nInclude a short SOC-style summary:\n- \"Observed recon attempt\" (nmap)\n- \"Alert severity\" and signature\n- \"Recommended action\" (block at firewall, tune rule, whitelist internal scan)\n\nValidation:\n- A reader can reproduce your IDS setup from the README.\n\nDeliverable:\n- Updated README.md with commands + evidence references."
+    },
+    {
+      "title": "Step 16 — Optional upgrade: forward Suricata logs into Splunk or SIEM",
+      "body": "This is optional but makes the lab much more realistic.\n\nIf you already have Splunk or syslog forwarding:\n- Use rsyslog or file monitoring to ship eve.json.\n\nExample (basic approach):\n- Configure rsyslog to forward /var/log/suricata/fast.log.\n\nValidation:\n- Alerts appear inside your SIEM.\n\nDeliverable:\n- Add a section in README describing the log forwarding approach.\n\nSOC Note:\n- In real SOC environments, Suricata is rarely read locally. It's forwarded to Splunk/Elastic/Sentinel."
+    }
+  ],
+  "successCriteria": [
+    "Suricata is installed and running as an active service",
+    "Suricata rules are downloaded and updated successfully",
+    "fast.log and eve.json exist and contain IDS events",
+    "At least one alert is generated from a simulated recon scan",
+    "A custom Suricata rule is created and successfully triggered",
+    "Evidence logs are exported into the IDS_Setup folder",
+    "README includes full commands, validation steps, and troubleshooting guidance"
+  ],
+  "troubleshooting": [
+    {
+      "issue": "Suricata service fails to start",
+      "fix": "Run `sudo journalctl -u suricata -n 100 --no-pager` to view errors. Then validate config with `sudo suricata -T -c /etc/suricata/suricata.yaml -v`. Most failures are caused by YAML indentation or invalid interface name."
+    },
+    {
+      "issue": "No alerts appear in fast.log",
+      "fix": "Confirm Suricata is running (`sudo systemctl status suricata`). Generate traffic using `nmap -Pn <IDS-IP>` from another machine. Check if the correct interface is configured in suricata.yaml."
+    },
+    {
+      "issue": "suricata-update fails or downloads no rules",
+      "fix": "Check internet/DNS. Run `ping -c 4 8.8.8.8` and `ping -c 4 google.com`. Retry with `sudo suricata-update`."
+    },
+    {
+      "issue": "My custom rule does not trigger",
+      "fix": "Confirm local.rules is listed under `rule-files:` in suricata.yaml. Restart Suricata after changes. Run `sudo suricata -T` to confirm the rule loads. Verify your rule SID is unique."
+    },
+    {
+      "issue": "eve.json output is hard to read",
+      "fix": "Use jq: `sudo tail -n 20 /var/log/suricata/eve.json | jq .` or filter alerts only: `sudo cat eve.json | jq 'select(.event_type==\"alert\")'`."
+    }
+  ],
+  "references": [
+    {
+      "title": "Suricata Official Documentation",
+      "url": "https://suricata.io/documentation/"
+    },
+    {
+      "title": "Suricata User Guide (OISF)",
+      "url": "https://docs.suricata.io/en/latest/"
+    },
+    {
+      "title": "Suricata Rules Format",
+      "url": "https://docs.suricata.io/en/latest/rules/intro.html"
+    },
+    {
+      "title": "nmap Reference Guide",
+      "url": "https://nmap.org/book/man.html"
+    },
+    {
+      "title": "Ubuntu Systemd service basics",
+      "url": "https://manpages.ubuntu.com/manpages/jammy/en/man1/systemctl.1.html"
+    }
+  ],
+  "cliCheatSheet": [
+    {
+      "command": "sudo suricata-update",
+      "syntax": "sudo suricata-update",
+      "purpose": "Downloads and updates Suricata rulesets."
+    },
+    {
+      "command": "sudo suricata -T -c /etc/suricata/suricata.yaml -v",
+      "syntax": "sudo suricata -T -c <config> -v",
+      "purpose": "Validates Suricata configuration file before running the service."
+    },
+    {
+      "command": "sudo systemctl status suricata --no-pager",
+      "syntax": "sudo systemctl status <service>",
+      "purpose": "Checks Suricata service status and whether it is running."
+    },
+    {
+      "command": "sudo tail -n 50 /var/log/suricata/fast.log",
+      "syntax": "sudo tail -n <lines> <file>",
+      "purpose": "Views recent IDS alerts in a readable format."
+    },
+    {
+      "command": "sudo tail -n 5 /var/log/suricata/eve.json | jq .",
+      "syntax": "tail -n <lines> <file> | jq .",
+      "purpose": "Pretty-prints JSON log events for easier analysis."
+    },
+    {
+      "command": "sudo journalctl -u suricata -n 50 --no-pager",
+      "syntax": "sudo journalctl -u <service> -n <lines>",
+      "purpose": "Views Suricata service logs to troubleshoot startup failures."
+    },
+    {
+      "command": "nmap -sS -Pn <target-ip>",
+      "syntax": "nmap -sS -Pn <target-ip>",
+      "purpose": "Generates safe recon scan traffic to test IDS detection."
+    },
+    {
+      "command": "sudo ss -tulnp",
+      "syntax": "sudo ss -tulnp",
+      "purpose": "Shows listening ports and services running on the host."
+    }
+  ]
+}

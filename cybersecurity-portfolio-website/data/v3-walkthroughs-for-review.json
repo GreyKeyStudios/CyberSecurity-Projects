@@ -1,0 +1,699 @@
+{
+  "soc-casefiles": {
+    "id": "soc-casefiles",
+    "title": "SOC Casefiles (Incident Documentation Pack)",
+    "difficulty": "Beginner → Intermediate",
+    "timeEstimate": "3–6 hours (depending on how deep you document)",
+    "tools": [
+      "Text editor (VS Code recommended)",
+      "Git + GitHub (or any Git host)",
+      "Optional: Wireshark (pcaps), Splunk/ELK (logs), CyberChef",
+      "Optional: VirusTotal / AbuseIPDB / OTX (free tiers)"
+    ],
+    "prereqs": [
+      "Basic understanding of: IPs, domains, URLs, hashes, ports",
+      "Comfortable reading logs and copying output",
+      "Basic Markdown (headings, bullet lists, code blocks)"
+    ],
+    "objective": "Create a repeatable SOC-style incident writeup workflow using casefiles and playbooks. The goal is to demonstrate how you triage an alert, extract IOCs, validate suspicion, document decisions, and produce clean portfolio-ready artifacts.",
+    "deliverables": [
+      "A consistent casefile folder structure",
+      "At least 3–5 completed casefiles with evidence + conclusions",
+      "IOC extraction notes (IPs/domains/hashes) for each case",
+      "At least 2–4 operational playbooks/runbooks that match your casefile style",
+      "Optional: redacted screenshots (Wireshark, SIEM, headers) and sample logs/pcaps referenced from each case"
+    ],
+    "steps": [
+      {
+        "title": "Step 1 — Understand the goal + pick your casefile set",
+        "body": "What you're building here is *not* a single lab — it's a reusable workflow.\n\nSuccess looks like:\n- A visitor can open SOC-Casefiles and immediately understand the structure\n- Each case reads like a real analyst ticket: what happened, what evidence you checked, what you concluded, what you recommend next\n\nPick one approach (either is fine):\nA) **Realistic simulated cases** (recommended): you use provided logs/pcaps/samples to \"investigate\" a scenario.\nB) **Knowledge-casefiles**: you write cases based on public incident reports and document how you would have responded.\n\nValidation:\n- You can describe the difference between a \"casefile\" (incident story + evidence) and a \"playbook\" (repeatable steps).\n\nTroubleshooting:\n- If you feel stuck: start with one easy case (phishing email header analysis) and build the template from that."
+      },
+      {
+        "title": "Step 2 — Create a standard casefile template (Markdown)",
+        "body": "In `SOC-Casefiles/`, create a reusable template file (example name):\n- `TEMPLATE-CASEFILE.md`\n\nUse a consistent structure like this (copy/paste skeleton):\n\n# Case: <short title>\n\n## Summary\n- **Date:** YYYY-MM-DD\n- **Severity:** Low/Med/High\n- **Category:** Phishing / Malware / Suspicious Login / Data Exfil / Recon / etc.\n- **Data sources:** (pcap, syslog, EDR, email headers, SIEM)\n- **Initial alert:** (what triggered this investigation)\n\n## Key Findings\n- Finding 1\n- Finding 2\n\n## Indicators of Compromise (IOCs)\n- **IPs:**\n- **Domains:**\n- **URLs:**\n- **Hashes:** (MD5/SHA256)\n- **Email artifacts:** (from, reply-to, return-path)\n\n## Investigation Timeline\n| Time | Action | Evidence |\n|------|--------|----------|\n\n## Evidence\n### Logs / Queries\n```text\n(paste log snippets or query results)\n```\n\n### Screenshots (optional)\n- `images/<file>`\n\n## Analysis\nExplain why this is suspicious (or benign). Call out assumptions.\n\n## Conclusion\n- **Verdict:** True Positive / False Positive / Needs More Info\n- **Confidence:** Low/Med/High\n\n## Recommendations / Next Steps\n- Block/allow\n- Reset creds\n- Improve detection\n\n## Appendix\n- References\n- Tools used\n\nValidation:\n- Your template includes Summary, IOCs, Timeline, Evidence, Analysis, Conclusion, Next Steps.\n\nTroubleshooting:\n- If Markdown tables are annoying, keep the timeline as bullets — consistency matters more than formatting."
+      },
+      {
+        "title": "Step 3 — Create a repeatable IOC extraction workflow",
+        "body": "Your casefiles should show that you *always* extract and normalize IOCs.\n\nCreate a helper file:\n- `IOC-NORMALIZATION.md`\n\nInclude:\n- Preferred formats (one IOC per line)\n- How you record them (with source + context)\n\nRecommended snippet format:\n\n**IOC:** 203.0.113.10\n- Type: IP\n- Source: pcap frame 421 / proxy log line 88\n- Why it matters: suspicious outbound connection to rare ASN\n\nCLI helpers (optional but great for portfolio):\n- Extract IPs from a text file:\n```bash\ngrep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence.txt | sort -u\n```\n- Extract domains (rough but useful):\n```bash\ngrep -Eo '([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}' evidence.txt | sort -u\n```\n\nValidation:\n- You can point to exactly where each IOC came from (log line, screenshot, email header field).\n\nTroubleshooting:\n- If grep extraction pulls junk, that's ok — show you filtered false matches. That’s analyst work."
+      },
+      {
+        "title": "Step 4 — Add a playbook template + write 2–4 playbooks",
+        "body": "Playbooks are your repeatable procedures. They prove you can standardize response.\n\nCreate:\n- `TEMPLATE-PLAYBOOK.md`\n\nSuggested structure:\n\n# Playbook: <name>\n\n## When to Use\n- Trigger conditions\n\n## Inputs\n- Logs/pcap/email/EDR alert\n\n## Triage Steps\n1. Confirm alert details\n2. Identify affected user/host\n3. Pull key evidence\n\n## Investigation Steps\n1. IOC extraction\n2. Enrichment\n3. Scope assessment\n\n## Containment\n- Block indicators\n- Disable account\n- Isolate host\n\n## Eradication & Recovery\n- Reset creds\n- Patch\n\n## Communication\n- Who to notify\n\n## Closure Criteria\n- What \"done\" looks like\n\nNow write at least 2 of these playbooks:\n- Phishing triage\n- Suspicious login / impossible travel\nAnd optionally:\n- Malware quick triage\n- Data exfil suspicion\n\nValidation:\n- Each playbook reads like something a SOC analyst could follow at 2am.\n\nTroubleshooting:\n- If you don’t know containment steps yet, keep them \"recommended\" rather than definitive (and cite vendor docs later)."
+      },
+      {
+        "title": "Step 5 — Create casefile folders + naming conventions",
+        "body": "Create a predictable structure so your repo feels like a real SOC knowledge base.\n\nRecommended folder layout inside `SOC-Casefiles/`:\n- `casefiles/`\n  - `2026-02-12-phishing-o365-link/`\n  - `2026-02-13-suspicious-login-vpn/`\n- `playbooks/`\n- `templates/`\n- `assets/` (optional)\n  - `images/`\n  - `samples/` (redacted logs, email headers, tiny text samples)\n\nNaming rules:\n- Date prefix helps sorting\n- Short descriptive slug\n\nValidation:\n- A stranger can browse your repo and immediately understand where to find casefiles vs playbooks.\n\nTroubleshooting:\n- If you already have a structure, don’t rewrite history — align new casefiles to the standard going forward."
+      },
+      {
+        "title": "Step 6 — Build Casefile #1 (Phishing/email header triage)",
+        "body": "This is the easiest \"complete\" casefile to start.\n\nWhat to include:\n- Email header artifacts (or a simulated header)\n- Suspicious URL and domain checks\n- Recommended actions (block sender, user education, reset creds if clicked)\n\nWhere to get data:\n- Use any real phishing example you have access to (redact addresses)\n- Or use public samples (don’t paste sensitive info)\n\nUseful checks (no code execution required):\n- Identify SPF/DKIM/DMARC results from headers\n- Compare From vs Return-Path vs Reply-To\n- Extract URLs and domains\n\nCLI helpers if you have an `.eml` or header text file:\n```bash\n# List URLs in a header/body text dump\ngrep -Eo 'https?://[^ ]+' email.txt | sort -u\n\n# Quick view of authentication results\ngrep -iE 'spf=|dkim=|dmarc=' email.txt\n```\n\nValidation:\n- Your casefile ends with Verdict + Confidence + Next Steps.\n\nTroubleshooting:\n- If you can’t use real customer data, write it as a \"simulated\" case and focus on process + fields you checked."
+      },
+      {
+        "title": "Step 7 — Build Casefile #2 (Suspicious login / account anomaly)",
+        "body": "This casefile should show you can reason through authentication signals.\n\nSignals you can document even without a real SIEM:\n- Multiple failed logins then success\n- New device/browser user-agent\n- New geo or \"impossible travel\" (even simulated)\n- MFA fatigue attempt\n\nEvidence ideas:\n- A small fake CSV log (timestamp, user, source_ip, result, user_agent)\n- Or logs from a lab environment\n\nExample query ideas (generic):\n- Count failed logins by user\n- Identify first-seen IP/user-agent\n\nIf you have a CSV:\n```bash\n# Show unique source IPs for a user (replace user@example.com)\nawk -F',' '$2==\"user@example.com\" {print $3}' auth.csv | sort -u\n```\n\nValidation:\n- You answer: \"Was it likely legit? If not, what action would you take?\"\n\nTroubleshooting:\n- If you don’t have real logs yet, create a mini dataset and treat it as a training incident. Be explicit that it’s simulated."
+      },
+      {
+        "title": "Step 8 — Build Casefile #3 (Network artifact / pcap-based investigation)",
+        "body": "This casefile proves you can pivot from network evidence.\n\nInputs:\n- A pcap from your Wireshark project OR any small training pcap\n\nWhat to include:\n- What host is suspected\n- What external IP/domain it contacted\n- Protocol summary (DNS/HTTP/TLS)\n- Any extracted files or suspicious URIs (if applicable)\n\nWireshark workflow notes (high-level but reproducible):\n- Statistics → Protocol Hierarchy\n- Statistics → Conversations\n- Filter for DNS queries: `dns`\n- Filter for HTTP: `http`\n- Filter for TLS SNI (if present): `tls.handshake.extensions_server_name`\n\nValidation:\n- You identify at least 1–3 IOCs from the pcap and explain why they’re relevant.\n\nTroubleshooting:\n- If the pcap is \"boring,\" use it anyway and label the verdict False Positive — it’s still a valid investigation."
+      },
+      {
+        "title": "Step 9 — Add enrichment evidence (VirusTotal / AbuseIPDB / OTX)",
+        "body": "Your casefiles become much stronger when you show enrichment.\n\nFor each IOC (IP/domain/hash), record:\n- Tool used\n- What you observed\n- How that influenced your confidence\n\nExample writeup snippet:\n- **AbuseIPDB:** 92% confidence, recent reports for scanning\n- **VirusTotal:** domain has X detections, first seen date, related URLs\n\nIf you have your Threat-Intelligence Python tool, you can reference it:\n- \"Enriched using Threat-Intelligence tool (see /Threat-Intelligence/)\"\n\nValidation:\n- Enrichment results appear in Evidence section with a short conclusion.\n\nTroubleshooting:\n- If APIs are rate-limited, include the manual lookup approach and note limitations."
+      },
+      {
+        "title": "Step 10 — Document escalation + containment decision-making",
+        "body": "SOC work isn’t just finding IOCs — it’s deciding what to do next.\n\nAdd a section in each casefile:\n- **Escalation criteria** (what would make you page IR?)\n- **Containment action** (block IP/domain, reset creds, isolate host)\n- **Risk of false positive** (what could go wrong if you block)\n\nExample language:\n- \"If this user confirms they clicked the link, escalate to IR and force password reset + token revoke.\"\n\nValidation:\n- A reader can see that you considered business impact and false positives.\n\nTroubleshooting:\n- If you’re unsure, write \"recommended\" actions and cite a reference in Appendix."
+      },
+      {
+        "title": "Step 11 — Create an index + make it portfolio-readable",
+        "body": "Create an index file that lists your cases and playbooks:\n- `SOC-Casefiles/README.md`\n\nInclude:\n- What this folder is\n- Links to each casefile\n- Links to each playbook\n- A short \"skills demonstrated\" list\n\nExample structure:\n- ## Casefiles\n  - [2026-02-12 Phishing O365 Link](casefiles/...) \n- ## Playbooks\n  - [Phishing Triage](playbooks/...)\n\nValidation:\n- Your README acts like a landing page.\n\nTroubleshooting:\n- If GitHub relative links are annoying, test by clicking them in GitHub UI."
+      },
+      {
+        "title": "Step 12 — Quality pass: consistency, redaction, and final checks",
+        "body": "Final pass checklist:\n- Consistent headings across all casefiles\n- IOCs listed in a clean format\n- Timeline present (table or bullets)\n- Verdict + Confidence included\n- Redact emails, real names, internal domains/IPs if needed\n\nRecommended redaction approach:\n- Replace sensitive domains with `corp.example`\n- Replace real IPs with RFC 5737 examples: `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`\n\nGit sanity (optional):\n```bash\ngit status\n```\n\nValidation:\n- A new reader can open any casefile and immediately understand the story.\n\nTroubleshooting:\n- If you’re worried you included sensitive info, remove it and rewrite the evidence section as a description of what you observed."
+      }
+    ],
+    "successCriteria": [
+      "At least 3 completed casefiles using a consistent template",
+      "At least 2 playbooks with clear triage/investigation/containment steps",
+      "Each casefile includes IOCs + evidence + verdict + confidence",
+      "Repo README links to casefiles and playbooks cleanly",
+      "Content is safe to publish (redacted where needed) while still demonstrating analyst thinking",
+      "Casefiles are readable without extra explanation",
+      "Documentation style is consistent across the folder"
+    ],
+    "troubleshooting": [
+      {
+        "issue": "I don't have real incident data to write casefiles from.",
+        "fix": "Use simulated datasets: small CSV auth logs, public phishing header samples, or a training pcap. Be explicit in the casefile that it’s simulated and focus on the workflow."
+      },
+      {
+        "issue": "My casefiles feel too shallow (\"I checked X\" without proof).",
+        "fix": "Add an Evidence section for each major claim: paste a log snippet, a Wireshark screenshot reference, header fields, or enrichment summary. Tie each finding to a concrete artifact."
+      },
+      {
+        "issue": "I'm worried about leaking sensitive data.",
+        "fix": "Redact: replace domains with example domains, use RFC 5737 IP ranges, remove real names/emails. If needed, describe evidence instead of pasting it verbatim."
+      },
+      {
+        "issue": "I don’t know what containment actions are appropriate.",
+        "fix": "Write containment as recommendations with conditions (\"If confirmed compromised...\"). Add a reference link to Microsoft/Google/Okta guidance in Appendix."
+      }
+    ],
+    "cliCheatSheet": [
+      {
+        "command": "grep -Eo 'https?://[^ ]+' email.txt | sort -u",
+        "syntax": "Extract URLs from a text file by matching http/https patterns, then sort uniquely.",
+        "purpose": "Quickly pull suspicious URLs out of email/header/body text dumps for IOC listing."
+      },
+      {
+        "command": "grep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence.txt | sort -u",
+        "syntax": "Regex-match IPv4-like patterns in a file, then sort uniquely.",
+        "purpose": "Extract candidate IP indicators from evidence text (logs, notes, exports)."
+      },
+      {
+        "command": "awk -F',' '$2==\"user@example.com\" {print $3}' auth.csv | sort -u",
+        "syntax": "Split CSV by commas, filter rows where column 2 matches a user, print column 3, then unique-sort.",
+        "purpose": "Quickly list source IPs for a given user from a simple authentication log CSV."
+      },
+      {
+        "command": "nslookup example.com",
+        "syntax": "nslookup <domain>",
+        "purpose": "Resolves a domain and can be used to verify DNS behavior during investigations."
+      },
+      {
+        "command": "curl -I https://example.com",
+        "syntax": "curl -I <url>",
+        "purpose": "Pulls response headers to quickly inspect redirects, server type, and cache behavior."
+      }
+    ],
+    "references": [
+      {
+        "title": "NIST Computer Security Incident Handling Guide (SP 800-61)",
+        "url": "https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final"
+      },
+      {
+        "title": "RFC 5737 — Documentation IPv4 Address Blocks (safe example IPs)",
+        "url": "https://www.rfc-editor.org/rfc/rfc5737"
+      },
+      {
+        "title": "GitHub Docs — Mastering Markdown",
+        "url": "https://guides.github.com/features/mastering-markdown/"
+      },
+      {
+        "title": "AbuseIPDB — IP reputation lookup",
+        "url": "https://www.abuseipdb.com/"
+      },
+      {
+        "title": "VirusTotal — File/URL/Domain analysis",
+        "url": "https://www.virustotal.com/"
+      },
+      {
+        "title": "AlienVault OTX — Open threat intelligence",
+        "url": "https://otx.alienvault.com/"
+      }
+    ]
+  },
+  "ids-setup": {
+    "id": "ids-setup",
+    "title": "IDS Setup (Suricata / Snort Detection Lab)",
+    "difficulty": "Intermediate",
+    "timeEstimate": "3–6 hours",
+    "tools": [
+      "Linux VM (Ubuntu Server recommended)",
+      "Suricata (preferred IDS)",
+      "Optional: Snort",
+      "tcpdump",
+      "Wireshark (optional)",
+      "curl",
+      "nmap",
+      "Python 3 (optional)",
+      "sudo privileges"
+    ],
+    "prereqs": [
+      "Basic Linux administration (systemctl, apt, editing config files)",
+      "Understanding of TCP/IP, ports, and protocols",
+      "Basic familiarity with packet capture concepts",
+      "Comfort reading logs"
+    ],
+    "objective": "Deploy an Intrusion Detection System (IDS) on a Linux host using Suricata (or Snort), configure it to monitor traffic, generate alerts from test attacks, and validate detection by analyzing alert logs and rule hits like a SOC analyst.",
+    "deliverables": [
+      "Suricata installed and running as a service",
+      "Configured Suricata interface monitoring (eth0 or correct NIC)",
+      "Alerts generated from simulated attacks (nmap scan, HTTP requests, etc.)",
+      "Saved evidence: suricata logs (`fast.log`, `eve.json`)",
+      "Screenshots of alert output and service status",
+      "README documentation showing setup, validation, and troubleshooting steps",
+      "Optional: custom IDS rule written and tested"
+    ],
+    "steps": [
+      {
+        "title": "Step 1 — Create your IDS VM and confirm network connectivity",
+        "body": "Spin up a Linux VM (Ubuntu Server recommended). The IDS works best when the VM has real network access.\n\nRecommended VM setup:\n- 2 CPU cores\n- 4GB RAM\n- 20GB storage\n- Bridged adapter if possible (so it sees real LAN traffic)\n\nCommands:\n- `ip a`\n- `ping -c 4 8.8.8.8`\n- `ping -c 4 google.com`\n\nValidation:\n- You can ping external IPs and resolve DNS.\n\nDeliverable:\n- Screenshot showing IP address + successful ping.\n\nTroubleshooting:\n- If ping fails, check VM network mode (NAT vs bridged).\n- If DNS fails, verify `/etc/resolv.conf`."
+      },
+      {
+        "title": "Step 2 — Navigate into the IDS project folder",
+        "body": "Open the project directory in your CyberSecurity-Projects repo.\n\nCommands:\n- `cd ~/CyberSecurity-Projects/IDS_Setup`\n- `ls -la`\n\nValidation:\n- You should see a README and/or supporting files.\n\nDeliverable:\n- Screenshot of folder contents.\n\nSOC Note:\n- This lab folder is where your screenshots, exported logs, and rule files will live."
+      },
+      {
+        "title": "Step 3 — Update system packages and install dependencies",
+        "body": "Before installing Suricata, update packages and install utilities.\n\nCommands:\n- `sudo apt update && sudo apt upgrade -y`\n- `sudo apt install -y curl wget jq tcpdump net-tools unzip`\n\nOptional:\n- Install Wireshark CLI tools:\n  - `sudo apt install -y tshark`\n\nValidation:\n- `tcpdump --version` returns output.\n- `jq --version` returns output.\n\nDeliverable:\n- Screenshot showing successful installs.\n\nTroubleshooting:\n- If apt fails, rerun `sudo apt update` and check network connectivity."
+      },
+      {
+        "title": "Step 4 — Install Suricata",
+        "body": "Install Suricata from Ubuntu repositories.\n\nCommands:\n- `sudo apt install -y suricata`\n\nConfirm install:\n- `suricata --build-info`\n\nValidation:\n- Suricata version output appears.\n\nDeliverable:\n- Screenshot of `suricata --build-info`.\n\nSOC Note:\n- Suricata is a modern IDS/IPS engine that outputs JSON logs (eve.json), making it SIEM-friendly."
+      },
+      {
+        "title": "Step 5 — Identify the correct network interface to monitor",
+        "body": "Suricata must listen on the correct NIC.\n\nCommands:\n- `ip link show`\n- `ip a`\n\nCommon interface names:\n- `eth0`\n- `ens33`\n- `enp0s3`\n\nValidation:\n- Identify which interface has your real IP.\n\nDeliverable:\n- Write down your interface name (example: `ens33`).\n\nTroubleshooting:\n- If you see multiple interfaces, pick the one with your assigned IP (not lo/loopback)."
+      },
+      {
+        "title": "Step 6 — Configure Suricata to monitor your interface",
+        "body": "Suricata configuration file:\n- `/etc/suricata/suricata.yaml`\n\nFirst, back it up:\n- `sudo cp /etc/suricata/suricata.yaml /etc/suricata/suricata.yaml.bak`\n\nEdit the file:\n- `sudo nano /etc/suricata/suricata.yaml`\n\nLook for the `af-packet:` section and ensure your interface is listed.\nExample:\n```\naf-packet:\n  - interface: ens33\n```\n\nSome installs use `pcap:` mode instead.\n\nValidation:\n- Configuration includes your correct interface.\n\nDeliverable:\n- Screenshot of the relevant config section.\n\nTroubleshooting:\n- If Suricata fails to start later, restore backup:\n  - `sudo cp /etc/suricata/suricata.yaml.bak /etc/suricata/suricata.yaml`"
+      },
+      {
+        "title": "Step 7 — Download and update Suricata rules",
+        "body": "Suricata needs rules to detect malicious patterns.\n\nUpdate rules using suricata-update:\n- `sudo suricata-update`\n\nConfirm rules exist:\n- `ls -la /var/lib/suricata/rules/`\n\nThe main rule file is usually:\n- `/var/lib/suricata/rules/suricata.rules`\n\nValidation:\n- suricata-update finishes without errors.\n- Rule files exist in `/var/lib/suricata/rules/`.\n\nDeliverable:\n- Screenshot showing rules downloaded.\n\nTroubleshooting:\n- If update fails, check DNS/internet connectivity.\n- If rules directory is empty, rerun `sudo suricata-update`."
+      },
+      {
+        "title": "Step 8 — Run Suricata in test mode (validate configuration)",
+        "body": "Before enabling Suricata as a service, validate the config.\n\nCommand:\n- `sudo suricata -T -c /etc/suricata/suricata.yaml -v`\n\nValidation:\n- Output should include: `Configuration provided was successfully loaded.`\n\nDeliverable:\n- Screenshot of successful test output.\n\nTroubleshooting:\n- If you see YAML parsing errors, re-check indentation.\n- Restore from backup if needed."
+      },
+      {
+        "title": "Step 9 — Start and enable Suricata service",
+        "body": "Now start Suricata as a service.\n\nCommands:\n- `sudo systemctl start suricata`\n- `sudo systemctl enable suricata`\n\nCheck status:\n- `sudo systemctl status suricata --no-pager`\n\nValidation:\n- Service shows `active (running)`.\n\nDeliverable:\n- Screenshot showing active service.\n\nTroubleshooting:\n- If it fails, check logs:\n  - `sudo journalctl -u suricata -n 50 --no-pager`"
+      },
+      {
+        "title": "Step 10 — Locate Suricata output logs (fast.log and eve.json)",
+        "body": "Suricata logs are usually stored here:\n- `/var/log/suricata/`\n\nCheck files:\n- `ls -la /var/log/suricata/`\n\nCommon files:\n- `fast.log` (human readable alerts)\n- `eve.json` (structured JSON event output)\n- `stats.log`\n\nView alerts:\n- `sudo tail -n 50 /var/log/suricata/fast.log`\n\nView JSON events:\n- `sudo tail -n 5 /var/log/suricata/eve.json | jq .`\n\nValidation:\n- Logs exist and are updating.\n\nDeliverable:\n- Screenshot showing files in /var/log/suricata.\n\nTroubleshooting:\n- If logs are empty, generate traffic and ensure Suricata is running."
+      },
+      {
+        "title": "Step 11 — Generate test traffic (safe recon simulation)",
+        "body": "To trigger alerts, generate network activity.\n\nFrom another machine (Kali/Windows):\n- `nmap -sS -Pn <IDS-IP>`\n\nFrom IDS machine itself:\n- `curl http://example.com`\n- `ping -c 5 1.1.1.1`\n\nOptional: aggressive scan (still safe):\n- `nmap -A -T4 -Pn <IDS-IP>`\n\nValidation:\n- Alerts appear in fast.log.\n\nCheck:\n- `sudo tail -n 100 /var/log/suricata/fast.log`\n\nDeliverable:\n- Screenshot showing scan output + Suricata alerts.\n\nSOC Note:\n- Recon scans are one of the most common \"first indicators\" of intrusion attempts."
+      },
+      {
+        "title": "Step 12 — Analyze Suricata alerts like a SOC analyst",
+        "body": "Your job is not just to \"see alerts\" but to interpret them.\n\nCheck recent alerts:\n- `sudo tail -n 50 /var/log/suricata/fast.log`\n\nExtract alert events from eve.json:\n- `sudo cat /var/log/suricata/eve.json | jq 'select(.event_type==\"alert\")' | head -n 20`\n\nLook for:\n- signature name\n- severity\n- source/destination IP\n- ports\n\nValidation:\n- You can identify at least 2 alerts and explain what triggered them.\n\nDeliverable:\n- Write 2–3 bullet analysis notes into README or a notes file (example: `IDS_Setup/alert-analysis.md`)."
+      },
+      {
+        "title": "Step 13 — Create and test a custom Suricata rule",
+        "body": "Writing a rule is the most valuable skill-building part of this lab.\n\nCreate a custom rule file:\n- `sudo nano /etc/suricata/rules/local.rules`\n\nExample rule (detect a test keyword):\n```\nalert http any any -> any any (msg:\"SOC OS TEST RULE - suspicious keyword\"; content:\"eviltest\"; http_uri; sid:9999999; rev:1;)\n```\n\nNow ensure local.rules is referenced in suricata.yaml.\nLook for:\n- `rule-files:`\n\nAdd or confirm:\n- `- local.rules`\n\nTest config:\n- `sudo suricata -T -c /etc/suricata/suricata.yaml -v`\n\nRestart Suricata:\n- `sudo systemctl restart suricata`\n\nTrigger the rule:\n- `curl \"http://<IDS-IP>/eviltest\"`\n\nValidation:\n- Your custom alert appears in fast.log.\n\nDeliverable:\n- Screenshot of your local.rules file + alert output.\n\nTroubleshooting:\n- If no alert triggers, ensure rule is loaded and Suricata restarted."
+      },
+      {
+        "title": "Step 14 — Export logs and evidence into the repo folder",
+        "body": "Copy Suricata evidence into your project folder so the lab is portable.\n\nRecommended folder structure:\n- `IDS_Setup/evidence/`\n- `IDS_Setup/screenshots/`\n\nCommands:\n- `mkdir -p ~/CyberSecurity-Projects/IDS_Setup/evidence`\n- `sudo cp /var/log/suricata/fast.log ~/CyberSecurity-Projects/IDS_Setup/evidence/fast.log`\n- `sudo cp /var/log/suricata/eve.json ~/CyberSecurity-Projects/IDS_Setup/evidence/eve.json`\n\nFix permissions:\n- `sudo chown -R $USER:$USER ~/CyberSecurity-Projects/IDS_Setup/evidence`\n\nValidation:\n- Evidence files exist in repo folder.\n\nDeliverable:\n- `IDS_Setup/evidence/fast.log`\n- `IDS_Setup/evidence/eve.json`"
+      },
+      {
+        "title": "Step 15 — Document the lab with validation and SOC-style findings",
+        "body": "Update README.md with:\n\nRecommended sections:\n- What is an IDS?\n- Why Suricata matters\n- Setup steps (install + config)\n- How rules were updated\n- Test attack results (nmap scans)\n- Custom rule test\n- Evidence folder contents\n- Lessons learned\n\nInclude a short SOC-style summary:\n- \"Observed recon attempt\" (nmap)\n- \"Alert severity\" and signature\n- \"Recommended action\" (block at firewall, tune rule, whitelist internal scan)\n\nValidation:\n- A reader can reproduce your IDS setup from the README.\n\nDeliverable:\n- Updated README.md with commands + evidence references."
+      },
+      {
+        "title": "Step 16 — Optional upgrade: forward Suricata logs into Splunk or SIEM",
+        "body": "This is optional but makes the lab much more realistic.\n\nIf you already have Splunk or syslog forwarding:\n- Use rsyslog or file monitoring to ship eve.json.\n\nExample (basic approach):\n- Configure rsyslog to forward /var/log/suricata/fast.log.\n\nValidation:\n- Alerts appear inside your SIEM.\n\nDeliverable:\n- Add a section in README describing the log forwarding approach.\n\nSOC Note:\n- In real SOC environments, Suricata is rarely read locally. It's forwarded to Splunk/Elastic/Sentinel."
+      }
+    ],
+    "successCriteria": [
+      "Suricata is installed and running as an active service",
+      "Suricata rules are downloaded and updated successfully",
+      "fast.log and eve.json exist and contain IDS events",
+      "At least one alert is generated from a simulated recon scan",
+      "A custom Suricata rule is created and successfully triggered",
+      "Evidence logs are exported into the IDS_Setup folder",
+      "README includes full commands, validation steps, and troubleshooting guidance"
+    ],
+    "troubleshooting": [
+      {
+        "issue": "Suricata service fails to start",
+        "fix": "Run `sudo journalctl -u suricata -n 100 --no-pager` to view errors. Then validate config with `sudo suricata -T -c /etc/suricata/suricata.yaml -v`. Most failures are caused by YAML indentation or invalid interface name."
+      },
+      {
+        "issue": "No alerts appear in fast.log",
+        "fix": "Confirm Suricata is running (`sudo systemctl status suricata`). Generate traffic using `nmap -Pn <IDS-IP>` from another machine. Check if the correct interface is configured in suricata.yaml."
+      },
+      {
+        "issue": "suricata-update fails or downloads no rules",
+        "fix": "Check internet/DNS. Run `ping -c 4 8.8.8.8` and `ping -c 4 google.com`. Retry with `sudo suricata-update`."
+      },
+      {
+        "issue": "My custom rule does not trigger",
+        "fix": "Confirm local.rules is listed under `rule-files:` in suricata.yaml. Restart Suricata after changes. Run `sudo suricata -T` to confirm the rule loads. Verify your rule SID is unique."
+      },
+      {
+        "issue": "eve.json output is hard to read",
+        "fix": "Use jq: `sudo tail -n 20 /var/log/suricata/eve.json | jq .` or filter alerts only: `sudo cat eve.json | jq 'select(.event_type==\"alert\")'`."
+      }
+    ],
+    "references": [
+      {
+        "title": "Suricata Official Documentation",
+        "url": "https://suricata.io/documentation/"
+      },
+      {
+        "title": "Suricata User Guide (OISF)",
+        "url": "https://docs.suricata.io/en/latest/"
+      },
+      {
+        "title": "Suricata Rules Format",
+        "url": "https://docs.suricata.io/en/latest/rules/intro.html"
+      },
+      {
+        "title": "nmap Reference Guide",
+        "url": "https://nmap.org/book/man.html"
+      },
+      {
+        "title": "Ubuntu Systemd service basics",
+        "url": "https://manpages.ubuntu.com/manpages/jammy/en/man1/systemctl.1.html"
+      }
+    ],
+    "cliCheatSheet": [
+      {
+        "command": "sudo suricata-update",
+        "syntax": "sudo suricata-update",
+        "purpose": "Downloads and updates Suricata rulesets."
+      },
+      {
+        "command": "sudo suricata -T -c /etc/suricata/suricata.yaml -v",
+        "syntax": "sudo suricata -T -c <config> -v",
+        "purpose": "Validates Suricata configuration file before running the service."
+      },
+      {
+        "command": "sudo systemctl status suricata --no-pager",
+        "syntax": "sudo systemctl status <service>",
+        "purpose": "Checks Suricata service status and whether it is running."
+      },
+      {
+        "command": "sudo tail -n 50 /var/log/suricata/fast.log",
+        "syntax": "sudo tail -n <lines> <file>",
+        "purpose": "Views recent IDS alerts in a readable format."
+      },
+      {
+        "command": "sudo tail -n 5 /var/log/suricata/eve.json | jq .",
+        "syntax": "tail -n <lines> <file> | jq .",
+        "purpose": "Pretty-prints JSON log events for easier analysis."
+      },
+      {
+        "command": "sudo journalctl -u suricata -n 50 --no-pager",
+        "syntax": "sudo journalctl -u <service> -n <lines>",
+        "purpose": "Views Suricata service logs to troubleshoot startup failures."
+      },
+      {
+        "command": "nmap -sS -Pn <target-ip>",
+        "syntax": "nmap -sS -Pn <target-ip>",
+        "purpose": "Generates safe recon scan traffic to test IDS detection."
+      },
+      {
+        "command": "sudo ss -tulnp",
+        "syntax": "sudo ss -tulnp",
+        "purpose": "Shows listening ports and services running on the host."
+      }
+    ]
+  },
+  "malware-analysis": {
+    "id": "malware-analysis",
+    "title": "Malware Analysis (Triage Lab: Static + Dynamic)",
+    "difficulty": "Intermediate → Advanced",
+    "timeEstimate": "4–10 hours",
+    "tools": [
+      "Isolated Malware VM (Windows recommended) OR Linux analysis VM",
+      "Snapshot-capable hypervisor (VirtualBox/VMware)",
+      "Any.Run (optional cloud sandbox) OR REMnux/FLARE VM (optional)",
+      "Sysinternals Suite (Process Explorer, Procmon, Autoruns)",
+      "Wireshark",
+      "Strings utility (strings / floss)",
+      "Hashing tools (sha256sum / certutil)",
+      "YARA (optional)",
+      "VirusTotal (for hash lookup only)",
+      "Python 3 (optional for automation/reporting)"
+    ],
+    "prereqs": [
+      "Comfort with VM snapshots and isolated networks",
+      "Basic understanding of Windows processes, persistence, and networking",
+      "Familiarity with hashing and IOCs",
+      "Know what NOT to do (never execute unknown malware on a host machine)"
+    ],
+    "objective": "Perform safe malware triage using a controlled environment: capture hashes, extract strings and metadata, observe behavior in a sandbox/VM, collect indicators of compromise (IOCs), and write a SOC-ready report with confidence levels and recommended actions.",
+    "deliverables": [
+      "A safe analysis environment (VM) with snapshots and no direct access to production networks",
+      "Hash set (MD5/SHA1/SHA256) of the sample",
+      "Static triage notes (strings, PE metadata if applicable, embedded URLs/domains)",
+      "Dynamic observation notes (processes, persistence attempts, network connections)",
+      "Collected IOCs (domains, IPs, file paths, mutexes, registry keys, scheduled tasks, user-agent, etc.)",
+      "Evidence package (screenshots + exported logs/captures)",
+      "Final SOC-style malware triage report (Markdown/PDF)"
+    ],
+    "steps": [
+      {
+        "title": "Step 1 — Create an isolated analysis environment (no regrets setup)",
+        "body": "Rule #1: Never analyze unknown malware on your daily machine.\n\nCreate a dedicated Malware Analysis VM.\nRecommended: Windows 10/11 VM (for typical malware behavior) + optional Linux analysis VM.\n\nIsolation checklist:\n- Use a hypervisor that supports snapshots (VirtualBox/VMware).\n- Disable shared folders / clipboard sharing if possible.\n- Use Host-only network or NAT with strict outbound control (preferred: host-only + simulated internet tools).\n- Take a clean snapshot named: `CLEAN_BASELINE`.\n\nValidation:\n- You can revert to snapshot instantly.\n\nDeliverables:\n- Screenshot of VM settings (network mode) + snapshot list.\n\nTroubleshooting:\n- If you need internet for tooling downloads, do that first, then snapshot, then isolate."
+      },
+      {
+        "title": "Step 2 — Create the project evidence folders in the repo",
+        "body": "In your CyberSecurity-Projects repo, create a consistent evidence structure.\n\nCommands:\n- `cd ~/CyberSecurity-Projects/Malware-Analysis`\n- `mkdir -p evidence/screenshots evidence/logs evidence/pcaps evidence/notes evidence/iocs`\n\nSuggested files:\n- `analysis-notes.md`\n- `ioc-list.md`\n- `malware-triage-report.md`\n\nValidation:\n- `ls -R evidence` shows the folders.\n\nDeliverable:\n- Screenshot of folder structure."
+      },
+      {
+        "title": "Step 3 — Acquire a SAFE sample (or use a known benign test file)",
+        "body": "For a universal walkthrough, this lab supports two paths:\n\nPath A (recommended for practice): Use a known-safe test file (EICAR) to practice workflows.\n- EICAR is NOT malware, but it exercises AV detection and handling procedures.\n\nPath B (advanced): Use an intentionally vulnerable lab sample from a trusted training source.\n- Only do this if you understand the risk.\n- Do not use random malware from the internet.\n\nValidation:\n- You can explain exactly where your sample came from.\n\nDeliverable:\n- `evidence/notes/sample-source.md` describing the source and why it’s safe/trusted.\n\nImportant:\n- Do NOT paste or distribute real malware binaries inside public repos."
+      },
+      {
+        "title": "Step 4 — Compute file hashes and capture file metadata",
+        "body": "Hashing is your anchor: it lets you correlate findings safely.\n\nOn Windows:\n- `certutil -hashfile <sample> SHA256`\n- `certutil -hashfile <sample> MD5`\n\nOn Linux:\n- `sha256sum <sample>`\n- `md5sum <sample>`\n\nRecord:\n- SHA256, SHA1, MD5\n- Filename, size, timestamps\n\nValidation:\n- Hashes are stored in your notes.\n\nDeliverables:\n- `evidence/notes/hashes.txt`\n- Screenshot showing hash output.\n\nTroubleshooting:\n- If you can’t access the file, confirm permissions and that you copied it into the VM correctly."
+      },
+      {
+        "title": "Step 5 — Run a “hash-only” reputation lookup (no uploads)",
+        "body": "Use VirusTotal (or similar) responsibly: do a hash lookup first.\n\nRules:\n- Prefer hash lookup only.\n- Uploading samples can leak data and may violate policies.\n\nWhat to capture:\n- Detection ratio (e.g., 12/70)\n- First seen / last seen\n- Known names/family hints\n- Reported behaviors (high-level)\n\nValidation:\n- You can cite the reputation summary without uploading the binary.\n\nDeliverable:\n- Screenshot or notes in `analysis-notes.md` under “Reputation Check”.\n\nTroubleshooting:\n- If no results, that may indicate a new sample OR a benign file—don’t over-interpret."
+      },
+      {
+        "title": "Step 6 — Static triage: strings + quick indicator harvesting",
+        "body": "Goal: pull out obvious IOCs without executing anything.\n\nOn Linux (best for strings):\n- `strings -n 6 <sample> | tee evidence/logs/strings.txt`\n\nOptional (better): FLOSS (extracts obfuscated strings):\n- `floss <sample> | tee evidence/logs/floss.txt`\n\nLook for:\n- URLs, domains, IPs\n- suspicious file paths\n- registry keys\n- user-agent strings\n- commands (powershell/cmd)\n\nQuick filtering examples:\n- `grep -Eo '(https?://[^ ]+)' evidence/logs/strings.txt | sort -u`\n- `grep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence/logs/strings.txt | sort -u`\n\nValidation:\n- You extracted at least 5 candidate indicators.\n\nDeliverables:\n- `evidence/logs/strings.txt` (or floss output)\n- `evidence/iocs/iocs-static.txt`\n\nTroubleshooting:\n- If strings output is empty, the file may be packed or not a typical binary—document that."
+      },
+      {
+        "title": "Step 7 — Identify file type and (optional) PE metadata",
+        "body": "Determine what you’re looking at: PE EXE/DLL, script, document macro, etc.\n\nLinux:\n- `file <sample>`\n\nIf it’s a Windows PE file and you have tools:\n- Extract PE metadata (imports, sections, compile time) using a PE viewer.\n\nWhat to capture:\n- File type\n- Suspected packer/obfuscation\n- Notable imports (networking, process injection hints)\n\nValidation:\n- Your notes clearly state file type and any suspicious metadata.\n\nDeliverable:\n- Section in `analysis-notes.md`: “Static Metadata”."
+      },
+      {
+        "title": "Step 8 — Prepare dynamic analysis (instrumentation before execution)",
+        "body": "If you plan to execute, instrument first.\n\nWindows tooling (recommended):\n- Procmon (Process Monitor)\n- Process Explorer\n- Autoruns\n\nNetwork capture:\n- Start Wireshark capture on the VM NIC.\n- Save to `evidence/pcaps/dynamic-run-1.pcapng`\n\nBaseline snapshot:\n- Revert to `CLEAN_BASELINE`\n- Take a second snapshot: `PRE_EXECUTION`\n\nValidation:\n- Procmon is ready, Wireshark capture running, snapshot taken.\n\nDeliverables:\n- Screenshot: Procmon filters open + Wireshark capturing.\n\nTroubleshooting:\n- If Wireshark sees nothing, confirm correct interface inside VM."
+      },
+      {
+        "title": "Step 9 — Execute in a controlled way and observe behavior",
+        "body": "Only proceed if you’re confident you’re in an isolated environment.\n\nExecution plan:\n- Start Procmon capture.\n- Execute sample.\n- Observe 2–5 minutes.\n- Stop Procmon capture and save PML (or export CSV if you prefer).\n\nWhat to watch:\n- New processes spawned (cmd/powershell)\n- Writes to AppData/Temp/System32\n- Registry persistence keys\n- Scheduled tasks\n- Network connections and DNS requests\n\nValidation:\n- You can list:\n  - process tree observed\n  - file writes (top 3)\n  - persistence attempt (if any)\n  - network indicators (domains/IPs)\n\nDeliverables:\n- `evidence/screenshots/` (process tree + notable procmon events)\n- `evidence/logs/procmon-run-1.pml` (or exported CSV)\n- `evidence/pcaps/dynamic-run-1.pcapng`\n\nTroubleshooting:\n- If nothing happens, the sample may be sandbox-aware or requires arguments/admin. Document that and stop."
+      },
+      {
+        "title": "Step 10 — Extract IOCs from dynamic artifacts",
+        "body": "From Procmon and Wireshark, extract high-confidence indicators.\n\nWireshark tips:\n- Filter DNS: `dns`\n- Filter HTTP: `http`\n- Filter TLS SNI (if present): `tls.handshake.extensions_server_name`\n\nIOC categories:\n- Domains / IPs\n- URLs\n- File paths\n- Registry keys\n- Scheduled task names\n- Mutex names\n- User-Agent\n\nValidation:\n- Your IOC list is clean (deduped), categorized, and tagged as static/dynamic.\n\nDeliverable:\n- `evidence/iocs/ioc-list.md` with sections:\n  - High confidence\n  - Medium confidence\n  - Needs verification"
+      },
+      {
+        "title": "Step 11 — Optional: YARA rule starter for one indicator pattern",
+        "body": "Write a small YARA rule to detect the sample (or a characteristic string) as a learning artifact.\n\nExample skeleton:\n```\nrule Training_Malware_Sample {\n  meta:\n    author = \"YourName\"\n    description = \"Training rule based on extracted strings\"\n    date = \"YYYY-MM-DD\"\n  strings:\n    $s1 = \"<unique_string_here>\" ascii nocase\n    $s2 = \"<another_unique_string>\" ascii\n  condition:\n    1 of them\n}\n```\n\nValidation:\n- Rule compiles and matches the sample (or matches extracted strings).\n\nDeliverable:\n- `evidence/notes/training.yar`\n\nTroubleshooting:\n- If it matches too broadly, tighten strings or require multiple conditions."
+      },
+      {
+        "title": "Step 12 — Write the SOC-style malware triage report",
+        "body": "This is the portfolio gold.\n\nCreate/Update:\n- `malware-triage-report.md`\n\nRecommended sections:\n1) Executive Summary (what it likely is, confidence)\n2) Sample Details (hashes, file type)\n3) Static Findings (strings, metadata)\n4) Dynamic Findings (processes, persistence, network)\n5) Indicators of Compromise (categorized)\n6) MITRE ATT&CK mapping (optional)\n7) Recommendations (containment, hunting queries ideas)\n8) Limitations (sandbox evasion, no internet, etc.)\n\nValidation:\n- A reader can follow your steps and understand your conclusions.\n\nDeliverables:\n- Completed report + links to evidence paths inside the repo.\n\nTroubleshooting:\n- If you’re unsure about conclusions, explicitly mark uncertain items and propose next steps (submit to sandbox, detonate with better telemetry, etc.)."
+      },
+      {
+        "title": "Step 13 — Cleanup: revert snapshot and confirm no persistence remains",
+        "body": "After analysis:\n- Revert VM to `CLEAN_BASELINE` snapshot.\n\nValidation:\n- System returns to known-clean state.\n\nDeliverable:\n- Note in README/report that the VM was reverted to baseline.\n\nSOC Note:\n- This models professional hygiene: malware labs reset after detonation."
+      }
+    ],
+    "successCriteria": [
+      "You performed analysis in an isolated snapshot-capable VM and documented the containment approach",
+      "You produced hash values (MD5/SHA1/SHA256) and captured file metadata",
+      "You extracted and categorized IOCs from static triage and (optional) dynamic telemetry",
+      "You captured and saved evidence artifacts (screenshots, logs, PCAPs) under Malware-Analysis/evidence/",
+      "You wrote a clear triage report with findings, confidence, and recommendations",
+      "You reverted the VM to a clean snapshot after detonation/observation"
+    ],
+    "troubleshooting": [
+      {
+        "issue": "I can’t safely get a malware sample",
+        "fix": "Use EICAR for workflow practice and document that this run is a triage exercise. Later, use a dedicated training platform or a known lab source with explicit permission."
+      },
+      {
+        "issue": "The sample does nothing when executed",
+        "fix": "It may be sandbox-aware, require admin, need arguments, or be non-executable. Document the behavior, focus on static IOCs, and recommend next steps (richer sandbox telemetry, different VM profile)."
+      },
+      {
+        "issue": "Wireshark shows no traffic",
+        "fix": "Confirm correct interface, ensure capture started before execution, and confirm the VM has a network route. Some malware only beacons after delays or triggers."
+      },
+      {
+        "issue": "Procmon captures too much noise",
+        "fix": "Use filters: include Process Name = sample.exe; include Operation = CreateFile/RegSetValue/TCP Connect; exclude common Windows noise where safe. Focus on first minutes after execution."
+      },
+      {
+        "issue": "I’m worried I infected my host",
+        "fix": "Stop, disconnect network, and revert snapshots. If you executed outside the VM, treat it as a real incident: isolate the host, run offline AV scans, and seek professional remediation."
+      }
+    ],
+    "references": [
+      {
+        "title": "EICAR Test File (Safe AV Test)",
+        "url": "https://www.eicar.org/download-anti-malware-testfile/"
+      },
+      {
+        "title": "Sysinternals Suite (Microsoft)",
+        "url": "https://learn.microsoft.com/en-us/sysinternals/"
+      },
+      {
+        "title": "Wireshark Display Filters Reference",
+        "url": "https://www.wireshark.org/docs/dfref/"
+      },
+      {
+        "title": "MITRE ATT&CK Framework",
+        "url": "https://attack.mitre.org/"
+      },
+      {
+        "title": "YARA Documentation",
+        "url": "https://yara.readthedocs.io/"
+      }
+    ],
+    "cliCheatSheet": [
+      {
+        "command": "sha256sum <sample>",
+        "syntax": "sha256sum <file>",
+        "purpose": "Computes SHA256 hash for correlation and reputation lookup."
+      },
+      {
+        "command": "certutil -hashfile <sample> SHA256",
+        "syntax": "certutil -hashfile <file> SHA256",
+        "purpose": "Computes SHA256 hash on Windows without extra tools."
+      },
+      {
+        "command": "strings -n 6 <sample> | tee evidence/logs/strings.txt",
+        "syntax": "strings -n <minlen> <file> | tee <output>",
+        "purpose": "Extracts readable strings for static IOC harvesting and saves output."
+      },
+      {
+        "command": "grep -Eo '(https?://[^ ]+)' evidence/logs/strings.txt | sort -u",
+        "syntax": "grep -Eo '<regex>' <file> | sort -u",
+        "purpose": "Extracts and deduplicates URLs from strings output."
+      },
+      {
+        "command": "grep -Eo '([0-9]{1,3}\\.){3}[0-9]{1,3}' evidence/logs/strings.txt | sort -u",
+        "syntax": "grep -Eo '<regex>' <file> | sort -u",
+        "purpose": "Extracts and deduplicates IP-like patterns from strings output."
+      }
+    ]
+  },
+  "home-security-lab": {
+    "id": "home-security-lab",
+    "title": "Home Security Lab (SOC Monitoring at Home)",
+    "difficulty": "Intermediate",
+    "timeEstimate": "6–14 hours",
+    "tools": [
+      "A spare PC or laptop (recommended) OR a VM host",
+      "Ubuntu Server (or Debian) for log collection",
+      "Windows machine (or Windows VM) as an endpoint",
+      "Router access (basic admin access)",
+      "UFW firewall (Linux)",
+      "Wireshark (optional but recommended)",
+      "rsyslog (log forwarding)",
+      "Splunk Free OR Elastic Stack (optional SIEM)",
+      "nmap",
+      "journalctl",
+      "fail2ban (optional hardening)",
+      "Sysmon (Windows, optional but highly recommended)"
+    ],
+    "prereqs": [
+      "Basic understanding of TCP/IP and ports",
+      "Comfort using Linux CLI",
+      "Basic familiarity with log files and event logs",
+      "Ability to create VMs or use spare hardware"
+    ],
+    "objective": "Build a realistic home SOC lab: establish a baseline of normal network activity, configure log forwarding from endpoints, detect suspicious activity using log review and simple alerts, and document a repeatable monitoring workflow.",
+    "deliverables": [
+      "A documented home lab topology diagram (network layout)",
+      "A configured Linux log collector (rsyslog server)",
+      "Forwarded logs from at least one endpoint (Linux and/or Windows)",
+      "Baseline capture (ports/services + normal log patterns)",
+      "Detection test results (simulated brute force / scan / suspicious behavior)",
+      "Evidence artifacts (screenshots, logs, pcaps)",
+      "A SOC-style Home Monitoring Report (Markdown)"
+    ],
+    "steps": [
+      {
+        "title": "Step 1 — Plan your home SOC topology (simple but realistic)",
+        "body": "You are building a mini SOC environment, not just \"installing tools.\"\n\nRecommended minimum lab layout:\n- 1 Linux Server (Log Collector)\n- 1 Windows endpoint (Victim/Client)\n- 1 Linux endpoint (optional)\n- Your router (existing home network)\n\nTwo recommended setups:\n\nOption A (Best / easiest): Virtual lab (VMs)\n- Ubuntu Server VM = log collector\n- Windows 10/11 VM = endpoint\n\nOption B (More realistic): Spare laptop/PC as log collector\n- Ubuntu Server installed on spare machine\n- Windows PC is your real workstation\n\nDeliverable:\n- Create `Home-Security-Lab/evidence/notes/topology.md`\n- Write a short topology description + IP ranges.\n\nValidation:\n- You can clearly explain which machine collects logs and which machine generates logs."
+      },
+      {
+        "title": "Step 2 — Create the evidence folder structure in the repo",
+        "body": "In the CyberSecurity-Projects repo:\n\nCommands:\n- `cd ~/CyberSecurity-Projects/Home-Security-Lab`\n- `mkdir -p evidence/screenshots evidence/logs evidence/pcaps evidence/notes evidence/iocs evidence/reports`\n\nCreate these files:\n- `baseline.md`\n- `detection-tests.md`\n- `home-soc-report.md`\n\nValidation:\n- `ls -R evidence` shows your folder structure.\n\nDeliverable:\n- Screenshot of folder tree."
+      },
+      {
+        "title": "Step 3 — Install and secure your Linux log collector server",
+        "body": "Install Ubuntu Server (recommended).\n\nUpdate the system:\n- `sudo apt update && sudo apt upgrade -y`\n\nInstall core tools:\n- `sudo apt install -y ufw rsyslog net-tools curl wget unzip fail2ban`\n\nEnable SSH (if not installed):\n- `sudo apt install -y openssh-server`\n\nCheck SSH:\n- `sudo systemctl status ssh`\n\nValidation:\n- SSH service is active.\n- Server has a stable IP address.\n\nDeliverables:\n- Screenshot of `ip a` output\n- Screenshot of `systemctl status ssh`\n\nTroubleshooting:\n- If you cannot SSH in, confirm firewall is not blocking port 22 and the VM network is correct."
+      },
+      {
+        "title": "Step 4 — Configure a static IP or DHCP reservation for the log collector",
+        "body": "Your collector must be reachable.\n\nRecommended approach:\n- Set DHCP reservation in your router for the Ubuntu server.\n\nAlternative:\n- Configure static IP in Ubuntu netplan.\n\nCheck current IP:\n- `ip a`\n\nWrite down:\n- Server IP\n- Gateway IP\n- DNS\n\nDeliverable:\n- Add IP info to `evidence/notes/topology.md`\n\nValidation:\n- Collector keeps the same IP after reboot.\n\nTroubleshooting:\n- If IP changes, fix DHCP reservation or configure static IP."
+      },
+      {
+        "title": "Step 5 — Configure UFW firewall rules on the collector",
+        "body": "Lock down the collector.\n\nEnable UFW:\n- `sudo ufw default deny incoming`\n- `sudo ufw default allow outgoing`\n\nAllow SSH:\n- `sudo ufw allow 22/tcp`\n\nAllow syslog (UDP 514 is common):\n- `sudo ufw allow 514/udp`\n\nEnable firewall:\n- `sudo ufw enable`\n\nVerify:\n- `sudo ufw status verbose`\n\nValidation:\n- UFW is active.\n- SSH still works.\n\nDeliverable:\n- Screenshot of `ufw status verbose`\n\nTroubleshooting:\n- If SSH breaks, use the VM console to re-allow port 22."
+      },
+      {
+        "title": "Step 6 — Configure rsyslog to receive remote logs",
+        "body": "rsyslog is installed by default on Ubuntu, but remote receiving is usually disabled.\n\nEdit rsyslog config:\n- `sudo nano /etc/rsyslog.conf`\n\nUncomment or add these lines:\n```\nmodule(load=\"imudp\")\ninput(type=\"imudp\" port=\"514\")\n\nmodule(load=\"imtcp\")\ninput(type=\"imtcp\" port=\"514\")\n```\n\nRestart rsyslog:\n- `sudo systemctl restart rsyslog`\n\nCheck status:\n- `sudo systemctl status rsyslog`\n\nValidation:\n- rsyslog service is active.\n- Port is listening:\n  - `sudo ss -tulnp | grep 514`\n\nDeliverables:\n- Screenshot of `ss -tulnp | grep 514`\n\nTroubleshooting:\n- If port 514 is not listening, confirm the lines are not commented and restart the service."
+      },
+      {
+        "title": "Step 7 — Configure Linux logging structure for incoming logs",
+        "body": "By default, incoming logs may mix with system logs. Create a clean folder.\n\nCreate a directory:\n- `sudo mkdir -p /var/log/remote`\n- `sudo chmod 755 /var/log/remote`\n\nCreate an rsyslog rule:\n- `sudo nano /etc/rsyslog.d/10-remote.conf`\n\nAdd:\n```\n$template RemoteLogs,\"/var/log/remote/%HOSTNAME%/%PROGRAMNAME%.log\"\n*.* ?RemoteLogs\n& stop\n```\n\nRestart rsyslog:\n- `sudo systemctl restart rsyslog`\n\nValidation:\n- Directory exists.\n- rsyslog restarted successfully.\n\nDeliverables:\n- Screenshot of `/var/log/remote` existing\n\nTroubleshooting:\n- If logs do not appear later, check permissions and confirm rsyslog is writing."
+      },
+      {
+        "title": "Step 8 — Forward logs from a Linux endpoint (test client)",
+        "body": "You need at least one endpoint sending logs.\n\nOn your Linux endpoint machine (or a second VM):\n\nEdit rsyslog config:\n- `sudo nano /etc/rsyslog.conf`\n\nAdd at bottom:\n```\n*.* @<COLLECTOR_IP>:514\n```\n\nUse @@ for TCP:\n```\n*.* @@<COLLECTOR_IP>:514\n```\n\nRestart:\n- `sudo systemctl restart rsyslog`\n\nGenerate a test log entry:\n- `logger \"HOME SOC TEST: Linux endpoint connected\"`\n\nOn collector:\n- `sudo ls -R /var/log/remote`\n\nValidation:\n- You see logs arriving in `/var/log/remote/<hostname>/...`\n\nDeliverables:\n- Screenshot showing the test log on the collector.\n\nTroubleshooting:\n- If logs do not arrive:\n  - ping the collector\n  - check UFW allows 514\n  - check rsyslog listening on collector (`ss -tulnp | grep 514`)\n  - check client config syntax"
+      },
+      {
+        "title": "Step 9 — Forward logs from Windows (Sysmon recommended)",
+        "body": "Windows is where this lab becomes real.\n\nTwo options:\n\nOption A (Basic): Windows Event Logs only\n- Use Windows Event Forwarding or an agent (harder)\n\nOption B (Recommended): Install Sysmon + forward logs using an agent (Splunk Forwarder or Winlogbeat)\n\nSysmon:\n- Download Sysmon from Microsoft Sysinternals\n- Install with a config (SwiftOnSecurity config is commonly used)\n\nExample install command (Admin PowerShell):\n- `sysmon64.exe -accepteula -i sysmonconfig.xml`\n\nIf using Splunk Forwarder (recommended if you're already using Splunk in your other project):\n- Install Universal Forwarder\n- Configure to forward Windows Event Logs to Splunk\n\nValidation:\n- Sysmon service running\n- Event logs show process creation events\n\nDeliverables:\n- Screenshot of Sysmon installed\n- Screenshot of a Sysmon Event ID 1 (process creation)\n\nTroubleshooting:\n- If Sysmon doesn't log: confirm the service is running and config file is valid."
+      },
+      {
+        "title": "Step 10 — Establish a baseline: ports, services, and normal log behavior",
+        "body": "Baseline means: \"What does normal look like?\"\n\nOn your collector:\n- `sudo ss -tulnp`\n- `sudo journalctl -n 50`\n\nFrom your attacker machine (or Kali VM), scan your Windows endpoint:\n- `nmap -sV <WINDOWS_IP>`\n\nRecord:\n- Normal open ports\n- Normal DNS behavior\n- Normal authentication events\n\nSave baseline output:\n- `nmap -sV <WINDOWS_IP> | tee evidence/logs/nmap-baseline.txt`\n\nValidation:\n- You can identify which ports are expected and why.\n\nDeliverables:\n- `evidence/logs/nmap-baseline.txt`\n- `baseline.md` updated with notes\n\nTroubleshooting:\n- If nmap fails, check firewall settings or VM network mode."
+      },
+      {
+        "title": "Step 11 — Run detection test #1: brute-force simulation (safe)",
+        "body": "Simulate a brute-force style pattern safely.\n\nLinux endpoint brute force simulation:\n- Try repeated invalid SSH logins from another machine.\n\nExample:\n- `ssh fakeuser@<LINUX_ENDPOINT_IP>`\n- Enter wrong password multiple times.\n\nOn collector:\n- Inspect logs:\n  - `sudo grep -i \"failed\" -R /var/log/remote | tail -n 50`\n\nValidation:\n- You can see repeated failed auth attempts.\n\nDeliverables:\n- Screenshot of log entries\n- Notes in `detection-tests.md`\n\nTroubleshooting:\n- If logs don’t show, confirm forwarding works and that your log rule is writing correctly."
+      },
+      {
+        "title": "Step 12 — Run detection test #2: port scan simulation",
+        "body": "Port scanning is a realistic SOC detection scenario.\n\nFrom Kali or another machine:\n- `nmap -sS -T4 <WINDOWS_IP>`\n- `nmap -sS -T4 <LINUX_IP>`\n\nOn the endpoints:\n- Look for firewall or system logs.\n\nOn collector:\n- Search for scan patterns:\n  - `sudo grep -R \"nmap\" /var/log/remote | tail -n 50`\n\nOptional Wireshark capture:\n- Start capture during scan and save to `evidence/pcaps/portscan-test.pcapng`\n\nValidation:\n- You captured evidence of the scan in logs and/or pcap.\n\nDeliverables:\n- `evidence/pcaps/portscan-test.pcapng`\n- screenshot of scan output\n\nTroubleshooting:\n- If nothing logs, that's a learning moment: document that your current setup lacks IDS capability."
+      },
+      {
+        "title": "Step 13 — Optional hardening: install fail2ban and confirm bans work",
+        "body": "fail2ban simulates real SOC defensive automation.\n\nInstall:\n- `sudo apt install -y fail2ban`\n\nEnable:\n- `sudo systemctl enable --now fail2ban`\n\nCheck status:\n- `sudo fail2ban-client status`\n\nValidation:\n- fail2ban is running.\n\nDeliverables:\n- Screenshot of fail2ban status\n\nTroubleshooting:\n- If no jails appear, configure a jail for sshd in `/etc/fail2ban/jail.local`."
+      },
+      {
+        "title": "Step 14 — Optional SIEM: ingest logs into Splunk (recommended)",
+        "body": "If you already have Splunk from your Log-Analysis project, this is the best upgrade.\n\nOption A: Install Splunk on the collector\nOption B: Forward rsyslog logs into Splunk\n\nTypical approach:\n- Configure Splunk to monitor `/var/log/remote/**`\n\nExample (Splunk inputs.conf concept):\n- Monitor directory\n- Assign sourcetype = syslog\n\nValidation:\n- You can search logs in Splunk:\n  - `index=* host=<endpoint>`\n\nDeliverables:\n- Screenshot of Splunk search results\n- Screenshot of a simple dashboard panel\n\nTroubleshooting:\n- If logs don’t ingest, confirm file permissions and Splunk monitoring path."
+      },
+      {
+        "title": "Step 15 — Build a simple detection checklist (SOC workflow)",
+        "body": "Create a repeatable daily SOC workflow.\n\nCreate `evidence/notes/monitoring-checklist.md` with:\n- Daily authentication failures review\n- Daily new IP/domain review\n- Weekly port scan / service inventory\n- System update review\n- New device discovery\n\nExample log search commands:\n- `sudo grep -R \"Failed password\" /var/log/remote | tail -n 50`\n- `sudo grep -R \"Accepted password\" /var/log/remote | tail -n 50`\n\nValidation:\n- You can run the checklist and explain what each item detects.\n\nDeliverable:\n- Completed monitoring checklist file."
+      },
+      {
+        "title": "Step 16 — Write the Home SOC Report (portfolio-ready)",
+        "body": "Write your final report in:\n- `home-soc-report.md`\n\nRecommended structure:\n1) Executive Summary\n2) Lab Topology\n3) Log Collection Setup (rsyslog + forwarding)\n4) Baseline Findings\n5) Detection Tests (brute force, scan)\n6) Observed Indicators\n7) Gaps Identified (no IDS, no EDR, etc.)\n8) Improvements Roadmap\n\nValidation:\n- A reader can replicate your lab.\n\nDeliverables:\n- Final report + evidence paths.\n\nTroubleshooting:\n- If your lab feels \"too simple,\" that's fine. The report should clearly identify the next upgrades (IDS project comes next)."
+      }
+    ],
+    "successCriteria": [
+      "You configured a Linux log collector with rsyslog listening on port 514",
+      "You forwarded logs from at least one Linux endpoint into /var/log/remote/",
+      "You documented a baseline (nmap scan + normal logs) for your environment",
+      "You successfully generated and detected at least one suspicious activity pattern (failed logins or port scan)",
+      "You produced a topology diagram/description and a SOC-style report",
+      "You saved all artifacts into the repo under Home-Security-Lab/evidence/"
+    ],
+    "troubleshooting": [
+      {
+        "issue": "Logs are not arriving at the collector",
+        "fix": "Confirm ping works, confirm UFW allows 514/udp, confirm rsyslog is listening (`ss -tulnp | grep 514`), and confirm endpoint rsyslog config uses correct IP and syntax."
+      },
+      {
+        "issue": "Port 514 is listening but logs still don’t write into /var/log/remote",
+        "fix": "Check your rsyslog rule in `/etc/rsyslog.d/10-remote.conf` and confirm the directory permissions allow writing. Restart rsyslog."
+      },
+      {
+        "issue": "Windows logs are hard to forward",
+        "fix": "Use Sysmon + Splunk Forwarder or Winlogbeat. Windows Event Forwarding works but is more complex. Document whichever approach you used."
+      },
+      {
+        "issue": "Nmap scans don’t show anything suspicious in logs",
+        "fix": "That is expected without an IDS. Capture the traffic in Wireshark and document that IDS functionality is a future upgrade."
+      },
+      {
+        "issue": "SSH brute-force test doesn’t show up",
+        "fix": "Confirm the endpoint is logging auth attempts (check `/var/log/auth.log`) and confirm those logs are forwarded."
+      }
+    ],
+    "references": [
+      {
+        "title": "rsyslog Documentation",
+        "url": "https://www.rsyslog.com/doc/"
+      },
+      {
+        "title": "UFW Documentation (Ubuntu)",
+        "url": "https://help.ubuntu.com/community/UFW"
+      },
+      {
+        "title": "Sysmon (Microsoft Sysinternals)",
+        "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+      },
+      {
+        "title": "Splunk Free (Splunk Enterprise Trial)",
+        "url": "https://www.splunk.com/en_us/download/splunk-enterprise.html"
+      },
+      {
+        "title": "Wireshark Display Filters Reference",
+        "url": "https://www.wireshark.org/docs/dfref/"
+      }
+    ],
+    "cliCheatSheet": [
+      {
+        "command": "sudo ss -tulnp | grep 514",
+        "syntax": "ss -tulnp | grep <port>",
+        "purpose": "Confirms rsyslog is listening on the syslog port."
+      },
+      {
+        "command": "logger \"HOME SOC TEST: Linux endpoint connected\"",
+        "syntax": "logger \"<message>\"",
+        "purpose": "Generates a test syslog entry to verify forwarding."
+      },
+      {
+        "command": "sudo ufw status verbose",
+        "syntax": "ufw status verbose",
+        "purpose": "Verifies firewall rules and whether syslog traffic is allowed."
+      },
+      {
+        "command": "nmap -sV <TARGET_IP>",
+        "syntax": "nmap -sV <target>",
+        "purpose": "Service/version scan to build baseline exposure of endpoints."
+      },
+      {
+        "command": "sudo journalctl -n 50",
+        "syntax": "journalctl -n <lines>",
+        "purpose": "Quickly checks recent system logs on the collector."
+      }
+    ]
+  }
+}
